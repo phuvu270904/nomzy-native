@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-expo-app",
-    "slug": "my-expo-app",
+    "name": "nomzy-native",
+    "slug": "nomzy-native",
     "version": "1.0.0",
 
     "web": {
@@ -17,7 +17,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
 
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
 
     "splash": {
       "image": "./assets/splash.png",

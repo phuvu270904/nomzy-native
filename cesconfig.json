@@ -1,6 +1,6 @@
 {
   "cesVersion": "2.18.3",
-  "projectName": "my-expo-app",
+  "projectName": "nomzy-native",
   "packages": [
     {
       "name": "nativewind",
