@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,14 +7,11 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { getOnboardingStatus } from '@/utils/onboarding';
 import "../global.css";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -30,9 +27,6 @@ export default function RootLayout() {
       } catch (error) {
         console.error("Error checking onboarding status:", error);
         setIsOnboardingComplete(false);
-      } finally {
-        // Always set loading to false when done
-        setIsLoading(false);
       }
     }
 
@@ -53,7 +47,7 @@ export default function RootLayout() {
   // rendering different navigation stacks based on the onboarding state
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         {isOnboardingComplete ? (
           // Main app screens when onboarding is complete
@@ -64,7 +58,7 @@ export default function RootLayout() {
         )}
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 
