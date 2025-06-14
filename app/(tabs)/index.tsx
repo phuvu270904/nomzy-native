@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -51,8 +52,28 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+      
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Test Onboarding</ThemedText>
+        <ThemedText>Want to see the onboarding screens again?</ThemedText>
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={resetOnboardingAndRestart}>
+          <ThemedText style={styles.resetButtonText}>Reset Onboarding</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
     </ParallaxScrollView>
   );
+}
+
+// Function to reset onboarding and restart the app
+function resetOnboardingAndRestart() {
+  import('@/utils/onboarding').then(({ resetOnboardingStatus }) => {
+    resetOnboardingStatus().then(() => {
+      // Force reload the app to trigger onboarding
+      router.replace('/onboarding');
+    });
+  });
 }
 
 const styles = StyleSheet.create({
@@ -71,5 +92,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  resetButton: {
+    backgroundColor: '#A1CEDC',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  resetButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });
