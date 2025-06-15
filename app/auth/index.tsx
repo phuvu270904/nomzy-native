@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import {
-  Dimensions,
-  Image,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -35,13 +35,13 @@ export default function LoginScreen() {
   const handleNomzyLogin = () => {
     console.log('Phone login pressed');
     // Navigate to phone number input screen
-    router.navigate('/login');
+    router.navigate('/auth/login');
   };
 
   const handleSignUp = () => {
     console.log('Sign up pressed');
     // Navigate to sign up screen
-    router.navigate('/signup');
+    router.navigate('/auth/signup');
   };
 
   return (
@@ -53,7 +53,7 @@ export default function LoginScreen() {
         {/* Illustration */}
         <View style={styles.illustrationContainer}>
           <Image 
-            source={require('../assets/images/onboarding/onboarding-1.png')} 
+            source={require('../../assets/images/onboarding/onboarding-1.png')} 
             style={styles.illustration}
             resizeMode="contain"
           />

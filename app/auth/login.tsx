@@ -16,14 +16,12 @@ import {
   View
 } from 'react-native';
 
-import { ThemedText } from '../components/ThemedText';
+import { ThemedText } from '@/components/ThemedText';
 
-Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-export default function SignUpScreen() {
+export default function PhoneLoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,48 +29,46 @@ export default function SignUpScreen() {
     router.back();
   };
 
-  const handleSignUp = async () => {
-    if (!phoneNumber.trim() || !email.trim() || !fullName.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleSignIn = async () => {
+    if (!phoneNumber.trim()) {
+      Alert.alert('Error', 'Please enter your phone number');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Implement your sign-up logic here
-      console.log('Sign up with:', { phoneNumber, email, fullName, rememberMe });
+      // Implement your sign-in logic here
+      console.log('Sign in with phone:', { phoneNumber, rememberMe });
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Navigate to main app or verification screen
-      router.navigate('/(tabs)');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // Navigate to OTP verification or main app
+    //   router.navigate('/otp-verification');
     } catch (error) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      Alert.alert('Error', 'Failed to sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFacebookSignUp = () => {
-    console.log('Facebook sign up pressed');
-    // Implement Facebook sign up logic
+  const handleFacebookLogin = () => {
+    console.log('Facebook login pressed');
+    // Implement Facebook login logic
   };
 
-  const handleGoogleSignUp = () => {
-    console.log('Google sign up pressed');
-    // Implement Google sign up logic
+  const handleGoogleLogin = () => {
+    console.log('Google login pressed');
+    // Implement Google login logic
   };
 
-  const handleAppleSignUp = () => {
-    console.log('Apple sign up pressed');
-    // Implement Apple sign up logic
+  const handleAppleLogin = () => {
+    console.log('Apple login pressed');
+    // Implement Apple login logic
   };
 
-  const handleSignIn = () => {
-    console.log('Sign in pressed');
-    router.navigate('/login');
+  const handleSignUp = () => {
+    router.navigate('/auth/signup');
   };
 
   const toggleRememberMe = () => {
@@ -99,26 +95,26 @@ export default function SignUpScreen() {
           </View>
 
           {/* Logo */}
-          {/* <View style={styles.logoContainer}>
+          <View style={styles.logoContainer}>
             <View style={styles.logoWrapper}>
               <View style={styles.logo}>
                 <Image 
-                  source={require('../assets/images/icon.png')} 
+                  source={require('../../assets/images/icon.png')} 
                   style={styles.logoImage}
                   resizeMode="contain"
                 />
               </View>
+              {/* Speed lines */}
               <View style={styles.speedLines}>
                 <View style={[styles.speedLine, styles.speedLine1]} />
                 <View style={[styles.speedLine, styles.speedLine2]} />
                 <View style={[styles.speedLine, styles.speedLine3]} />
               </View>
             </View>
-          </View> */}
-          
+          </View>
 
           {/* Title */}
-          <ThemedText style={styles.title}>Create New Account</ThemedText>
+          <ThemedText style={styles.title}>Login to Your Account</ThemedText>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -127,7 +123,7 @@ export default function SignUpScreen() {
               <View style={styles.phoneInputWrapper}>
                 <View style={styles.countrySelector}>
                   <Image 
-                    source={require('../assets/images/icon.png')} 
+                    source={require('../../assets/images/icon.png')} 
                     style={styles.flagIcon}
                   />
                   <Ionicons name="chevron-down" size={16} color="#9E9E9E" />
@@ -139,37 +135,6 @@ export default function SignUpScreen() {
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
                   keyboardType="phone-pad"
-                />
-              </View>
-            </View>
-
-            {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color="#9E9E9E" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Email"
-                  placeholderTextColor="#9E9E9E"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            {/* Full Name Input */}
-            <View style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color="#9E9E9E" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Full Name"
-                  placeholderTextColor="#9E9E9E"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  autoCapitalize="words"
                 />
               </View>
             </View>
@@ -188,15 +153,15 @@ export default function SignUpScreen() {
               <ThemedText style={styles.checkboxLabel}>Remember me</ThemedText>
             </TouchableOpacity>
 
-            {/* Sign Up Button */}
+            {/* Sign In Button */}
             <TouchableOpacity 
-              style={[styles.signUpButton, isLoading && styles.signUpButtonDisabled]} 
-              onPress={handleSignUp}
+              style={[styles.signInButton, isLoading && styles.signInButtonDisabled]} 
+              onPress={handleSignIn}
               activeOpacity={0.8}
               disabled={isLoading}
             >
-              <ThemedText style={styles.signUpButtonText}>
-                {isLoading ? 'Creating Account...' : 'Sign up'}
+              <ThemedText style={styles.signInButtonText}>
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </ThemedText>
             </TouchableOpacity>
 
@@ -209,7 +174,7 @@ export default function SignUpScreen() {
             <View style={styles.socialIconsContainer}>
               <TouchableOpacity 
                 style={styles.socialIconButton} 
-                onPress={handleFacebookSignUp}
+                onPress={handleFacebookLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="logo-facebook" size={24} color="#1877F2" />
@@ -217,7 +182,7 @@ export default function SignUpScreen() {
 
               <TouchableOpacity 
                 style={styles.socialIconButton} 
-                onPress={handleGoogleSignUp}
+                onPress={handleGoogleLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="logo-google" size={24} color="#EC4436" />
@@ -225,18 +190,18 @@ export default function SignUpScreen() {
 
               <TouchableOpacity 
                 style={styles.socialIconButton} 
-                onPress={handleAppleSignUp}
+                onPress={handleAppleLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="logo-apple" size={24} color="#000" />
               </TouchableOpacity>
             </View>
 
-            {/* Sign In Link */}
-            <View style={styles.signInContainer}>
-              <ThemedText style={styles.signInText}>Already have an account? </ThemedText>
-              <TouchableOpacity onPress={handleSignIn}>
-                <ThemedText style={styles.signInLink}>Sign in</ThemedText>
+            {/* Sign Up Link */}
+            <View style={styles.signUpContainer}>
+              <ThemedText style={styles.signUpText}>Don&apos;t have an account? </ThemedText>
+              <TouchableOpacity onPress={handleSignUp}>
+                <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -270,8 +235,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+    marginTop: 40,
+    marginBottom: 40,
   },
   logoWrapper: {
     position: 'relative',
@@ -324,7 +289,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 50,
     color: '#2E2E2E',
     letterSpacing: -0.5,
     lineHeight: 36,
@@ -334,14 +299,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 30,
   },
   phoneInputWrapper: {
     flexDirection: 'row',
     backgroundColor: '#F8F8F8',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 18,
     alignItems: 'center',
   },
   countrySelector: {
@@ -362,26 +327,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2E2E2E',
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2E2E2E',
-  },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
   checkbox: {
     width: 20,
@@ -401,13 +350,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2E2E2E',
   },
-  signUpButton: {
+  signInButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
     shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
@@ -417,10 +366,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  signUpButtonDisabled: {
+  signInButtonDisabled: {
     opacity: 0.7,
   },
-  signUpButtonText: {
+  signInButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
@@ -428,7 +377,7 @@ const styles = StyleSheet.create({
   },
   dividerContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
   dividerText: {
     fontSize: 14,
@@ -438,7 +387,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
   socialIconButton: {
     width: 50,
@@ -453,17 +402,17 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  signInContainer: {
+  signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 30,
   },
-  signInText: {
+  signUpText: {
     fontSize: 14,
     color: '#9E9E9E',
   },
-  signInLink: {
+  signUpLink: {
     fontSize: 14,
     color: '#4CAF50',
     fontWeight: '600',
