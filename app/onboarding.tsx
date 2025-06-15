@@ -10,7 +10,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { completeOnboarding } from '@/store/slices/onboardingSlice';
 import { useAppDispatch } from '../store/store';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const steps = [
   {
@@ -69,9 +69,6 @@ export default function OnboardingScreen() {
     });
   };
 
-  const handleSkip = () => {
-    handleOnboardingComplete();
-  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor }]}>

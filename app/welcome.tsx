@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -17,10 +17,6 @@ import { ThemedText } from '@/components/ThemedText';
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  const handleBack = () => {
-    router.back();
-  };
-
   const handleFacebookLogin = () => {
     console.log('Facebook login pressed');
     // Implement Facebook login logic

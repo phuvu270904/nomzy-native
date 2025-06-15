@@ -18,7 +18,7 @@ import {
 
 import { ThemedText } from '../components/ThemedText';
 
-const { width } = Dimensions.get('window');
+Dimensions.get('window');
 
 export default function SignUpScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -47,6 +47,7 @@ export default function SignUpScreen() {
       
       // Navigate to main app or verification screen
       router.navigate('/(tabs)');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       Alert.alert('Error', 'Failed to create account. Please try again.');
     } finally {
