@@ -2,36 +2,38 @@ import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 
 import { ThemedText } from '@/components/ThemedText';
-import { getOnboardingStatus } from '@/utils/onboarding';
+import { store } from '@/store/store';
 import "../global.css";
 
+// Root layout wrapper that provides Redux store
 export default function RootLayout() {
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
+  return (
+    <Provider store={store}>
+      <RootLayoutNav />
+    </Provider>
+  );
+}
+
+// Navigation component that uses Redux
+function RootLayoutNav() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  
+  const dispatch = useDispatch();
+  const isOnboardingComplete = useSelector((state: any) => state.onboarding.isComplete);
 
   // Only check onboarding status once during initial load
   useEffect(() => {
-    async function checkOnboardingStatus() {
-      try {
-        // Use a simpler approach - look for the key directly
-        const isCompleted = await getOnboardingStatus();
-        console.log("Initial onboarding check:", isCompleted);
-        setIsOnboardingComplete(isCompleted);
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
-        setIsOnboardingComplete(false);
-      }
-    }
-
-    checkOnboardingStatus();
-  }, []); // Empty dependency array ensures this only runs once
+    const { checkOnboardingStatus } = require('../store/slices/onboardingSlice');
+    dispatch(checkOnboardingStatus());
+  }, [dispatch]); 
 
   if (!loaded) {
     // Only wait for fonts to load
@@ -43,9 +45,7 @@ export default function RootLayout() {
     );
   }
   
-  // This is the critical change - we're not using redirection anymore, but conditionally
-  // rendering different navigation stacks based on the onboarding state
-
+  // Conditionally rendering different navigation stacks based on the onboarding state
   return (
     <ThemeProvider value={DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
@@ -61,5 +61,4 @@ export default function RootLayout() {
       <StatusBar style="light" />
     </ThemeProvider>
   );
-
 }
