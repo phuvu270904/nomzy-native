@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     color: '#2E2E2E',
     letterSpacing: -0.5,
+    lineHeight: 36,
   },
   formContainer: {
     paddingHorizontal: 24,
