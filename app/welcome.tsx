@@ -157,12 +157,13 @@ const styles = StyleSheet.create({
     maxHeight: 250,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 40,
     color: '#2E2E2E',
     letterSpacing: -0.5,
+    lineHeight: 36,
   },
   socialButtonsContainer: {
     marginBottom: 30,
