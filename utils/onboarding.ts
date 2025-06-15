@@ -4,9 +4,7 @@ export const ONBOARDING_COMPLETE_KEY = '@nomzy:onboardingComplete';
 
 export const setOnboardingComplete = async () => {
   try {
-    console.log('Setting onboarding complete...');
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
-    console.log('Onboarding status set to complete');
     return true;
   } catch (error) {
     console.error('Failed to save onboarding status', error);
@@ -18,24 +16,19 @@ export const setOnboardingComplete = async () => {
 
 export const getOnboardingStatus = async () => {
   try {
-    console.log('Checking onboarding status...');
-    
     // If we're already in the onboarding screen, don't redirect there again
     // This is the most important check to break any potential infinite loops
     if ((global as any).inOnboardingScreen === true) {
-      console.log('Already in onboarding screen, not redirecting');
       return false;
     }
     
     // Check for the global completion flag
     if ((global as any).onboardingComplete === true) {
-      console.log('Using global fallback: onboarding is complete');
       return true;
     }
     
     // Check if onboarding status is stored in AsyncStorage
     const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-    console.log('AsyncStorage onboarding status:', value);
     
     // If we've explicitly marked it as complete, return true
     if (value === 'true') {

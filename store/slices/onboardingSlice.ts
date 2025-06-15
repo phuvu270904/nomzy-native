@@ -48,9 +48,7 @@ export const {
 export const completeOnboarding = (): AppThunk => async (dispatch) => {
   dispatch(setLoading(true));
   try {
-    console.log('Setting onboarding complete...');
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
-    console.log('Onboarding status set to complete');
     dispatch(setOnboardingCompleteState(true));
     dispatch(setError(null));
   } catch (error) {
@@ -66,12 +64,9 @@ export const completeOnboarding = (): AppThunk => async (dispatch) => {
 export const checkOnboardingStatus = (): AppThunk => async (dispatch, getState) => {
   dispatch(setLoading(true));
   try {
-    console.log('Checking onboarding status...');
-    
     // First check if we're already in the onboarding screen
     const { inOnboardingScreen } = getState().onboarding;
     if (inOnboardingScreen) {
-      console.log('Already in onboarding screen, not redirecting');
       dispatch(setLoading(false));
       return false;
     }
@@ -79,14 +74,12 @@ export const checkOnboardingStatus = (): AppThunk => async (dispatch, getState) 
     // Check if onboarding is already marked complete in state
     const { isComplete } = getState().onboarding;
     if (isComplete) {
-      console.log('Redux state: onboarding is complete');
       dispatch(setLoading(false));
       return true;
     }
     
     // Check if onboarding status is stored in AsyncStorage
     const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-    console.log('AsyncStorage onboarding status:', value);
     
     // If we've explicitly marked it as complete, update state and return true
     if (value === 'true') {
