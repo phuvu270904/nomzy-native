@@ -1,6 +1,6 @@
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -26,37 +26,50 @@ function RootLayoutNav() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
   
+  const router = useRouter();
   const dispatch = useDispatch();
   const isOnboardingComplete = useSelector((state: any) => state.onboarding.isComplete);
-
+  const isLoading = useSelector((state: any) => state.onboarding.isLoading);
+  
   // Only check onboarding status once during initial load
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { checkOnboardingStatus } = require('../store/slices/onboardingSlice');
-    dispatch(checkOnboardingStatus());
-  }, [dispatch]); 
+    const checkStatus = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { checkOnboardingStatus } = require('../store/slices/onboardingSlice');
+      await dispatch(checkOnboardingStatus());
+    };
+    
+    checkStatus();
+  }, [dispatch]);
 
-  if (!loaded) {
-    // Only wait for fonts to load
+  // Navigate based on onboarding status once loading is complete
+  useEffect(() => {
+    if (!isLoading && loaded) {
+      if (isOnboardingComplete) {
+        router.replace('/auth');
+      } else {
+        router.replace('/onboarding');
+      }
+    }
+  }, [isOnboardingComplete, isLoading, loaded, router]);
+
+  if (!loaded || isLoading) {
+    // Wait for fonts to load AND onboarding status check to complete
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
-        <ThemedText style={{ marginTop: 10 }}>Loading fonts...</ThemedText>
+        <ThemedText style={{ marginTop: 10 }}>Loading...</ThemedText>
       </View>
     );
   }
   
-  // Conditionally rendering different navigation stacks based on the onboarding state
+  // Render navigation structure
   return (
     <ThemeProvider value={DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        {isOnboardingComplete ? (
-          // Main app screens when onboarding is complete
-          <Stack.Screen name="auth" />
-        ) : (
-          // Onboarding screen when onboarding is not complete
-          <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-        )}
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="light" />
