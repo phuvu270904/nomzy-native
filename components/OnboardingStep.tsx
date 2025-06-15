@@ -1,58 +1,39 @@
 import React from 'react';
-import { Dimensions, Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
+import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 
-interface OnboardingStepProps {
-  title: string;
-  description: string;
-  image: ImageSourcePropType;
-}
+const { width, height } = Dimensions.get('window');
 
-export function OnboardingStep({ title, description, image }: OnboardingStepProps) {
+export const OnboardingStep = ({ title, description, image }: { title: string, description: string, image: any }) => {
   return (
-    <ThemedView style={[styles.container, { width: Dimensions.get('window').width }]}>
-      <View style={styles.imageContainer}>
-        <Image source={image} style={styles.image} resizeMode="contain" />
-      </View>
-      <ThemedView style={styles.textContainer}>
-        <ThemedText type="title" style={styles.title}>{title}</ThemedText>
-        <ThemedText style={styles.description}>{description}</ThemedText>
-      </ThemedView>
-    </ThemedView>
+    <View style={styles.container}>
+      <Image source={image} style={styles.image} resizeMode="contain" />
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.description}>{description}</Text>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    width, // full screen width
+    paddingHorizontal: 24,
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  imageContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
   },
   image: {
-    width: 250,
-    height: 250,
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginBottom: 50,
-    paddingHorizontal: 20,
+    width: width * 0.8,
+    height: height * 0.4,
+    marginBottom: 32,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 12,
     textAlign: 'center',
-    marginBottom: 16,
   },
   description: {
     fontSize: 16,
+    color: '#666',
     textAlign: 'center',
   },
 });

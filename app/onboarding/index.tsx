@@ -9,51 +9,44 @@ import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { setOnboardingComplete } from '@/utils/onboarding';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const steps = [
   {
     id: '1',
-    title: 'Welcome to Nomzy',
-    description: 'Your personal food discovery app that helps you find amazing dishes near you.',
-    image: require('@/assets/images/react-logo.png'), // Use first onboarding image
+    title: 'Order for Food',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
+    image: require('../../assets/images/onboarding/onboarding-1.png'),
   },
   {
     id: '2',
-    title: 'Explore Local Cuisine',
-    description: 'Discover local restaurants and popular dishes that match your taste preferences.',
-    image: require('@/assets/images/partial-react-logo.png'), // Use second onboarding image
+    title: 'Easy Payment',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
+    image: require('../../assets/images/onboarding/onboarding-2.png'),
   },
   {
     id: '3',
-    title: 'Share Your Experience',
-    description: 'Share your food experiences with friends and build a community of food lovers.',
-    image: require('@/assets/images/favicon.png'), // Use third onboarding image
-  },
-  {
-    id: '4',
-    title: "Let's Get Started",
-    description: 'Ready to start your food adventure? Create your profile and start exploring!',
-    image: require('@/assets/images/splash-icon.png'), // Use fourth onboarding image
+    title: 'Fast Delivery',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
+    image: require('../../assets/images/onboarding/onboarding-3.png'),
   },
 ];
 
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const backgroundColor = useThemeColor({ light: '#F5F5F5', dark: '#1A1A1A' }, 'background');
-  const accentColor = useThemeColor({ light: '#A1CEDC', dark: '#1D3D47' }, 'tint');
+  const backgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#1A1A1A' }, 'background');
+  const primaryGreen = '#4CAF50'; // Main green color from design
+  const lightGray = '#E0E0E0'; // For inactive dots
   
   const completeOnboarding = async () => {
     try {
       const success = await setOnboardingComplete();
       console.log("Completed onboarding, success:", success);
-      // Add a global fallback in case AsyncStorage fails
       (global as any).onboardingComplete = true;
       router.navigate('/(tabs)');
     } catch (error) {
       console.error("Error completing onboarding:", error);
-      // Even if there's an error, try to navigate to the main app
       (global as any).onboardingComplete = true;
       router.navigate('/(tabs)');
     }
@@ -87,7 +80,16 @@ export default function OnboardingScreen() {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor }]}>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
+      
+      {/* Background decorative circles */}
+      <View style={styles.backgroundDecorations}>
+        <View style={[styles.decorativeCircle, styles.topLeft]} />
+        <View style={[styles.decorativeCircle, styles.topRight]} />
+        <View style={[styles.decorativeCircle, styles.bottomLeft]} />
+        <View style={[styles.decorativeCircle, styles.bottomRight]} />
+      </View>
+
       <FlatList
         ref={flatListRef}
         data={steps}
@@ -111,29 +113,31 @@ export default function OnboardingScreen() {
         scrollEnabled={true}
       />
 
-      <View style={styles.pagination}>
-        {steps.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              {
-                backgroundColor: currentIndex === index ? accentColor : '#D9D9D9',
-              },
-            ]}
-          />
-        ))}
-      </View>
+      {/* Bottom section with pagination and buttons */}
+      <View style={styles.bottomSection}>
+        {/* Pagination dots */}
+        <View style={styles.pagination}>
+          {steps.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: currentIndex === index ? primaryGreen : lightGray,
+                  width: currentIndex === index ? 24 : 8,
+                },
+              ]}
+            />
+          ))}
+        </View>
 
-      <View style={styles.buttonsContainer}>
-        {currentIndex < steps.length - 1 ? (
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-            <ThemedText style={styles.skipText}>Skip</ThemedText>
-          </TouchableOpacity>
-        ) : null}
-        
-        <TouchableOpacity onPress={handleNext} style={[styles.nextButton, { backgroundColor: accentColor }]}>
-          <ThemedText style={styles.nextButtonText}>
+        {/* Action button */}
+        <TouchableOpacity 
+          onPress={handleNext} 
+          style={[styles.actionButton, { backgroundColor: primaryGreen }]}
+          activeOpacity={0.8}
+        >
+          <ThemedText style={styles.actionButtonText}>
             {currentIndex === steps.length - 1 ? 'Get Started' : 'Next'}
           </ThemedText>
         </TouchableOpacity>
@@ -146,40 +150,73 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backgroundDecorations: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  decorativeCircle: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+  },
+  topLeft: {
+    top: 60,
+    left: -30,
+  },
+  topRight: {
+    top: 120,
+    right: -40,
+  },
+  bottomLeft: {
+    bottom: 200,
+    left: -50,
+  },
+  bottomRight: {
+    bottom: 300,
+    right: -30,
+  },
+  bottomSection: {
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'ios' ? 50 : 30,
+    alignItems: 'center',
+  },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginBottom: 40,
+    height: 20,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
-  buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 50 : 20,
-  },
-  skipButton: {
-    paddingVertical: 10,
-  },
-  skipText: {
-    fontSize: 16,
-  },
-  nextButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
+  actionButton: {
+    width: width - 48,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#4CAF50',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });
