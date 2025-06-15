@@ -72,7 +72,7 @@ export default function SignUpScreen() {
 
   const handleSignIn = () => {
     console.log('Sign in pressed');
-    // router.navigate('/login');
+    router.navigate('/login');
   };
 
   const toggleRememberMe = () => {
