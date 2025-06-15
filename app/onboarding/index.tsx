@@ -7,7 +7,8 @@ import { OnboardingStep } from '@/components/OnboardingStep';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { setOnboardingComplete } from '@/utils/onboarding';
+import { completeOnboarding } from '@/store/slices/onboardingSlice';
+import { useAppDispatch } from '../../store/store';
 
 const { width, height } = Dimensions.get('window');
 
@@ -38,18 +39,12 @@ export default function OnboardingScreen() {
   const backgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#1A1A1A' }, 'background');
   const primaryGreen = '#4CAF50'; // Main green color from design
   const lightGray = '#E0E0E0'; // For inactive dots
+  const dispatch = useAppDispatch();
   
-  const completeOnboarding = async () => {
-    try {
-      const success = await setOnboardingComplete();
-      console.log("Completed onboarding, success:", success);
-      (global as any).onboardingComplete = true;
-      router.navigate('/(tabs)');
-    } catch (error) {
-      console.error("Error completing onboarding:", error);
-      (global as any).onboardingComplete = true;
-      router.navigate('/(tabs)');
-    }
+  const handleOnboardingComplete = () => {
+    dispatch(completeOnboarding());
+    console.log("Completed onboarding");
+    router.navigate('/(tabs)');
   };
 
   const renderItem = ({ item }: { item: typeof steps[0] }) => (
@@ -62,7 +57,7 @@ export default function OnboardingScreen() {
 
   const handleNext = () => {
     if (currentIndex === steps.length - 1) {
-      completeOnboarding();
+      handleOnboardingComplete();
       return;
     }
 
@@ -75,7 +70,7 @@ export default function OnboardingScreen() {
   };
 
   const handleSkip = () => {
-    completeOnboarding();
+    handleOnboardingComplete();
   };
 
   return (
