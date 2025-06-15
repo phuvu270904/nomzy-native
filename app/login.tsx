@@ -185,10 +185,7 @@ export default function PhoneLoginScreen() {
                 onPress={handleGoogleLogin}
                 activeOpacity={0.7}
               >
-                <Image 
-                  source={require('../assets/images/icon.png')} 
-                  style={styles.googleIcon}
-                />
+                <Ionicons name="logo-google" size={24} color="#EC4436" />
               </TouchableOpacity>
 
               <TouchableOpacity 
