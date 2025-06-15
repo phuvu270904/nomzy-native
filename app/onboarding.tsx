@@ -44,7 +44,7 @@ export default function OnboardingScreen() {
   const handleOnboardingComplete = () => {
     dispatch(completeOnboarding());
     console.log("Completed onboarding");
-    router.navigate('/login');
+    router.navigate('/welcome');
   };
 
   const renderItem = ({ item }: { item: typeof steps[0] }) => (

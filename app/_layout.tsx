@@ -52,7 +52,7 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         {isOnboardingComplete ? (
           // Main app screens when onboarding is complete
-          <Stack.Screen name="login" />
+          <Stack.Screen name="welcome" />
         ) : (
           // Onboarding screen when onboarding is not complete
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
