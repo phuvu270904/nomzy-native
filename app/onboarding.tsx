@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { completeOnboarding } from '@/store/slices/onboardingSlice';
-import { useAppDispatch } from '../../store/store';
+import { useAppDispatch } from '../store/store';
 
 const { width, height } = Dimensions.get('window');
 
@@ -17,19 +17,19 @@ const steps = [
     id: '1',
     title: 'Order for Food',
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-    image: require('../../assets/images/onboarding/onboarding-1.png'),
+    image: require('../assets/images/onboarding/onboarding-1.png'),
   },
   {
     id: '2',
     title: 'Easy Payment',
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-    image: require('../../assets/images/onboarding/onboarding-2.png'),
+    image: require('../assets/images/onboarding/onboarding-2.png'),
   },
   {
     id: '3',
     title: 'Fast Delivery',
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-    image: require('../../assets/images/onboarding/onboarding-3.png'),
+    image: require('../assets/images/onboarding/onboarding-3.png'),
   },
 ];
 

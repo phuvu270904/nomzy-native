@@ -57,14 +57,14 @@ export default function LoginScreen() {
         {/* Illustration */}
         <View style={styles.illustrationContainer}>
           <Image 
-            source={require('../../assets/images/onboarding/onboarding-1.png')} 
+            source={require('../assets/images/onboarding/onboarding-1.png')} 
             style={styles.illustration}
             resizeMode="contain"
           />
         </View>
 
         {/* Title */}
-        <ThemedText style={styles.title}>Let&apos;s you in</ThemedText>
+        <ThemedText style={styles.title}>Sign up page</ThemedText>
 
         {/* Social login buttons */}
         <View style={styles.socialButtonsContainer}>
