@@ -32,10 +32,10 @@ export default function LoginScreen() {
     // Implement Apple login logic
   };
 
-  const handlePhoneLogin = () => {
+  const handleNomzyLogin = () => {
     console.log('Phone login pressed');
     // Navigate to phone number input screen
-    // router.navigate('/phone-login');
+    router.navigate('/login');
   };
 
   const handleSignUp = () => {
@@ -108,7 +108,7 @@ export default function LoginScreen() {
         {/* Phone login button */}
         <TouchableOpacity 
           style={styles.phoneButton} 
-          onPress={handlePhoneLogin}
+          onPress={handleNomzyLogin}
           activeOpacity={0.8}
         >
           <ThemedText style={styles.phoneButtonText}>Sign in with Nomzy account</ThemedText>
