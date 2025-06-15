@@ -8,8 +8,8 @@ import 'react-native-reanimated';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 
 import { ThemedText } from '@/components/ThemedText';
-import { store } from '@/store/store';
 import "../global.css";
+import { store } from '../store/store';
 
 // Root layout wrapper that provides Redux store
 export default function RootLayout() {
@@ -31,6 +31,7 @@ function RootLayoutNav() {
 
   // Only check onboarding status once during initial load
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { checkOnboardingStatus } = require('../store/slices/onboardingSlice');
     dispatch(checkOnboardingStatus());
   }, [dispatch]); 
