@@ -2,11 +2,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { StyleSheet } from 'react-native';
 
-export default function HomeScreen() {
+export default function MessageScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Home</ThemedText>
-      <ThemedText style={styles.subtitle}>Welcome to Nomzy!</ThemedText>
+      <ThemedText style={styles.title}>Messages</ThemedText>
+      <ThemedText style={styles.subtitle}>Chat with support</ThemedText>
     </ThemedView>
   );
 }
