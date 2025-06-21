@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -24,6 +24,7 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = () => {
     console.log('Google login pressed');
+    router.navigate('/(tabs)');
     // Implement Google login logic
   };
 
@@ -66,23 +67,23 @@ export default function LoginScreen() {
         <View style={styles.socialButtonsContainer}>
           <TouchableOpacity 
             style={styles.socialButton} 
-            onPress={handleFacebookLogin}
+            onPress={handleGoogleLogin}
             activeOpacity={0.7}
           >
             <View style={styles.socialButtonContent}>
               <Ionicons name="logo-google" size={20} color="#EC4436" />
-              <ThemedText style={styles.socialButtonText}>Continue with Facebook</ThemedText>
+              <ThemedText style={styles.socialButtonText}>Continue with Google</ThemedText>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.socialButton} 
-            onPress={handleGoogleLogin}
+            onPress={handleFacebookLogin}
             activeOpacity={0.7}
           >
             <View style={styles.socialButtonContent}>
               <Ionicons name="logo-facebook" size={20} color="#219BEE" />
-              <ThemedText style={styles.socialButtonText}>Continue with Google</ThemedText>
+              <ThemedText style={styles.socialButtonText}>Continue with Facebook</ThemedText>
             </View>
           </TouchableOpacity>
 
