@@ -1,10 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState } from "react";
 import {
   Alert,
-  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,15 +12,13 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-import { ThemedText } from '@/components/ThemedText';
-
-const { width } = Dimensions.get('window');
+import { ThemedText } from "@/components/ThemedText";
 
 export default function PhoneLoginScreen() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,44 +28,45 @@ export default function PhoneLoginScreen() {
 
   const handleSignIn = async () => {
     if (!phoneNumber.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
+      Alert.alert("Error", "Please enter your phone number");
       return;
     }
 
     setIsLoading(true);
     try {
       // Implement your sign-in logic here
-      console.log('Sign in with phone:', { phoneNumber, rememberMe });
-      
+      console.log("Sign in with phone:", { phoneNumber, rememberMe });
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Navigate to OTP verification or main app
-    //   router.navigate('/otp-verification');
+      //   router.navigate('/otp-verification');
     } catch (error) {
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
+      console.log(error);
+      Alert.alert("Error", "Failed to sign in. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFacebookLogin = () => {
-    console.log('Facebook login pressed');
+    console.log("Facebook login pressed");
     // Implement Facebook login logic
   };
 
   const handleGoogleLogin = () => {
-    console.log('Google login pressed');
+    console.log("Google login pressed");
     // Implement Google login logic
   };
 
   const handleAppleLogin = () => {
-    console.log('Apple login pressed');
+    console.log("Apple login pressed");
     // Implement Apple login logic
   };
 
   const handleSignUp = () => {
-    router.navigate('/auth/signup');
+    router.navigate("/auth/signup");
   };
 
   const toggleRememberMe = () => {
@@ -78,12 +76,12 @@ export default function PhoneLoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
@@ -98,8 +96,8 @@ export default function PhoneLoginScreen() {
           <View style={styles.logoContainer}>
             <View style={styles.logoWrapper}>
               <View style={styles.logo}>
-                <Image 
-                  source={require('../../assets/images/icon.png')} 
+                <Image
+                  source={require("../../assets/images/icon.png")}
                   style={styles.logoImage}
                   resizeMode="contain"
                 />
@@ -122,8 +120,8 @@ export default function PhoneLoginScreen() {
             <View style={styles.inputContainer}>
               <View style={styles.phoneInputWrapper}>
                 <View style={styles.countrySelector}>
-                  <Image 
-                    source={require('../../assets/images/icon.png')} 
+                  <Image
+                    source={require("../../assets/images/icon.png")}
                     style={styles.flagIcon}
                   />
                   <Ionicons name="chevron-down" size={16} color="#9E9E9E" />
@@ -140,12 +138,14 @@ export default function PhoneLoginScreen() {
             </View>
 
             {/* Remember Me Checkbox */}
-            <TouchableOpacity 
-              style={styles.checkboxContainer} 
+            <TouchableOpacity
+              style={styles.checkboxContainer}
               onPress={toggleRememberMe}
               activeOpacity={0.7}
             >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              <View
+                style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
+              >
                 {rememberMe && (
                   <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 )}
@@ -154,42 +154,47 @@ export default function PhoneLoginScreen() {
             </TouchableOpacity>
 
             {/* Sign In Button */}
-            <TouchableOpacity 
-              style={[styles.signInButton, isLoading && styles.signInButtonDisabled]} 
+            <TouchableOpacity
+              style={[
+                styles.signInButton,
+                isLoading && styles.signInButtonDisabled,
+              ]}
               onPress={handleSignIn}
               activeOpacity={0.8}
               disabled={isLoading}
             >
               <ThemedText style={styles.signInButtonText}>
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? "Signing in..." : "Sign in"}
               </ThemedText>
             </TouchableOpacity>
 
             {/* Divider */}
             <View style={styles.dividerContainer}>
-              <ThemedText style={styles.dividerText}>or continue with</ThemedText>
+              <ThemedText style={styles.dividerText}>
+                or continue with
+              </ThemedText>
             </View>
 
             {/* Social Login Icons */}
             <View style={styles.socialIconsContainer}>
-              <TouchableOpacity 
-                style={styles.socialIconButton} 
+              <TouchableOpacity
+                style={styles.socialIconButton}
                 onPress={handleFacebookLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="logo-facebook" size={24} color="#1877F2" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.socialIconButton} 
+              <TouchableOpacity
+                style={styles.socialIconButton}
                 onPress={handleGoogleLogin}
                 activeOpacity={0.7}
               >
                 <Ionicons name="logo-google" size={24} color="#EC4436" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.socialIconButton} 
+              <TouchableOpacity
+                style={styles.socialIconButton}
                 onPress={handleAppleLogin}
                 activeOpacity={0.7}
               >
@@ -199,7 +204,9 @@ export default function PhoneLoginScreen() {
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
-              <ThemedText style={styles.signUpText}>Don&apos;t have an account? </ThemedText>
+              <ThemedText style={styles.signUpText}>
+                Don&apos;t have an account?{" "}
+              </ThemedText>
               <TouchableOpacity onPress={handleSignUp}>
                 <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
               </TouchableOpacity>
@@ -214,7 +221,7 @@ export default function PhoneLoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   keyboardView: {
     flex: 1,
@@ -224,32 +231,32 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
+    paddingTop: Platform.OS === "ios" ? 10 : 20,
     paddingBottom: 10,
   },
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 40,
     marginBottom: 40,
   },
   logoWrapper: {
-    position: 'relative',
-    alignItems: 'center',
+    position: "relative",
+    alignItems: "center",
   },
   logo: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#4CAF50",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -263,13 +270,13 @@ const styles = StyleSheet.create({
     height: 40,
   },
   speedLines: {
-    position: 'absolute',
+    position: "absolute",
     left: -30,
-    top: '50%',
+    top: "50%",
     marginTop: -10,
   },
   speedLine: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     borderRadius: 2,
     marginBottom: 4,
   },
@@ -287,10 +294,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
     marginBottom: 50,
-    color: '#2E2E2E',
+    color: "#2E2E2E",
     letterSpacing: -0.5,
     lineHeight: 36,
   },
@@ -302,20 +309,20 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   phoneInputWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#F8F8F8',
+    flexDirection: "row",
+    backgroundColor: "#F8F8F8",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 18,
-    alignItems: 'center',
+    alignItems: "center",
   },
   countrySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: 12,
     paddingRight: 12,
     borderRightWidth: 1,
-    borderRightColor: '#E5E5E5',
+    borderRightColor: "#E5E5E5",
   },
   flagIcon: {
     width: 24,
@@ -325,11 +332,11 @@ const styles = StyleSheet.create({
   phoneInput: {
     flex: 1,
     fontSize: 16,
-    color: '#2E2E2E',
+    color: "#2E2E2E",
   },
   checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 40,
   },
   checkbox: {
@@ -337,27 +344,27 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#E5E5E5',
+    borderColor: "#E5E5E5",
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkboxChecked: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#2E2E2E',
+    color: "#2E2E2E",
   },
   signInButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     borderRadius: 16,
     paddingVertical: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 40,
-    shadowColor: '#4CAF50',
+    shadowColor: "#4CAF50",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -370,32 +377,32 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   signInButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
   dividerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   dividerText: {
     fontSize: 14,
-    color: '#9E9E9E',
+    color: "#9E9E9E",
   },
   socialIconsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 40,
   },
   socialIconButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#F8F8F8',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F8F8F8",
+    justifyContent: "center",
+    alignItems: "center",
     marginHorizontal: 15,
   },
   googleIcon: {
@@ -403,18 +410,18 @@ const styles = StyleSheet.create({
     height: 24,
   },
   signUpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingBottom: 30,
   },
   signUpText: {
     fontSize: 14,
-    color: '#9E9E9E',
+    color: "#9E9E9E",
   },
   signUpLink: {
     fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
+    color: "#4CAF50",
+    fontWeight: "600",
   },
 });

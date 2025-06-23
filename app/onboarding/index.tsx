@@ -1,53 +1,66 @@
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useRef, useState } from 'react';
-import { Dimensions, FlatList, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useRef, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { OnboardingStep } from '@/components/OnboardingStep';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { completeOnboarding } from '@/store/slices/onboardingSlice';
-import { useAppDispatch } from '../../store/store';
+import { OnboardingStep } from "@/components/OnboardingStep";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { completeOnboarding } from "@/store/slices/onboardingSlice";
+import { useAppDispatch } from "../../store/store";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 const steps = [
   {
-    id: '1',
-    title: 'Order for Food',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-    image: require('../../assets/images/onboarding/onboarding-1.png'),
+    id: "1",
+    title: "Order for Food",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+    image: require("../../assets/images/onboarding/onboarding-1.png"),
   },
   {
-    id: '2',
-    title: 'Easy Payment',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-    image: require('../../assets/images/onboarding/onboarding-2.png'),
+    id: "2",
+    title: "Easy Payment",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+    image: require("../../assets/images/onboarding/onboarding-2.png"),
   },
   {
-    id: '3',
-    title: 'Fast Delivery',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-    image: require('../../assets/images/onboarding/onboarding-3.png'),
+    id: "3",
+    title: "Fast Delivery",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+    image: require("../../assets/images/onboarding/onboarding-3.png"),
   },
 ];
 
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const backgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#1A1A1A' }, 'background');
-  const primaryGreen = '#4CAF50'; // Main green color from design
-  const lightGray = '#E0E0E0'; // For inactive dots
+  const backgroundColor = useThemeColor(
+    { light: "#FFFFFF", dark: "#1A1A1A" },
+    "background",
+  );
+  const primaryGreen = "#4CAF50"; // Main green color from design
+  const lightGray = "#E0E0E0"; // For inactive dots
   const dispatch = useAppDispatch();
-  
+
   const handleOnboardingComplete = () => {
     dispatch(completeOnboarding());
     console.log("Completed onboarding");
-    router.navigate('/auth');
+    router.navigate("/auth");
   };
 
-  const renderItem = ({ item }: { item: typeof steps[0] }) => (
+  const renderItem = ({ item }: { item: (typeof steps)[0] }) => (
     <OnboardingStep
       title={item.title}
       description={item.description}
@@ -69,11 +82,10 @@ export default function OnboardingScreen() {
     });
   };
 
-
   return (
     <ThemedView style={[styles.container, { backgroundColor }]}>
       <StatusBar style="dark" />
-      
+
       {/* Background decorative circles */}
       <View style={styles.backgroundDecorations}>
         <View style={[styles.decorativeCircle, styles.topLeft]} />
@@ -115,7 +127,8 @@ export default function OnboardingScreen() {
               style={[
                 styles.dot,
                 {
-                  backgroundColor: currentIndex === index ? primaryGreen : lightGray,
+                  backgroundColor:
+                    currentIndex === index ? primaryGreen : lightGray,
                   width: currentIndex === index ? 24 : 8,
                 },
               ]}
@@ -124,13 +137,13 @@ export default function OnboardingScreen() {
         </View>
 
         {/* Action button */}
-        <TouchableOpacity 
-          onPress={handleNext} 
+        <TouchableOpacity
+          onPress={handleNext}
           style={[styles.actionButton, { backgroundColor: primaryGreen }]}
           activeOpacity={0.8}
         >
           <ThemedText style={styles.actionButtonText}>
-            {currentIndex === steps.length - 1 ? 'Get Started' : 'Next'}
+            {currentIndex === steps.length - 1 ? "Get Started" : "Next"}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -143,7 +156,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backgroundDecorations: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -151,11 +164,11 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   decorativeCircle: {
-    position: 'absolute',
+    position: "absolute",
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    backgroundColor: "rgba(76, 175, 80, 0.1)",
   },
   topLeft: {
     top: 60,
@@ -175,13 +188,13 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 50 : 30,
-    alignItems: 'center',
+    paddingBottom: Platform.OS === "ios" ? 50 : 30,
+    alignItems: "center",
   },
   pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 40,
     height: 20,
   },
@@ -194,9 +207,9 @@ const styles = StyleSheet.create({
     width: width - 48,
     height: 56,
     borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#4CAF50',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#4CAF50",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -206,9 +219,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
 });

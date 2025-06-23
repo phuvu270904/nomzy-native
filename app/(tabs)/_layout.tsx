@@ -1,31 +1,28 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
+import { Platform } from "react-native";
 
-import { HapticTab } from '@/components/HapticTab';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { HapticTab } from "@/components/HapticTab";
+import TabBarBackground from "@/components/ui/TabBarBackground";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#4CAF50', // Green color for active tab
-        tabBarInactiveTintColor: '#9E9E9E', // Gray color for inactive tabs
+        tabBarActiveTintColor: "#4CAF50", // Green color for active tab
+        tabBarInactiveTintColor: "#9E9E9E", // Gray color for inactive tabs
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: "#FFFFFF",
           borderTopWidth: 1,
-          borderTopColor: '#F0F0F0',
-          paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+          borderTopColor: "#F0F0F0",
+          paddingBottom: Platform.OS === "ios" ? 20 : 10,
           paddingTop: 10,
-          height: Platform.OS === 'ios' ? 90 : 70,
-          shadowColor: '#000',
+          height: Platform.OS === "ios" ? 90 : 70,
+          shadowColor: "#000",
           shadowOffset: {
             width: 0,
             height: -2,
@@ -36,19 +33,20 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
+          fontWeight: "500",
           marginTop: 4,
         },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'home' : 'home-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -56,12 +54,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Orders',
+          title: "Orders",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'list' : 'list-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "list" : "list-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -69,12 +67,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="message"
         options={{
-          title: 'Message',
+          title: "Message",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'chatbubble' : 'chatbubble-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "chatbubble" : "chatbubble-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -82,12 +80,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="wallet"
         options={{
-          title: 'E-Wallet',
+          title: "E-Wallet",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'wallet' : 'wallet-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "wallet" : "wallet-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -95,12 +93,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'person' : 'person-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
