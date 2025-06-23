@@ -62,7 +62,7 @@ function RootLayoutNav() {
       </View>
     );
   }
-  
+   
   // Render navigation structure
   return (
     <ThemeProvider value={DefaultTheme}>
