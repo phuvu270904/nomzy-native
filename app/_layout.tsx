@@ -8,8 +8,8 @@ import "react-native-reanimated";
 import { Provider, useDispatch, useSelector } from "react-redux";
 
 import { ThemedText } from "@/components/ThemedText";
+import { store } from "@/store/store";
 import "../global.css";
-import { store } from "../store/store";
 
 // Root layout wrapper that provides Redux store
 export default function RootLayout() {

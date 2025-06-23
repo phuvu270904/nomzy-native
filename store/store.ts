@@ -1,6 +1,6 @@
-import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit';
-import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import onboardingReducer from './slices/onboardingSlice';
+import { Action, configureStore, ThunkAction } from "@reduxjs/toolkit";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import onboardingReducer from "./slices/onboardingSlice";
 
 export const store = configureStore({
   reducer: {
