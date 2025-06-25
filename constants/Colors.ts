@@ -29,3 +29,5 @@ export const Colors = {
     tabIconSelected: tintColorDark,
   },
 };
+
+export const typeColors = typeof Colors;
