@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const FoodDeliveryApp = () => {
   const categories = [
@@ -23,7 +23,7 @@ const FoodDeliveryApp = () => {
     { name: "More", icon: "🍱" },
   ];
 
-  const promoItems = [
+  const [promoItems, setPromoItems] = useState([
     {
       id: 1,
       name: "Mixed Salad Bowl",
@@ -34,6 +34,7 @@ const FoodDeliveryApp = () => {
       originalPrice: 9.0,
       image:
         "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=150&h=150&fit=crop&crop=center",
+      liked: false,
     },
     {
       id: 2,
@@ -45,10 +46,11 @@ const FoodDeliveryApp = () => {
       originalPrice: 9.0,
       image:
         "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&h=150&fit=crop&crop=center",
+      liked: false,
     },
-  ];
+  ]);
 
-  const recommendedItems = [
+  const [recommendedItems, setRecommendedItems] = useState([
     {
       id: 1,
       name: "Vegetarian Noodles",
@@ -93,13 +95,13 @@ const FoodDeliveryApp = () => {
         "https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=80&h=80&fit=crop&crop=center",
       liked: false,
     },
-  ];
+  ]);
 
   const filterOptions = ["All", "Hamburger", "Pizza", "Indian"];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -214,8 +216,21 @@ const FoodDeliveryApp = () => {
                   <Text style={styles.originalPrice}>
                     ${item.originalPrice.toFixed(2)}
                   </Text>
-                  <TouchableOpacity style={styles.heartButton}>
-                    <Text style={styles.heartIcon}>🤍</Text>
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={() => {
+                      setPromoItems((prevItems) =>
+                        prevItems.map((promo) =>
+                          promo.id === item.id
+                            ? { ...promo, liked: !promo.liked }
+                            : promo,
+                        ),
+                      );
+                    }}
+                  >
+                    <Text style={styles.heartIcon}>
+                      {item.liked ? "❤️" : "🤍"}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -279,7 +294,16 @@ const FoodDeliveryApp = () => {
                   ${item.price.toFixed(2)}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.heartButton}>
+              <TouchableOpacity
+                style={styles.heartButton}
+                onPress={() => {
+                  setRecommendedItems((prevItems) =>
+                    prevItems.map((rec) =>
+                      rec.id === item.id ? { ...rec, liked: !rec.liked } : rec,
+                    ),
+                  );
+                }}
+              >
                 <Text style={styles.heartIcon}>{item.liked ? "❤️" : "🤍"}</Text>
               </TouchableOpacity>
             </View>
@@ -450,6 +474,7 @@ const styles = StyleSheet.create({
   },
   promoItemsContainer: {
     paddingLeft: 20,
+    paddingBottom: 20,
   },
   promoItemCard: {
     width: 180,
