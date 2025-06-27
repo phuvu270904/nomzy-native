@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   Image,
@@ -123,10 +124,20 @@ const FoodDeliveryApp = () => {
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconButton}>
             <View style={styles.notificationBadge} />
-            <Text style={styles.bellIcon}>🔔</Text>
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color="black"
+              style={styles.bellIcon}
+            />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.bagIcon}>🛍️</Text>
+            <Ionicons
+              name="bag-handle-outline"
+              size={24}
+              color="black"
+              style={styles.bellIcon}
+            />
           </TouchableOpacity>
         </View>
       </View>
