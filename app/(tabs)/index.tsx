@@ -1,8 +1,8 @@
 import HomeScreen from "@/screens/home/homeScreen";
 import React from "react";
 
-const FoodDeliveryApp = () => {
+const HomeTab = () => {
   return <HomeScreen />;
 };
 
-export default FoodDeliveryApp;
+export default HomeTab;

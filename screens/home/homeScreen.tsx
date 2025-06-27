@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -100,6 +101,10 @@ const HomeScreen = () => {
 
   const filterOptions = ["All", "Hamburger", "Pizza", "Indian"];
 
+  const handleNavigateNotification = () => {
+    router.push("/notifications");
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -122,7 +127,10 @@ const HomeScreen = () => {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            onPress={handleNavigateNotification}
+            style={styles.iconButton}
+          >
             <View style={styles.notificationBadge} />
             <Ionicons
               name="notifications-outline"
