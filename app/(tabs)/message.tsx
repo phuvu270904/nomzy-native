@@ -1,30 +1,5 @@
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { StyleSheet } from "react-native";
+import MessageScreen from "@/screens/message/messageScreen";
 
-export default function MessageScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Messages</ThemedText>
-      <ThemedText style={styles.subtitle}>Chat with support</ThemedText>
-    </ThemedView>
-  );
+export default function MessageTab() {
+  return <MessageScreen />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-  },
-});
