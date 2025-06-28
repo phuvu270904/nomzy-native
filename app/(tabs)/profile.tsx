@@ -1,5 +1,5 @@
-import OrdersScreen from "@/screens/orders/ordersScreen";
+import ProfileScreen from "@/screens/profile/profileScreen";
 
 export default function ProfileTab() {
-  return <OrdersScreen />;
+  return <ProfileScreen />;
 }
