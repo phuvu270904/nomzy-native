@@ -105,6 +105,10 @@ const HomeScreen = () => {
     router.push("/notifications");
   };
 
+  const handleNavigateCarts = () => {
+    router.push("/carts");
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -139,7 +143,10 @@ const HomeScreen = () => {
               style={styles.bellIcon}
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleNavigateCarts}
+          >
             <Ionicons
               name="bag-handle-outline"
               size={24}
