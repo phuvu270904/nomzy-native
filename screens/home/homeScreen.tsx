@@ -22,7 +22,7 @@ const HomeScreen = () => {
     { name: "Vegetables", icon: "🥬" },
     { name: "Dessert", icon: "🍰" },
     { name: "Drink", icon: "🍺" },
-    { name: "More", icon: "🍱" },
+    { name: "More", icon: "..." },
   ];
 
   const [promoItems, setPromoItems] = useState([
@@ -492,6 +492,7 @@ const styles = StyleSheet.create({
   },
   categoryEmoji: {
     fontSize: 24,
+    color: "#4CAF50",
   },
   categoryText: {
     fontSize: 12,
