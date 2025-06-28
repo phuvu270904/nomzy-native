@@ -1,12 +1,16 @@
+import { router } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function SpecialOffers() {
+  const handleNavigateToOffers = () => {
+    router.navigate("/offers");
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Special Offers</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleNavigateToOffers}>
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>
