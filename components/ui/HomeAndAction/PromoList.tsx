@@ -1,11 +1,11 @@
 import React from "react";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface PromoItem {
@@ -32,7 +32,7 @@ export default function PromoList({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Discount Guaranteed! 👌</Text>
+        <Text style={styles.title}>Discount Guaranteed!</Text>
         <TouchableOpacity>
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
@@ -86,10 +86,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
   },
   seeAll: {
     color: "green",

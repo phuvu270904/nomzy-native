@@ -33,7 +33,7 @@ export default function RecommendedList({
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Recommended For You 😋</Text>
+        <Text style={styles.sectionTitle}>Recommended For You</Text>
         <TouchableOpacity>
           <Text style={styles.seeAllText}>See All</Text>
         </TouchableOpacity>
