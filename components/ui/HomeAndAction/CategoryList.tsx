@@ -9,7 +9,7 @@ const categories = [
   { label: "Vegeta..", icon: "🥬" },
   { label: "Dessert", icon: "🍰" },
   { label: "Drink", icon: "🍺" },
-  { label: "More", icon: "🧁" },
+  { label: "More", icon: "..." },
 ];
 
 export default function CategoryList() {
