@@ -17,17 +17,19 @@ export default function SearchBar() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#f0f0f08c",
+    backgroundColor: "#F5F5F5",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginVertical: 16,
+    paddingVertical: 15,
+    borderRadius: 25,
+    marginHorizontal: 20,
+    marginVertical: 15,
   },
   input: {
     marginLeft: 10,
-    fontSize: 14,
+    fontSize: 16,
     flex: 1,
+    color: "#000",
   },
 });

@@ -1,26 +1,44 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function Header() {
+interface HeaderProps {
+  onNotificationPress?: () => void;
+  onCartPress?: () => void;
+}
+
+export default function Header({
+  onNotificationPress,
+  onCartPress,
+}: HeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.left}>
         <Image
-          source={{ uri: "https:  //i.pravatar.cc/50" }}
+          source={{
+            uri: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+          }}
           style={styles.avatar}
         />
-        <View style={{}}>
+        <View>
           <Text style={styles.deliver}>Deliver to</Text>
           <View style={styles.location}>
             <Text style={styles.locationText}>Times Square</Text>
-            <Ionicons name="chevron-down" size={14} color="green" />
+            <Text style={styles.dropdownIcon}>▼</Text>
           </View>
         </View>
       </View>
       <View style={styles.right}>
-        <Ionicons name="notifications-outline" size={24} />
-        <Ionicons name="cart-outline" size={24} style={{ marginLeft: 12 }} />
+        <TouchableOpacity
+          onPress={onNotificationPress}
+          style={styles.iconButton}
+        >
+          <View style={styles.notificationBadge} />
+          <Ionicons name="notifications-outline" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onCartPress} style={styles.iconButton}>
+          <Ionicons name="bag-handle-outline" size={24} color="black" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -28,10 +46,11 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
   },
   left: {
     flexDirection: "row",
@@ -51,6 +70,10 @@ const styles = StyleSheet.create({
     color: "#000",
     marginRight: 4,
   },
+  dropdownIcon: {
+    marginLeft: 4,
+    color: "#4CAF50",
+  },
   avatar: {
     width: 50,
     height: 50,
@@ -59,5 +82,20 @@ const styles = StyleSheet.create({
   },
   right: {
     flexDirection: "row",
+    alignItems: "center",
+  },
+  iconButton: {
+    marginLeft: 15,
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FF4444",
+    zIndex: 1,
   },
 });
