@@ -1,13 +1,18 @@
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
+  const handleLogout = () => {
+    router.replace("/auth");
+  };
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Profile</ThemedText>
-      <ThemedText style={styles.subtitle}>Your account settings</ThemedText>
-    </ThemedView>
+    <View style={styles.container}>
+      <Text style={styles.title}>Profile</Text>
+      <Text style={styles.subtitle}>Your account settings</Text>
+      <TouchableOpacity onPress={handleLogout}>
+        <Text style={{ color: "blue", marginTop: 20 }}>Logout</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
