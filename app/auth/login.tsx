@@ -16,35 +16,57 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
+import { useAuth } from "@/hooks/useAuth";
+import { apiClient } from "@/utils/apiClient";
 
 export default function PhoneLoginScreen() {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleBack = () => {
     router.back();
   };
 
   const handleSignIn = async () => {
-    if (!phoneNumber.trim()) {
-      Alert.alert("Error", "Please enter your phone number");
+    if (!email.trim()) {
+      Alert.alert("Error", "Please enter your email");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert("Error", "Please enter your password");
       return;
     }
 
     setIsLoading(true);
     try {
-      // Implement your sign-in logic here
-      console.log("Sign in with phone:", { phoneNumber, rememberMe });
+      const response = await apiClient.post("/auth/login", {
+        email: email.trim(),
+        password: password.trim(),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const { jwt } = response.data;
+      console.log(jwt, "Login token received");
 
-      // Navigate to OTP verification or main app
-      //   router.navigate('/otp-verification');
-    } catch (error) {
+      // Use the login method from useAuth to store credentials
+      await login(jwt);
+
+      // Navigate to the main app
+      router.replace("/(tabs)");
+    } catch (error: any) {
       console.log(error);
-      Alert.alert("Error", "Failed to sign in. Please try again.");
+      const errorMessage =
+        error.response?.data?.message || "Failed to sign in. Please try again.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -69,10 +91,6 @@ export default function PhoneLoginScreen() {
     router.navigate("/auth/signup");
   };
 
-  const toggleRememberMe = () => {
-    setRememberMe(!rememberMe);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -94,21 +112,10 @@ export default function PhoneLoginScreen() {
 
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoWrapper}>
-              <View style={styles.logo}>
-                <Image
-                  source={require("../../assets/images/icon.png")}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
-              </View>
-              {/* Speed lines */}
-              <View style={styles.speedLines}>
-                <View style={[styles.speedLine, styles.speedLine1]} />
-                <View style={[styles.speedLine, styles.speedLine2]} />
-                <View style={[styles.speedLine, styles.speedLine3]} />
-              </View>
-            </View>
+            <Image
+              source={require("@/assets/images/react-logo.png")}
+              style={styles.logoImage}
+            />
           </View>
 
           {/* Title */}
@@ -118,40 +125,34 @@ export default function PhoneLoginScreen() {
           <View style={styles.formContainer}>
             {/* Phone Number Input */}
             <View style={styles.inputContainer}>
-              <View style={styles.phoneInputWrapper}>
-                <View style={styles.countrySelector}>
-                  <Image
-                    source={require("../../assets/images/icon.png")}
-                    style={styles.flagIcon}
-                  />
-                  <Ionicons name="chevron-down" size={16} color="#9E9E9E" />
-                </View>
+              <View style={styles.textInputWrapper}>
                 <TextInput
-                  style={styles.phoneInput}
-                  placeholder="+1 000 000 000"
+                  style={styles.textInput}
+                  placeholder="Email"
                   placeholderTextColor="#9E9E9E"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.textInputWrapper}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Password"
+                  placeholderTextColor="#9E9E9E"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={true}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
                 />
               </View>
             </View>
-
-            {/* Remember Me Checkbox */}
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={toggleRememberMe}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
-              >
-                {rememberMe && (
-                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                )}
-              </View>
-              <ThemedText style={styles.checkboxLabel}>Remember me</ThemedText>
-            </TouchableOpacity>
 
             {/* Sign In Button */}
             <TouchableOpacity
@@ -308,13 +309,14 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 30,
   },
-  phoneInputWrapper: {
+  textInputWrapper: {
     flexDirection: "row",
     backgroundColor: "#F8F8F8",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 18,
     alignItems: "center",
+    marginVertical: 10,
   },
   countrySelector: {
     flexDirection: "row",
@@ -329,7 +331,7 @@ const styles = StyleSheet.create({
     height: 16,
     marginRight: 8,
   },
-  phoneInput: {
+  textInput: {
     flex: 1,
     fontSize: 16,
     color: "#2E2E2E",

@@ -4,6 +4,7 @@ import { ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Import components
+import { useFetch } from "@/hooks";
 import {
   CategoryList,
   Header,
@@ -14,6 +15,9 @@ import {
 } from "../../components/ui/HomeAndAction";
 
 const HomeScreen = () => {
+  const { data } = useFetch("");
+  console.log("Fetched data:", data);
+
   const [promoItems, setPromoItems] = useState([
     {
       id: 1,

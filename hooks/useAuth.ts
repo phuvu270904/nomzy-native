@@ -9,7 +9,6 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -20,7 +19,6 @@ const USER_DATA_KEY = "user_data";
 
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
-    user: null,
     token: null,
     isLoading: true,
     isAuthenticated: false,
@@ -41,7 +39,6 @@ export const useAuth = () => {
       if (token && userData) {
         const user = JSON.parse(userData);
         setAuthState({
-          user,
           token,
           isLoading: false,
           isAuthenticated: true,
@@ -61,15 +58,11 @@ export const useAuth = () => {
     }
   };
 
-  const login = async (token: string, user: User) => {
+  const login = async (token: string) => {
     try {
-      await Promise.all([
-        AsyncStorage.setItem(AUTH_TOKEN_KEY, token),
-        AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(user)),
-      ]);
+      await Promise.all([AsyncStorage.setItem(AUTH_TOKEN_KEY, token)]);
 
       setAuthState({
-        user,
         token,
         isLoading: false,
         isAuthenticated: true,
@@ -88,7 +81,6 @@ export const useAuth = () => {
       ]);
 
       setAuthState({
-        user: null,
         token: null,
         isLoading: false,
         isAuthenticated: false,

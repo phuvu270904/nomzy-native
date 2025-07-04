@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 // Base API configuration
 const getApiBaseUrl = () => {
@@ -8,22 +8,12 @@ const getApiBaseUrl = () => {
     return "https://your-api-domain.com/api"; // Production URL
   }
 
-  // Development URLs - uncomment the one you need
-
-  // Option 1: For Android Emulator
-  if (Platform.OS === "android") {
-    return "http://10.0.2.2:8190/api";
+  const { expoConfig } = Constants;
+  if (expoConfig?.hostUri) {
+    const ip = expoConfig.hostUri.split(":")[0];
+    return `http://${ip}:8190/api`;
   }
 
-  // Option 2: For iOS Simulator
-  if (Platform.OS === "ios") {
-    return "http://localhost:8190/api";
-  }
-
-  // Option 3: For Physical Device - Replace with your computer's IP
-  // return "http://192.168.1.100:8190/api"; // Replace with your actual IP
-
-  // Fallback
   return "http://localhost:8190/api";
 };
 
