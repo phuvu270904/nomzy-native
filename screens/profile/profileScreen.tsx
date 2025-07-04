@@ -1,8 +1,11 @@
+import { useAuth } from "@/hooks";
 import { router } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
+  const { logout } = useAuth();
   const handleLogout = () => {
+    logout();
     router.replace("/auth");
   };
   return (
