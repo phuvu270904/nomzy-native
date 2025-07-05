@@ -91,18 +91,20 @@ export default function LoginScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleAppleLogin}
-            activeOpacity={0.7}
-          >
-            <View style={styles.socialButtonContent}>
-              <Ionicons name="logo-apple" size={20} color="#000" />
-              <ThemedText style={styles.socialButtonText}>
-                Continue with Apple
-              </ThemedText>
-            </View>
-          </TouchableOpacity>
+          {Platform.OS === "ios" && (
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={handleAppleLogin}
+              activeOpacity={0.7}
+            >
+              <View style={styles.socialButtonContent}>
+                <Ionicons name="logo-apple" size={20} color="#000" />
+                <ThemedText style={styles.socialButtonText}>
+                  Continue with Apple
+                </ThemedText>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Divider */}
