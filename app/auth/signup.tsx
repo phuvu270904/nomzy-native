@@ -25,7 +25,6 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleBack = () => {
@@ -76,10 +75,6 @@ export default function SignUpScreen() {
   const handleSignIn = () => {
     console.log("Sign in pressed");
     router.navigate("/auth/login");
-  };
-
-  const toggleRememberMe = () => {
-    setRememberMe(!rememberMe);
   };
 
   return (
