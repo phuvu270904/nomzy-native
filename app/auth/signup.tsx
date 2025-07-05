@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import apiClient from "@/utils/apiClient";
 import { ThemedText } from "../../components/ThemedText";
 
 Dimensions.get("window");
@@ -24,6 +24,7 @@ export default function SignUpScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,19 +40,16 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
-      // Implement your sign-up logic here
-      console.log("Sign up with:", {
-        phoneNumber,
+      const response = await apiClient.post("/auth/registerUser", {
+        phone_number: phoneNumber,
         email,
-        fullName,
-        rememberMe,
+        name: fullName,
+        password,
       });
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.log(response.data, "User registered successfully");
 
       // Navigate to main app or verification screen
-      router.navigate("/(tabs)");
+      router.navigate("/auth/login");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       Alert.alert("Error", "Failed to create account. Please try again.");
@@ -126,23 +124,22 @@ export default function SignUpScreen() {
 
           {/* Form */}
           <View style={styles.formContainer}>
-            {/* Phone Number Input */}
+            {/* Full Name Input */}
             <View style={styles.inputContainer}>
-              <View style={styles.phoneInputWrapper}>
-                <View style={styles.countrySelector}>
-                  <Image
-                    source={require("../../assets/images/icon.png")}
-                    style={styles.flagIcon}
-                  />
-                  <Ionicons name="chevron-down" size={16} color="#9E9E9E" />
-                </View>
+              <View style={styles.inputWrapper}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color="#9E9E9E"
+                  style={styles.inputIcon}
+                />
                 <TextInput
-                  style={styles.phoneInput}
-                  placeholder="+1 000 000 000"
+                  style={styles.textInput}
+                  placeholder="Full Name"
                   placeholderTextColor="#9E9E9E"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
                 />
               </View>
             </View>
@@ -168,28 +165,51 @@ export default function SignUpScreen() {
               </View>
             </View>
 
-            {/* Full Name Input */}
+            {/* Password Input */}
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <Ionicons
-                  name="person-outline"
+                  name="lock-closed-outline"
                   size={20}
                   color="#9E9E9E"
                   style={styles.inputIcon}
                 />
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Full Name"
+                  placeholder="Password"
                   placeholderTextColor="#9E9E9E"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  autoCapitalize="words"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={true}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+
+            {/* Phone Number Input */}
+            <View style={styles.inputContainer}>
+              <View style={styles.phoneInputWrapper}>
+                <Ionicons
+                  name="call-outline"
+                  size={20}
+                  color="#9E9E9E"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.phoneInput}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#9E9E9E"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
                 />
               </View>
             </View>
 
             {/* Remember Me Checkbox */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.checkboxContainer}
               onPress={toggleRememberMe}
               activeOpacity={0.7}
@@ -202,7 +222,7 @@ export default function SignUpScreen() {
                 )}
               </View>
               <ThemedText style={styles.checkboxLabel}>Remember me</ThemedText>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Sign Up Button */}
             <TouchableOpacity

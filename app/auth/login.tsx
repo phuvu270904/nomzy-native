@@ -126,6 +126,12 @@ export default function PhoneLoginScreen() {
             {/* Phone Number Input */}
             <View style={styles.inputContainer}>
               <View style={styles.textInputWrapper}>
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color="#9E9E9E"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.textInput}
                   placeholder="Email"
@@ -140,6 +146,12 @@ export default function PhoneLoginScreen() {
               </View>
 
               <View style={styles.textInputWrapper}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#9E9E9E"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.textInput}
                   placeholder="Password"
@@ -387,6 +399,9 @@ const styles = StyleSheet.create({
   dividerContainer: {
     alignItems: "center",
     marginBottom: 40,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   dividerText: {
     fontSize: 14,
