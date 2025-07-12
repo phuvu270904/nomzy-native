@@ -13,7 +13,7 @@ export default function ProfileScreen() {
       <Text style={styles.title}>Profile</Text>
       <Text style={styles.subtitle}>Your account settings</Text>
       <TouchableOpacity onPress={handleLogout}>
-        <Text style={{ color: "blue", marginTop: 20 }}>Logout</Text>
+        <Text style={{ color: "green", marginTop: 20 }}>Logout</Text>
       </TouchableOpacity>
     </View>
   );
