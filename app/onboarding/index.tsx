@@ -1,4 +1,3 @@
-import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";
 import {
@@ -57,7 +56,6 @@ export default function OnboardingScreen() {
   const handleOnboardingComplete = () => {
     dispatch(completeOnboarding());
     console.log("Completed onboarding");
-    router.navigate("/auth");
   };
 
   const renderItem = ({ item }: { item: (typeof steps)[0] }) => (
