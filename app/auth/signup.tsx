@@ -327,13 +327,15 @@ export default function SignUpScreen() {
                   <Ionicons name="logo-google" size={24} color="#EC4436" />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.socialIconButton}
-                  onPress={handleAppleSignUp}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="logo-apple" size={24} color="#000" />
-                </TouchableOpacity>
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={styles.socialIconButton}
+                    onPress={handleAppleSignUp}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="logo-apple" size={24} color="#000" />
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
