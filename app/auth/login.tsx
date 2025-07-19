@@ -19,10 +19,13 @@ import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/utils/apiClient";
 
+type UserType = "User" | "Driver";
+
 export default function PhoneLoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<UserType>("User");
   const { login } = useAuth();
 
   const handleBack = () => {
@@ -49,19 +52,31 @@ export default function PhoneLoginScreen() {
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post("/auth/login", {
-        email: email.trim(),
-        password: password.trim(),
-      });
+      if (activeTab === "User") {
+        const response = await apiClient.post("/auth/login/user", {
+          email: email.trim(),
+          password: password.trim(),
+        });
 
-      const { jwt } = response.data;
-      console.log(jwt, "Login token received");
+        const { jwt } = response.data;
 
-      // Use the login method from useAuth to store credentials
-      await login(jwt);
+        await login(jwt);
 
-      // Navigate to the main app
-      router.replace("/(tabs)");
+        // Navigate to the main app
+        router.replace("/(tabs)");
+      } else {
+        const response = await apiClient.post("/auth/login/driver", {
+          email: email.trim(),
+          password: password.trim(),
+        });
+
+        const { jwt } = response.data;
+
+        await login(jwt);
+
+        // Navigate to the main app
+        router.replace("/(tabs)");
+      }
     } catch (error: any) {
       console.log(error);
       const errorMessage =
@@ -89,6 +104,10 @@ export default function PhoneLoginScreen() {
 
   const handleSignUp = () => {
     router.navigate("/auth/signup");
+  };
+
+  const handleTabPress = (tab: UserType) => {
+    setActiveTab(tab);
   };
 
   return (
@@ -121,9 +140,60 @@ export default function PhoneLoginScreen() {
           {/* Title */}
           <ThemedText style={styles.title}>Login to Your Account</ThemedText>
 
+          {/* Tab Selector */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === "User" && styles.activeTabButton,
+              ]}
+              onPress={() => handleTabPress("User")}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color={activeTab === "User" ? "#FFFFFF" : "#9E9E9E"}
+                style={styles.tabIcon}
+              />
+              <ThemedText
+                style={[
+                  styles.tabText,
+                  activeTab === "User" && styles.activeTabText,
+                ]}
+              >
+                User
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === "Driver" && styles.activeTabButton,
+              ]}
+              onPress={() => handleTabPress("Driver")}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="car-outline"
+                size={20}
+                color={activeTab === "Driver" ? "#FFFFFF" : "#9E9E9E"}
+                style={styles.tabIcon}
+              />
+              <ThemedText
+                style={[
+                  styles.tabText,
+                  activeTab === "Driver" && styles.activeTabText,
+                ]}
+              >
+                Driver
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
           {/* Form */}
           <View style={styles.formContainer}>
-            {/* Phone Number Input */}
+            {/* Email Input */}
             <View style={styles.inputContainer}>
               <View style={styles.textInputWrapper}>
                 <Ionicons
@@ -177,7 +247,7 @@ export default function PhoneLoginScreen() {
               disabled={isLoading}
             >
               <ThemedText style={styles.signInButtonText}>
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading ? "Signing in..." : `Sign in as ${activeTab}`}
               </ThemedText>
             </TouchableOpacity>
 
@@ -309,7 +379,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     textAlign: "center",
-    marginBottom: 50,
+    marginBottom: 30,
     color: "#2E2E2E",
     letterSpacing: -0.5,
     lineHeight: 36,
@@ -440,5 +510,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4CAF50",
     fontWeight: "600",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  tabButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: "#F8F8F8",
+  },
+  activeTabButton: {
+    backgroundColor: "#4CAF50",
+  },
+  tabIcon: {
+    marginRight: 8,
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#9E9E9E",
+  },
+  activeTabText: {
+    color: "#FFFFFF",
   },
 });
