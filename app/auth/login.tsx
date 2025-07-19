@@ -252,38 +252,44 @@ export default function PhoneLoginScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <ThemedText style={styles.dividerText}>
-                or continue with
-              </ThemedText>
-            </View>
+            {activeTab === "User" && (
+              <View style={styles.dividerContainer}>
+                <ThemedText style={styles.dividerText}>
+                  or continue with
+                </ThemedText>
+              </View>
+            )}
 
             {/* Social Login Icons */}
-            <View style={styles.socialIconsContainer}>
-              <TouchableOpacity
-                style={styles.socialIconButton}
-                onPress={handleFacebookLogin}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-              </TouchableOpacity>
+            {activeTab === "User" && (
+              <View style={styles.socialIconsContainer}>
+                <TouchableOpacity
+                  style={styles.socialIconButton}
+                  onPress={handleFacebookLogin}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.socialIconButton}
-                onPress={handleGoogleLogin}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="logo-google" size={24} color="#EC4436" />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.socialIconButton}
+                  onPress={handleGoogleLogin}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-google" size={24} color="#EC4436" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.socialIconButton}
-                onPress={handleAppleLogin}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="logo-apple" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={styles.socialIconButton}
+                    onPress={handleAppleLogin}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="logo-apple" size={24} color="#000" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
@@ -447,7 +453,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 40,
+    marginBottom: 30,
     shadowColor: "#4CAF50",
     shadowOffset: {
       width: 0,
@@ -468,7 +474,7 @@ const styles = StyleSheet.create({
   },
   dividerContainer: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 30,
   },
   inputIcon: {
     marginRight: 12,
@@ -513,7 +519,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "center",
     paddingHorizontal: 20,
     marginBottom: 20,
   },
@@ -522,7 +528,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
     backgroundColor: "#F8F8F8",
   },
   activeTabButton: {

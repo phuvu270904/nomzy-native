@@ -20,12 +20,15 @@ import { ThemedText } from "../../components/ThemedText";
 
 Dimensions.get("window");
 
+type UserType = "User" | "Driver";
+
 export default function SignUpScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<UserType>("User");
 
   const handleBack = () => {
     router.back();
@@ -39,15 +42,22 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post("/auth/registerUser", {
-        phone_number: phoneNumber,
-        email,
-        name: fullName,
-        password,
-      });
-      console.log(response.data, "User registered successfully");
+      if (activeTab === "User") {
+        await apiClient.post("/auth/registerUser", {
+          phone_number: phoneNumber,
+          email,
+          name: fullName,
+          password,
+        });
+      } else {
+        await apiClient.post("/auth/registerDriver", {
+          phone_number: phoneNumber,
+          email,
+          name: fullName,
+          password,
+        });
+      }
 
-      // Navigate to main app or verification screen
       router.navigate("/auth/login");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -75,6 +85,10 @@ export default function SignUpScreen() {
   const handleSignIn = () => {
     console.log("Sign in pressed");
     router.navigate("/auth/login");
+  };
+
+  const handleTabPress = (tab: UserType) => {
+    setActiveTab(tab);
   };
 
   return (
@@ -116,6 +130,57 @@ export default function SignUpScreen() {
 
           {/* Title */}
           <ThemedText style={styles.title}>Create New Account</ThemedText>
+
+          {/* Tab Selector */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === "User" && styles.activeTabButton,
+              ]}
+              onPress={() => handleTabPress("User")}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color={activeTab === "User" ? "#FFFFFF" : "#9E9E9E"}
+                style={styles.tabIcon}
+              />
+              <ThemedText
+                style={[
+                  styles.tabText,
+                  activeTab === "User" && styles.activeTabText,
+                ]}
+              >
+                User
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === "Driver" && styles.activeTabButton,
+              ]}
+              onPress={() => handleTabPress("Driver")}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="car-outline"
+                size={20}
+                color={activeTab === "Driver" ? "#FFFFFF" : "#9E9E9E"}
+                style={styles.tabIcon}
+              />
+              <ThemedText
+                style={[
+                  styles.tabText,
+                  activeTab === "Driver" && styles.activeTabText,
+                ]}
+              >
+                Driver
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -230,43 +295,47 @@ export default function SignUpScreen() {
               disabled={isLoading}
             >
               <ThemedText style={styles.signUpButtonText}>
-                {isLoading ? "Creating Account..." : "Sign up"}
+                {isLoading ? "Creating Account..." : `Sign up as ${activeTab}`}
               </ThemedText>
             </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <ThemedText style={styles.dividerText}>
-                or continue with
-              </ThemedText>
-            </View>
+            {activeTab === "User" && (
+              <View style={styles.dividerContainer}>
+                <ThemedText style={styles.dividerText}>
+                  or continue with
+                </ThemedText>
+              </View>
+            )}
 
             {/* Social Login Icons */}
-            <View style={styles.socialIconsContainer}>
-              <TouchableOpacity
-                style={styles.socialIconButton}
-                onPress={handleFacebookSignUp}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-              </TouchableOpacity>
+            {activeTab === "User" && (
+              <View style={styles.socialIconsContainer}>
+                <TouchableOpacity
+                  style={styles.socialIconButton}
+                  onPress={handleFacebookSignUp}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.socialIconButton}
-                onPress={handleGoogleSignUp}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="logo-google" size={24} color="#EC4436" />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.socialIconButton}
+                  onPress={handleGoogleSignUp}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-google" size={24} color="#EC4436" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.socialIconButton}
-                onPress={handleAppleSignUp}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="logo-apple" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={styles.socialIconButton}
+                  onPress={handleAppleSignUp}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-apple" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Sign In Link */}
             <View style={styles.signInContainer}>
@@ -362,10 +431,38 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     textAlign: "center",
-    marginBottom: 40,
+    marginBottom: 20,
     color: "#2E2E2E",
     letterSpacing: -0.5,
     lineHeight: 36,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginHorizontal: 24,
+    marginBottom: 20,
+    paddingVertical: 8,
+  },
+  tabButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  activeTabButton: {
+    backgroundColor: "#4CAF50",
+  },
+  tabIcon: {
+    marginRight: 8,
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#9E9E9E",
+  },
+  activeTabText: {
+    color: "#FFFFFF",
   },
   formContainer: {
     paddingHorizontal: 24,
@@ -466,7 +563,7 @@ const styles = StyleSheet.create({
   },
   dividerContainer: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   dividerText: {
     fontSize: 14,
@@ -476,7 +573,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   socialIconButton: {
     width: 50,
