@@ -5,14 +5,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // Import components
 import { useFetch } from "@/hooks";
-import {
-  CategoryList,
-  Header,
-  PromoList,
-  RecommendedList,
-  SearchBar,
-  SpecialOffers,
-} from "../../components/ui/HomeAndAction";
+import CategoryList from "../../components/ui/HomeAndAction/CategoryList";
+import Header from "../../components/ui/HomeAndAction/Header";
+import ProductList from "../../components/ui/HomeAndAction/ProductList";
+import PromoList from "../../components/ui/HomeAndAction/PromoList";
+import RecommendedList from "../../components/ui/HomeAndAction/RecommendedList";
+import SearchBar from "../../components/ui/HomeAndAction/SearchBar";
+import SpecialOffers from "../../components/ui/HomeAndAction/SpecialOffers";
 
 const HomeScreen = () => {
   const { data } = useFetch("");
@@ -92,6 +91,75 @@ const HomeScreen = () => {
     },
   ]);
 
+  const [products, setProducts] = useState([
+    {
+      id: 1,
+      name: "Grilled Chicken Breast",
+      description: "Tender grilled chicken with herbs and spices",
+      price: 12.99,
+      image:
+        "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=200&h=200&fit=crop",
+      category: "Main Course",
+      rating: 4.8,
+      liked: false,
+    },
+    {
+      id: 2,
+      name: "Caesar Salad",
+      description: "Fresh romaine lettuce with caesar dressing",
+      price: 8.5,
+      image:
+        "https://images.unsplash.com/photo-1551248429-40975aa4de74?w=200&h=200&fit=crop",
+      category: "Salad",
+      rating: 4.6,
+      liked: true,
+    },
+    {
+      id: 3,
+      name: "Margherita Pizza",
+      description: "Classic pizza with tomato, mozzarella and basil",
+      price: 14,
+      image:
+        "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=200&h=200&fit=crop",
+      category: "Pizza",
+      rating: 4.9,
+      liked: false,
+    },
+    {
+      id: 4,
+      name: "Chocolate Cake",
+      description: "Rich chocolate cake with cream frosting",
+      price: 6.75,
+      image:
+        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop",
+      category: "Dessert",
+      rating: 4.7,
+      liked: true,
+    },
+    {
+      id: 5,
+      name: "Beef Burger",
+      description: "Juicy beef patty with fresh vegetables",
+      price: 11.25,
+      image:
+        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop",
+      category: "Burger",
+      rating: 4.5,
+      liked: false,
+    },
+    {
+      id: 6,
+      name: "Fresh Smoothie",
+      description: "Mixed berry smoothie with yogurt",
+      price: 5.99,
+      image:
+        "https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=200&h=200&fit=crop",
+      category: "Beverage",
+      rating: 4.4,
+      liked: true,
+    },
+  ]);
+
   const filterOptions = ["All", "Hamburger", "Pizza", "Indian"];
 
   const handleNavigateNotification = () => {
@@ -118,6 +186,19 @@ const HomeScreen = () => {
     );
   };
 
+  const handleToggleProductLike = (id: number) => {
+    setProducts((prevItems) =>
+      prevItems.map((product) =>
+        product.id === id ? { ...product, liked: !product.liked } : product,
+      ),
+    );
+  };
+
+  const handleProductPress = (product: any) => {
+    console.log("Product pressed:", product);
+    // You can navigate to product detail screen here
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -142,6 +223,11 @@ const HomeScreen = () => {
           recommendedItems={recommendedItems}
           onToggleLike={handleToggleRecommendedLike}
           filterOptions={filterOptions}
+        />
+        <ProductList
+          products={products}
+          onToggleLike={handleToggleProductLike}
+          onProductPress={handleProductPress}
         />
       </ScrollView>
     </SafeAreaView>
