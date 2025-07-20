@@ -1,42 +1,93 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useState } from "react";
 import {
+  Alert,
   Dimensions,
   Image,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
+import { useAuth } from "@/hooks/useAuth";
+import { apiClient } from "@/utils/apiClient";
 
 const { width } = Dimensions.get("window");
 
+type UserType = "User" | "Driver";
+
 export default function LoginScreen() {
-  const handleFacebookLogin = () => {
-    console.log("Facebook login pressed");
-    // Implement Facebook login logic
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<UserType>("User");
+  const { login } = useAuth();
+
+  const handleSignIn = async () => {
+    if (!email.trim()) {
+      Alert.alert("Error", "Please enter your email");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert("Error", "Please enter your password");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (activeTab === "User") {
+        const response = await apiClient.post("/auth/login/user", {
+          email: email.trim(),
+          password: password.trim(),
+        });
+
+        const { jwt } = response.data;
+
+        await login(jwt);
+
+        // Navigate to the main app
+        router.replace("/(tabs)");
+      } else {
+        const response = await apiClient.post("/auth/login/driver", {
+          email: email.trim(),
+          password: password.trim(),
+        });
+
+        const { jwt } = response.data;
+
+        await login(jwt);
+
+        // Navigate to the main app
+        router.replace("/(tabs)");
+      }
+    } catch (error: any) {
+      console.log(error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to sign in. Please try again.";
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Google login pressed");
-    router.navigate("/(tabs)");
-    // Implement Google login logic
-  };
-
-  const handleAppleLogin = () => {
-    console.log("Apple login pressed");
-    // Implement Apple login logic
-  };
-
-  const handleNomzyLogin = () => {
-    console.log("Phone login pressed");
-    // Navigate to phone number input screen
-    router.navigate("/auth/login");
+  const handleTabPress = (tab: UserType) => {
+    setActiveTab(tab);
   };
 
   const handleSignUp = () => {
@@ -49,92 +100,192 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* Main content */}
-      <View style={styles.content}>
-        {/* Illustration */}
-        <View style={styles.illustrationContainer}>
-          <Image
-            source={require("../../assets/images/onboarding/onboarding-1.png")}
-            style={styles.illustration}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Title */}
-        <ThemedText style={styles.title}>Let&apos;s you in</ThemedText>
-
-        {/* Social login buttons */}
-        <View style={styles.socialButtonsContainer}>
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleGoogleLogin}
-            activeOpacity={0.7}
-          >
-            <View style={styles.socialButtonContent}>
-              <Ionicons name="logo-google" size={20} color="#EC4436" />
-              <ThemedText style={styles.socialButtonText}>
-                Continue with Google
-              </ThemedText>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleFacebookLogin}
-            activeOpacity={0.7}
-          >
-            <View style={styles.socialButtonContent}>
-              <Ionicons name="logo-facebook" size={20} color="#219BEE" />
-              <ThemedText style={styles.socialButtonText}>
-                Continue with Facebook
-              </ThemedText>
-            </View>
-          </TouchableOpacity>
-
-          {Platform.OS === "ios" && (
-            <TouchableOpacity
-              style={styles.socialButton}
-              onPress={handleAppleLogin}
-              activeOpacity={0.7}
-            >
-              <View style={styles.socialButtonContent}>
-                <Ionicons name="logo-apple" size={20} color="#000" />
-                <ThemedText style={styles.socialButtonText}>
-                  Continue with Apple
-                </ThemedText>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Divider */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <ThemedText style={styles.dividerText}>or</ThemedText>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Phone login button */}
-        <TouchableOpacity
-          style={styles.phoneButton}
-          onPress={handleNomzyLogin}
-          activeOpacity={0.8}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <ThemedText style={styles.phoneButtonText}>
-            Sign in with Nomzy account
-          </ThemedText>
-        </TouchableOpacity>
+          {/* Main content */}
+          <View style={styles.content}>
+            {/* Illustration */}
+            <View style={styles.illustrationContainer}>
+              <Image
+                source={require("../../assets/images/onboarding/onboarding-1.png")}
+                style={styles.illustration}
+                resizeMode="contain"
+              />
+            </View>
 
-        {/* Sign up link */}
-        <View style={styles.signUpContainer}>
-          <ThemedText style={styles.signUpText}>
-            Don&apos;t have an account?{" "}
-          </ThemedText>
-          <TouchableOpacity onPress={handleSignUp}>
-            <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
-          </TouchableOpacity>
-        </View>
-      </View>
+            {/* Title */}
+            <ThemedText style={styles.title}>Let&apos;s you in</ThemedText>
+
+            {/* Tab Selector */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  activeTab === "User" && styles.activeTabButton,
+                ]}
+                onPress={() => handleTabPress("User")}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color={activeTab === "User" ? "#FFFFFF" : "#9E9E9E"}
+                  style={styles.tabIcon}
+                />
+                <ThemedText
+                  style={[
+                    styles.tabText,
+                    activeTab === "User" && styles.activeTabText,
+                  ]}
+                >
+                  User
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  activeTab === "Driver" && styles.activeTabButton,
+                ]}
+                onPress={() => handleTabPress("Driver")}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="car-outline"
+                  size={20}
+                  color={activeTab === "Driver" ? "#FFFFFF" : "#9E9E9E"}
+                  style={styles.tabIcon}
+                />
+                <ThemedText
+                  style={[
+                    styles.tabText,
+                    activeTab === "Driver" && styles.activeTabText,
+                  ]}
+                >
+                  Driver
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            {/* Form */}
+            <View style={styles.formContainer}>
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <View style={styles.textInputWrapper}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={20}
+                    color="#9E9E9E"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Email"
+                    placeholderTextColor="#9E9E9E"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect={false}
+                  />
+                </View>
+
+                <View style={styles.textInputWrapper}>
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={20}
+                    color="#9E9E9E"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Password"
+                    placeholderTextColor="#9E9E9E"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                    autoComplete="password"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              {/* Sign In Button */}
+              <TouchableOpacity
+                style={[
+                  styles.signInButton,
+                  isLoading && styles.signInButtonDisabled,
+                ]}
+                onPress={handleSignIn}
+                activeOpacity={0.8}
+                disabled={isLoading}
+              >
+                <ThemedText style={styles.signInButtonText}>
+                  {isLoading ? "Signing in..." : `Sign in as ${activeTab}`}
+                </ThemedText>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              {/* {activeTab === "User" && (
+                <View style={styles.dividerContainer}>
+                  <ThemedText style={styles.dividerText}>
+                    or continue with
+                  </ThemedText>
+                </View>
+              )} */}
+
+              {/* Social Login Icons */}
+              {/* {activeTab === "User" && (
+                <View style={styles.socialIconsContainer}>
+                  <TouchableOpacity
+                    style={styles.socialIconButton}
+                    onPress={handleFacebookLogin}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.socialIconButton}
+                    onPress={handleGoogleLogin}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="logo-google" size={24} color="#EC4436" />
+                  </TouchableOpacity>
+
+                  {Platform.OS === "ios" && (
+                    <TouchableOpacity
+                      style={styles.socialIconButton}
+                      onPress={handleAppleLogin}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="logo-apple" size={24} color="#000" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )} */}
+
+              {/* Sign Up Link */}
+              <View style={styles.signUpContainer}>
+                <ThemedText style={styles.signUpText}>
+                  Don&apos;t have an account?{" "}
+                </ThemedText>
+                <TouchableOpacity onPress={handleSignUp}>
+                  <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -143,6 +294,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     paddingHorizontal: 20,
@@ -177,6 +334,83 @@ const styles = StyleSheet.create({
     color: "#2E2E2E",
     letterSpacing: -0.5,
     lineHeight: 36,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  tabButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: "#F8F8F8",
+  },
+  activeTabButton: {
+    backgroundColor: "#4CAF50",
+  },
+  tabIcon: {
+    marginRight: 8,
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#9E9E9E",
+  },
+  activeTabText: {
+    color: "#FFFFFF",
+  },
+  formContainer: {
+    paddingHorizontal: 0,
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 30,
+  },
+  textInputWrapper: {
+    flexDirection: "row",
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#2E2E2E",
+  },
+  signInButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 16,
+    paddingVertical: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 30,
+    shadowColor: "#4CAF50",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  signInButtonDisabled: {
+    opacity: 0.7,
+  },
+  signInButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
   socialButtonsContainer: {
     marginBottom: 30,
@@ -255,6 +489,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: 30,
   },
   signUpText: {
     fontSize: 14,
@@ -264,5 +499,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4CAF50",
     fontWeight: "600",
+  },
+  socialIconsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  socialIconButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#F8F8F8",
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 15,
   },
 });

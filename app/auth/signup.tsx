@@ -58,7 +58,7 @@ export default function SignUpScreen() {
         });
       }
 
-      router.navigate("/auth/login");
+      router.navigate("/auth");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       Alert.alert("Error", "Failed to create account. Please try again.");
@@ -84,7 +84,7 @@ export default function SignUpScreen() {
 
   const handleSignIn = () => {
     console.log("Sign in pressed");
-    router.navigate("/auth/login");
+    router.navigate("/auth");
   };
 
   const handleTabPress = (tab: UserType) => {
@@ -300,16 +300,16 @@ export default function SignUpScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            {activeTab === "User" && (
+            {/* {activeTab === "User" && (
               <View style={styles.dividerContainer}>
                 <ThemedText style={styles.dividerText}>
                   or continue with
                 </ThemedText>
               </View>
-            )}
+            )} */}
 
             {/* Social Login Icons */}
-            {activeTab === "User" && (
+            {/* {activeTab === "User" && (
               <View style={styles.socialIconsContainer}>
                 <TouchableOpacity
                   style={styles.socialIconButton}
@@ -337,7 +337,7 @@ export default function SignUpScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-            )}
+            )} */}
 
             {/* Sign In Link */}
             <View style={styles.signInContainer}>
