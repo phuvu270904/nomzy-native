@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -24,12 +25,44 @@ const { width } = Dimensions.get("window");
 
 type UserType = "User" | "Driver";
 
+const AUTH_TOKEN_KEY = "auth_token";
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<UserType>("User");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { login } = useAuth();
+
+  // Check if user is already authenticated and redirect to home
+  useEffect(() => {
+    const checkAuthToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+        if (token) {
+          router.replace("/(tabs)");
+        }
+      } catch (error) {
+        console.error("Error checking auth token:", error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthToken();
+  }, []);
+
+  // Show loading while checking authentication status
+  if (isCheckingAuth) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ThemedText style={styles.loadingText}>Loading...</ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleSignIn = async () => {
     if (!email.trim()) {
@@ -294,6 +327,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#4CAF50",
+    fontWeight: "500",
   },
   keyboardView: {
     flex: 1,

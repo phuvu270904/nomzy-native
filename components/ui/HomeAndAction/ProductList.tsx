@@ -64,7 +64,9 @@ export default function ProductList({
 
   // Create full-width layout for products like recommended items
   const renderProductGrid = () => {
-    return products.map((product) => renderProduct({ item: product }));
+    return products.map((product) => (
+      <View key={product.id}>{renderProduct({ item: product })}</View>
+    ));
   };
 
   return (
