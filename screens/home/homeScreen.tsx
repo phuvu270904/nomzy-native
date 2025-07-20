@@ -17,6 +17,11 @@ const HomeScreen = () => {
   const { data } = useFetch("");
   console.log("Fetched data:", data);
 
+  // Pagination state for products
+  const [currentPage, setCurrentPage] = useState(1);
+  const [maxPage] = useState(5); // You can make this dynamic based on API response
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   const [promoItems, setPromoItems] = useState([
     {
       id: 1,
@@ -95,7 +100,6 @@ const HomeScreen = () => {
     {
       id: 1,
       name: "Grilled Chicken Breast",
-      description: "Tender grilled chicken with herbs and spices",
       price: 12.99,
       image:
         "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=200&h=200&fit=crop",
@@ -106,7 +110,6 @@ const HomeScreen = () => {
     {
       id: 2,
       name: "Caesar Salad",
-      description: "Fresh romaine lettuce with caesar dressing",
       price: 8.5,
       image:
         "https://images.unsplash.com/photo-1551248429-40975aa4de74?w=200&h=200&fit=crop",
@@ -117,7 +120,6 @@ const HomeScreen = () => {
     {
       id: 3,
       name: "Margherita Pizza",
-      description: "Classic pizza with tomato, mozzarella and basil",
       price: 14,
       image:
         "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=200&h=200&fit=crop",
@@ -128,7 +130,6 @@ const HomeScreen = () => {
     {
       id: 4,
       name: "Chocolate Cake",
-      description: "Rich chocolate cake with cream frosting",
       price: 6.75,
       image:
         "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop",
@@ -139,7 +140,6 @@ const HomeScreen = () => {
     {
       id: 5,
       name: "Beef Burger",
-      description: "Juicy beef patty with fresh vegetables",
       price: 11.25,
       image:
         "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop",
@@ -150,7 +150,6 @@ const HomeScreen = () => {
     {
       id: 6,
       name: "Fresh Smoothie",
-      description: "Mixed berry smoothie with yogurt",
       price: 5.99,
       image:
         "https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=200&h=200&fit=crop",
@@ -199,6 +198,45 @@ const HomeScreen = () => {
     // You can navigate to product detail screen here
   };
 
+  const handleLoadMoreProducts = () => {
+    if (currentPage < maxPage && !isLoadingMore) {
+      setIsLoadingMore(true);
+
+      // Simulate API call delay
+      setTimeout(() => {
+        // In a real app, you would fetch more products from your API
+        const newProducts = [
+          {
+            id: products.length + 1,
+            name: "Loaded Product " + (products.length + 1),
+            description: "This is a dynamically loaded product",
+            price: Math.floor(Math.random() * 20) + 5,
+            image:
+              "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=200&h=200&fit=crop",
+            category: "New",
+            rating: 4.5,
+            liked: false,
+          },
+          {
+            id: products.length + 2,
+            name: "Loaded Product " + (products.length + 2),
+            description: "Another dynamically loaded product",
+            price: Math.floor(Math.random() * 20) + 5,
+            image:
+              "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&h=200&fit=crop",
+            category: "New",
+            rating: 4.3,
+            liked: false,
+          },
+        ];
+
+        setProducts((prev) => [...prev, ...newProducts]);
+        setCurrentPage((prev) => prev + 1);
+        setIsLoadingMore(false);
+      }, 1500); // 1.5 second delay to simulate network request
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -228,6 +266,10 @@ const HomeScreen = () => {
           products={products}
           onToggleLike={handleToggleProductLike}
           onProductPress={handleProductPress}
+          currentPage={currentPage}
+          maxPage={maxPage}
+          onLoadMore={handleLoadMoreProducts}
+          isLoading={isLoadingMore}
         />
       </ScrollView>
     </SafeAreaView>
