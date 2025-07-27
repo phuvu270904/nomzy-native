@@ -4,7 +4,6 @@ import { ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Import components
-import { useFetch } from "@/hooks";
 import CategoryList from "../../components/ui/HomeAndAction/CategoryList";
 import Header from "../../components/ui/HomeAndAction/Header";
 import ProductList from "../../components/ui/HomeAndAction/ProductList";
@@ -14,9 +13,6 @@ import SearchBar from "../../components/ui/HomeAndAction/SearchBar";
 import SpecialOffers from "../../components/ui/HomeAndAction/SpecialOffers";
 
 const HomeScreen = () => {
-  const { data } = useFetch("");
-  console.log("Fetched data:", data);
-
   // Pagination state for products
   const [currentPage, setCurrentPage] = useState(1);
   const [maxPage] = useState(5); // You can make this dynamic based on API response

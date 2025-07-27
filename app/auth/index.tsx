@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
@@ -25,36 +24,27 @@ const { width } = Dimensions.get("window");
 
 type UserType = "User" | "Driver";
 
-const AUTH_TOKEN_KEY = "auth_token";
-
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [activeTab, setActiveTab] = useState<UserType>("User");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
 
   // Check if user is already authenticated and redirect to home
   useEffect(() => {
-    const checkAuthToken = async () => {
-      try {
-        const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-        if (token) {
-          router.replace("/(tabs)");
-        }
-      } catch (error) {
-        console.error("Error checking auth token:", error);
-      } finally {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.replace("/(tabs)");
+      } else {
         setIsCheckingAuth(false);
       }
-    };
-
-    checkAuthToken();
-  }, []);
+    }
+  }, [isAuthenticated, isLoading]);
 
   // Show loading while checking authentication status
-  if (isCheckingAuth) {
+  if (isCheckingAuth || isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -82,7 +72,7 @@ export default function LoginScreen() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSigningIn(true);
     try {
       if (activeTab === "User") {
         const response = await apiClient.post("/auth/login/user", {
@@ -90,9 +80,9 @@ export default function LoginScreen() {
           password: password.trim(),
         });
 
-        const { jwt } = response.data;
+        const { jwt, refresh } = response.data;
 
-        await login(jwt);
+        await login(jwt, refresh);
 
         // Navigate to the main app
         router.replace("/(tabs)");
@@ -102,9 +92,9 @@ export default function LoginScreen() {
           password: password.trim(),
         });
 
-        const { jwt } = response.data;
+        const { jwt, refresh } = response.data;
 
-        await login(jwt);
+        await login(jwt, refresh);
 
         // Navigate to the main app
         router.replace("/(tabs)");
@@ -115,7 +105,7 @@ export default function LoginScreen() {
         error.response?.data?.message || "Failed to sign in. Please try again.";
       Alert.alert("Error", errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsSigningIn(false);
     }
   };
 
@@ -255,14 +245,14 @@ export default function LoginScreen() {
               <TouchableOpacity
                 style={[
                   styles.signInButton,
-                  isLoading && styles.signInButtonDisabled,
+                  isSigningIn && styles.signInButtonDisabled,
                 ]}
                 onPress={handleSignIn}
                 activeOpacity={0.8}
-                disabled={isLoading}
+                disabled={isSigningIn}
               >
                 <ThemedText style={styles.signInButtonText}>
-                  {isLoading ? "Signing in..." : `Sign in as ${activeTab}`}
+                  {isSigningIn ? "Signing in..." : `Sign in as ${activeTab}`}
                 </ThemedText>
               </TouchableOpacity>
 

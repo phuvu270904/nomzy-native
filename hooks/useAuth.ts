@@ -15,6 +15,7 @@ interface AuthState {
 }
 
 const AUTH_TOKEN_KEY = "auth_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_DATA_KEY = "user_data";
 
 export const useAuth = () => {
@@ -31,22 +32,31 @@ export const useAuth = () => {
 
   const loadAuthState = async () => {
     try {
-      const [token, userData] = await Promise.all([
+      const [token, refreshToken] = await Promise.all([
         AsyncStorage.getItem(AUTH_TOKEN_KEY),
-        AsyncStorage.getItem(USER_DATA_KEY),
+        AsyncStorage.getItem(REFRESH_TOKEN_KEY),
       ]);
 
-      if (token && userData) {
-        const user = JSON.parse(userData);
+      if (token && refreshToken) {
+        // Only consider authenticated if we have both tokens
         setAuthState({
           token,
           isLoading: false,
           isAuthenticated: true,
         });
       } else {
+        // Clear any invalid tokens
+        if (token || refreshToken) {
+          await AsyncStorage.multiRemove([
+            AUTH_TOKEN_KEY,
+            REFRESH_TOKEN_KEY,
+            USER_DATA_KEY,
+          ]);
+        }
         setAuthState((prev) => ({
           ...prev,
           isLoading: false,
+          isAuthenticated: false,
         }));
       }
     } catch (error) {
@@ -58,9 +68,12 @@ export const useAuth = () => {
     }
   };
 
-  const login = async (token: string) => {
+  const login = async (token: string, refreshToken: string) => {
     try {
-      await Promise.all([AsyncStorage.setItem(AUTH_TOKEN_KEY, token)]);
+      await Promise.all([
+        AsyncStorage.setItem(AUTH_TOKEN_KEY, token),
+        AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken),
+      ]);
 
       setAuthState({
         token,
@@ -77,6 +90,7 @@ export const useAuth = () => {
     try {
       await Promise.all([
         AsyncStorage.removeItem(AUTH_TOKEN_KEY),
+        AsyncStorage.removeItem(REFRESH_TOKEN_KEY),
         AsyncStorage.removeItem(USER_DATA_KEY),
       ]);
 
@@ -104,10 +118,71 @@ export const useAuth = () => {
     }
   };
 
+  const refreshToken = async (): Promise<string | null> => {
+    try {
+      const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+      if (!storedRefreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      // This will be used by apiClient to refresh the token
+      return storedRefreshToken;
+    } catch (error) {
+      console.error("Error getting refresh token:", error);
+      // If refresh fails, logout the user
+      await logout();
+      return null;
+    }
+  };
+
+  const updateTokens = async (
+    newAccessToken: string,
+    newRefreshToken?: string,
+  ) => {
+    try {
+      const promises = [AsyncStorage.setItem(AUTH_TOKEN_KEY, newAccessToken)];
+
+      if (newRefreshToken) {
+        promises.push(AsyncStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken));
+      }
+
+      await Promise.all(promises);
+
+      setAuthState((prev) => ({
+        ...prev,
+        token: newAccessToken,
+      }));
+    } catch (error) {
+      console.error("Error updating tokens:", error);
+      throw error;
+    }
+  };
+
+  const forceLogout = async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(AUTH_TOKEN_KEY),
+        AsyncStorage.removeItem(REFRESH_TOKEN_KEY),
+        AsyncStorage.removeItem(USER_DATA_KEY),
+      ]);
+
+      setAuthState({
+        token: null,
+        isLoading: false,
+        isAuthenticated: false,
+      });
+    } catch (error) {
+      console.error("Error during force logout:", error);
+    }
+  };
+
   return {
     ...authState,
     login,
     logout,
     updateUser,
+    refreshToken,
+    updateTokens,
+    forceLogout,
   };
 };
