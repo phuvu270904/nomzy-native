@@ -1,28 +1,73 @@
+import { useFetch } from "@/hooks/useFetch";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const categories = [
-  { label: "Hambur..", icon: "🍔" },
-  { label: "Pizza", icon: "🍕" },
-  { label: "Noodles", icon: "🍜" },
-  { label: "Meat", icon: "🍖" },
-  { label: "Vegeta..", icon: "🥬" },
-  { label: "Dessert", icon: "🍰" },
-  { label: "Drink", icon: "🍺" },
-  { label: "More", icon: "..." },
-];
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+}
 
 export default function CategoryList() {
+  const {
+    data: categories,
+    loading,
+    error,
+  } = useFetch<Category[]>("/categories");
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Loading categories...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Error loading categories: {error}</Text>
+      </View>
+    );
+  }
+
+  if (!categories || categories.length === 0) {
+    return <View></View>;
+  }
+
   return (
     <View style={styles.container}>
-      {categories.map((cat, index) => (
-        <TouchableOpacity key={index} style={styles.item}>
+      {categories.slice(0, 7).map((cat, index) => (
+        <TouchableOpacity key={cat.id || index} style={styles.item}>
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{cat.icon}</Text>
+            <Image
+              source={{ uri: cat.icon }}
+              style={styles.iconImage}
+              resizeMode="contain"
+              onError={(error) =>
+                console.log("Image load error:", error.nativeEvent.error)
+              }
+            />
           </View>
-          <Text style={styles.label}>{cat.label}</Text>
+          <Text style={styles.label}>{cat.name}</Text>
         </TouchableOpacity>
       ))}
+      {categories.length > 7 && (
+        <TouchableOpacity style={styles.item}>
+          <View style={styles.iconContainer}>
+            <Text style={styles.moreIcon}>...</Text>
+          </View>
+          <Text style={styles.label}>More</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -31,13 +76,23 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
     marginBottom: 16,
     paddingHorizontal: 20,
     marginTop: 20,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+  },
   item: {
-    width: "22%",
+    width: "25%",
     alignItems: "center",
     marginVertical: 10,
   },
@@ -50,6 +105,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+  iconImage: {
+    width: 30,
+    height: 30,
+  },
   icon: {
     fontSize: 24,
     color: "#4CAF50",
@@ -57,6 +116,26 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     color: "#666",
+    textAlign: "center",
+  },
+  moreIcon: {
+    fontSize: 24,
+    color: "#666",
+    fontWeight: "bold",
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 100,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#ff4444",
     textAlign: "center",
   },
 });
