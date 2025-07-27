@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,11 +12,26 @@ import RecommendedList from "../../components/ui/HomeAndAction/RecommendedList";
 import SearchBar from "../../components/ui/HomeAndAction/SearchBar";
 import SpecialOffers from "../../components/ui/HomeAndAction/SpecialOffers";
 
+// Import hooks
+import { useProducts } from "../../hooks/useProducts";
+
 const HomeScreen = () => {
-  // Pagination state for products
-  const [currentPage, setCurrentPage] = useState(1);
-  const [maxPage] = useState(5); // You can make this dynamic based on API response
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Use the products hook for API integration
+  const {
+    products: apiProducts,
+    loading: productsLoading,
+    error: productsError,
+    hasMore,
+    fetchProducts,
+    loadMore,
+    refresh,
+    toggleLike,
+  } = useProducts(10);
+
+  // Load products on component mount
+  useEffect(() => {
+    fetchProducts(1, 10, true);
+  }, []);
 
   const [promoItems, setPromoItems] = useState([
     {
@@ -92,69 +107,6 @@ const HomeScreen = () => {
     },
   ]);
 
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Grilled Chicken Breast",
-      price: 12.99,
-      image:
-        "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=200&h=200&fit=crop",
-      category: "Main Course",
-      rating: 4.8,
-      liked: false,
-    },
-    {
-      id: 2,
-      name: "Caesar Salad",
-      price: 8.5,
-      image:
-        "https://images.unsplash.com/photo-1551248429-40975aa4de74?w=200&h=200&fit=crop",
-      category: "Salad",
-      rating: 4.6,
-      liked: true,
-    },
-    {
-      id: 3,
-      name: "Margherita Pizza",
-      price: 14,
-      image:
-        "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=200&h=200&fit=crop",
-      category: "Pizza",
-      rating: 4.9,
-      liked: false,
-    },
-    {
-      id: 4,
-      name: "Chocolate Cake",
-      price: 6.75,
-      image:
-        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop",
-      category: "Dessert",
-      rating: 4.7,
-      liked: true,
-    },
-    {
-      id: 5,
-      name: "Beef Burger",
-      price: 11.25,
-      image:
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop",
-      category: "Burger",
-      rating: 4.5,
-      liked: false,
-    },
-    {
-      id: 6,
-      name: "Fresh Smoothie",
-      price: 5.99,
-      image:
-        "https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=200&h=200&fit=crop",
-      category: "Beverage",
-      rating: 4.4,
-      liked: true,
-    },
-  ]);
-
   const filterOptions = ["All", "Hamburger", "Pizza", "Indian"];
 
   const handleNavigateNotification = () => {
@@ -182,11 +134,7 @@ const HomeScreen = () => {
   };
 
   const handleToggleProductLike = (id: number) => {
-    setProducts((prevItems) =>
-      prevItems.map((product) =>
-        product.id === id ? { ...product, liked: !product.liked } : product,
-      ),
-    );
+    toggleLike(id);
   };
 
   const handleProductPress = (product: any) => {
@@ -194,42 +142,19 @@ const HomeScreen = () => {
     // You can navigate to product detail screen here
   };
 
-  const handleLoadMoreProducts = () => {
-    if (currentPage < maxPage && !isLoadingMore) {
-      setIsLoadingMore(true);
+  const handleLoadMoreProducts = async () => {
+    try {
+      await loadMore();
+    } catch (error) {
+      console.error("Error loading more products:", error);
+    }
+  };
 
-      // Simulate API call delay
-      setTimeout(() => {
-        // In a real app, you would fetch more products from your API
-        const newProducts = [
-          {
-            id: products.length + 1,
-            name: "Loaded Product " + (products.length + 1),
-            description: "This is a dynamically loaded product",
-            price: Math.floor(Math.random() * 20) + 5,
-            image:
-              "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=200&h=200&fit=crop",
-            category: "New",
-            rating: 4.5,
-            liked: false,
-          },
-          {
-            id: products.length + 2,
-            name: "Loaded Product " + (products.length + 2),
-            description: "Another dynamically loaded product",
-            price: Math.floor(Math.random() * 20) + 5,
-            image:
-              "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&h=200&fit=crop",
-            category: "New",
-            rating: 4.3,
-            liked: false,
-          },
-        ];
-
-        setProducts((prev) => [...prev, ...newProducts]);
-        setCurrentPage((prev) => prev + 1);
-        setIsLoadingMore(false);
-      }, 1500); // 1.5 second delay to simulate network request
+  const handleRetryProducts = async () => {
+    try {
+      await refresh();
+    } catch (error) {
+      console.error("Error retrying products:", error);
     }
   };
 
@@ -259,13 +184,14 @@ const HomeScreen = () => {
           filterOptions={filterOptions}
         />
         <ProductList
-          products={products}
+          products={apiProducts}
           onToggleLike={handleToggleProductLike}
           onProductPress={handleProductPress}
-          currentPage={currentPage}
-          maxPage={maxPage}
+          hasMore={hasMore}
           onLoadMore={handleLoadMoreProducts}
-          isLoading={isLoadingMore}
+          isLoading={productsLoading}
+          error={productsError}
+          onRetry={handleRetryProducts}
         />
       </ScrollView>
     </SafeAreaView>

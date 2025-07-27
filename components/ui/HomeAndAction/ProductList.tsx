@@ -15,27 +15,30 @@ interface Product {
   image: string;
   category: string;
   rating: number;
-  liked: boolean;
+  liked?: boolean;
+  description?: string;
 }
 
 interface ProductListProps {
   products: Product[];
   onToggleLike: (id: number) => void;
   onProductPress?: (product: Product) => void;
-  currentPage: number;
-  maxPage: number;
+  hasMore: boolean;
   onLoadMore?: () => void;
   isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export default function ProductList({
   products,
   onToggleLike,
   onProductPress,
-  currentPage,
-  maxPage,
+  hasMore,
   onLoadMore,
   isLoading = false,
+  error,
+  onRetry,
 }: ProductListProps) {
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
@@ -78,8 +81,20 @@ export default function ProductList({
       {/* Product List */}
       <View style={styles.gridContainer}>{renderProductGrid()}</View>
 
+      {/* Error State */}
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          {onRetry && (
+            <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {/* Load More Button */}
-      {currentPage < maxPage && (
+      {hasMore && !error && (
         <TouchableOpacity
           style={styles.loadMoreButton}
           onPress={onLoadMore}
@@ -213,5 +228,40 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  errorContainer: {
+    backgroundColor: "#fee2e2",
+    padding: 16,
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#dc2626",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  retryButton: {
+    backgroundColor: "#dc2626",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  retryText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  endContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  endText: {
+    color: "#666",
+    fontSize: 14,
+    fontStyle: "italic",
   },
 });
