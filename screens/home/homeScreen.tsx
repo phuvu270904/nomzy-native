@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,33 +32,6 @@ const HomeScreen = () => {
   useEffect(() => {
     fetchProducts(1, 10, true);
   }, []);
-
-  const [promoItems, setPromoItems] = useState([
-    {
-      id: 1,
-      name: "Mixed Salad Bowl",
-      distance: "1.5 km",
-      rating: 4.8,
-      reviews: 126,
-      price: 6.0,
-      originalPrice: 9.0,
-      image:
-        "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=150&h=150&fit=crop&crop=center",
-      liked: false,
-    },
-    {
-      id: 2,
-      name: "Vegetarian Menu",
-      distance: "1.7 km",
-      rating: 4.7,
-      reviews: 900,
-      price: 5.5,
-      originalPrice: 9.0,
-      image:
-        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&h=150&fit=crop&crop=center",
-      liked: false,
-    },
-  ]);
 
   const [recommendedItems, setRecommendedItems] = useState([
     {
@@ -117,14 +90,6 @@ const HomeScreen = () => {
     router.push("/carts");
   };
 
-  const handleTogglePromoLike = (id: number) => {
-    setPromoItems((prevItems) =>
-      prevItems.map((promo) =>
-        promo.id === id ? { ...promo, liked: !promo.liked } : promo,
-      ),
-    );
-  };
-
   const handleToggleRecommendedLike = (id: number) => {
     setRecommendedItems((prevItems) =>
       prevItems.map((rec) =>
@@ -174,10 +139,7 @@ const HomeScreen = () => {
         <SearchBar />
         <SpecialOffers />
         <CategoryList />
-        <PromoList
-          promoItems={promoItems}
-          onToggleLike={handleTogglePromoLike}
-        />
+        <PromoList />
         <RecommendedList
           recommendedItems={recommendedItems}
           onToggleLike={handleToggleRecommendedLike}
