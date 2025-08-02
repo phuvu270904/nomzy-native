@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -29,29 +29,39 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [activeTab, setActiveTab] = useState<UserType>("User");
-  const { login, fetchUserProfile } = useAuth();
+  const { login, fetchUserProfile, isAuthenticated, user, isLoading } =
+    useAuth();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // // Check if user is already authenticated and redirect to home
-  // useEffect(() => {
-  //   if (!isLoading) {
-  //     if (isAuthenticated) {
-  //       router.replace("/(tabs)");
-  //     } else {
-  //       setIsCheckingAuth(false);
-  //     }
-  //   }
-  // }, [isAuthenticated, isLoading]);
+  // Check if user is already authenticated and redirect to home
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        console.log(user, "User is authenticated");
+        if (user?.jwt.role === "driver") {
+          console.log("Redirecting to driver tabs");
 
-  // // Show loading while checking authentication status
-  // if (isCheckingAuth || isLoading) {
-  //   return (
-  //     <SafeAreaView style={styles.container}>
-  //       <View style={styles.loadingContainer}>
-  //         <ThemedText style={styles.loadingText}>Loading...</ThemedText>
-  //       </View>
-  //     </SafeAreaView>
-  //   );
-  // }
+          router.replace("/(driver-tabs)");
+        } else {
+          console.log("Redirecting to user tabs");
+          router.replace("/(tabs)");
+        }
+      } else {
+        setIsCheckingAuth(false);
+      }
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Show loading while checking authentication status
+  if (isCheckingAuth || isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ThemedText style={styles.loadingText}>Loading...</ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleSignIn = async () => {
     if (!email.trim()) {

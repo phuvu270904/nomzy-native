@@ -1,4 +1,6 @@
-import React from "react";
+import { ApiProduct } from "@/hooks/useProducts";
+import { apiClient } from "@/utils/apiClient";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -20,15 +22,101 @@ interface PromoItem {
   liked: boolean;
 }
 
-interface PromoListProps {
-  promoItems: PromoItem[];
-  onToggleLike: (id: number) => void;
-}
+export default function PromoList() {
+  const [discountedProducts, setDiscountedProducts] = useState<ApiProduct[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
 
-export default function PromoList({
-  promoItems,
-  onToggleLike,
-}: PromoListProps) {
+  useEffect(() => {
+    fetchDiscountedProducts();
+  }, []);
+
+  const fetchDiscountedProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiClient.get<{ data: ApiProduct[] }>("/products");
+      const products = response.data.data;
+
+      // Filter products that have a discountPrice (not null and not empty)
+      const discounted = products.filter(
+        (product) => product.discountPrice && product.discountPrice !== "0",
+      );
+
+      setDiscountedProducts(discounted);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleLikeLocal = (productId: number) => {
+    setLikedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  // Transform API products to PromoItem format
+  const promoItems: PromoItem[] = discountedProducts.map((product) => {
+    const originalPrice = parseFloat(product.price);
+    const discountPrice = parseFloat(product.discountPrice || product.price);
+
+    // Generate a fallback image if the API image URL is a placeholder
+    const fallbackImage = `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsBGOs2225fFqTfnl5EKlrEUBn5-drby1x3Q&s`;
+    const imageUrl =
+      product.imageUrl && !product.imageUrl.includes("example.com")
+        ? product.imageUrl
+        : fallbackImage;
+
+    return {
+      id: product.id,
+      name: product.name,
+      distance: "0.5 km", // Default distance since API doesn't provide it
+      rating: 4.5, // Default rating since API doesn't provide it
+      reviews: Math.floor(Math.random() * 100) + 10, // Random reviews since API doesn't provide it
+      price: discountPrice,
+      originalPrice: originalPrice,
+      image: imageUrl,
+      liked: likedItems.has(product.id),
+    };
+  });
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Discount Guaranteed!</Text>
+        </View>
+        <Text>Loading promos...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Discount Guaranteed!</Text>
+        </View>
+        <Text>Error loading promos: {error}</Text>
+      </View>
+    );
+  }
+
+  if (promoItems.length === 0) {
+    return <View></View>;
+  }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -65,7 +153,7 @@ export default function PromoList({
                 </Text>
                 <TouchableOpacity
                   style={styles.heartButton}
-                  onPress={() => onToggleLike(item.id)}
+                  onPress={() => toggleLikeLocal(item.id)}
                 >
                   <Text style={styles.heartIcon}>
                     {item.liked ? "❤️" : "🤍"}

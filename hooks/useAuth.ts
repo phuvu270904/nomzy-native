@@ -5,12 +5,12 @@ interface User {
   id: string;
   email: string;
   name: string;
-  // Add other user properties as needed
+  role: "user" | "driver";
 }
 
 interface AuthState {
   token: string | null;
-  user: User | null;
+  user: any | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
