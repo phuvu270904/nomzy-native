@@ -152,7 +152,6 @@ apiClient.interceptors.request.use(
 // Response interceptor for handling common errors
 apiClient.interceptors.response.use(
   (response) => {
-    console.log("API response received:", response.status, response.statusText);
     return response;
   },
   async (error) => {

@@ -86,7 +86,6 @@ export default function LoginScreen() {
 
         // Fetch user profile data after successful login
         await fetchUserProfile();
-        console.log("User logged in successfully");
 
         // Navigate to the main app
       } else {
@@ -102,8 +101,6 @@ export default function LoginScreen() {
 
         // Fetch user profile data after successful login
         await fetchUserProfile();
-
-        console.log("Driver logged in successfully");
       }
     } catch (error: any) {
       console.log(error);
