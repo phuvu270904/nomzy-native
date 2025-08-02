@@ -94,7 +94,7 @@ export default function PromoList() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View>
         <View style={styles.header}>
           <Text style={styles.title}>Discount Guaranteed!</Text>
         </View>
@@ -105,7 +105,7 @@ export default function PromoList() {
 
   if (error) {
     return (
-      <View style={styles.container}>
+      <View>
         <View style={styles.header}>
           <Text style={styles.title}>Discount Guaranteed!</Text>
         </View>
@@ -118,7 +118,7 @@ export default function PromoList() {
     return <View></View>;
   }
   return (
-    <View style={styles.container}>
+    <View>
       <View style={styles.header}>
         <Text style={styles.title}>Discount Guaranteed!</Text>
         <TouchableOpacity>
@@ -169,7 +169,6 @@ export default function PromoList() {
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 24 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
