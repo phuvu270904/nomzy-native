@@ -37,13 +37,9 @@ export default function LoginScreen() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        console.log(user, "User is authenticated");
         if (user?.jwt.role === "driver") {
-          console.log("Redirecting to driver tabs");
-
           router.replace("/(driver-tabs)");
         } else {
-          console.log("Redirecting to user tabs");
           router.replace("/(tabs)");
         }
       } else {
