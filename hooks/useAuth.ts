@@ -10,6 +10,7 @@ interface User {
 
 interface AuthState {
   token: string | null;
+  user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -21,6 +22,7 @@ const USER_DATA_KEY = "user_data";
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     token: null,
+    user: null,
     isLoading: true,
     isAuthenticated: false,
   });
@@ -32,15 +34,27 @@ export const useAuth = () => {
 
   const loadAuthState = async () => {
     try {
-      const [token, refreshToken] = await Promise.all([
+      const [token, refreshToken, userData] = await Promise.all([
         AsyncStorage.getItem(AUTH_TOKEN_KEY),
         AsyncStorage.getItem(REFRESH_TOKEN_KEY),
+        AsyncStorage.getItem(USER_DATA_KEY),
       ]);
 
       if (token && refreshToken) {
+        // Parse user data if available
+        let user = null;
+        if (userData) {
+          try {
+            user = JSON.parse(userData);
+          } catch (parseError) {
+            console.error("Error parsing user data:", parseError);
+          }
+        }
+
         // Only consider authenticated if we have both tokens
         setAuthState({
           token,
+          user,
           isLoading: false,
           isAuthenticated: true,
         });
@@ -55,6 +69,7 @@ export const useAuth = () => {
         }
         setAuthState((prev) => ({
           ...prev,
+          user: null,
           isLoading: false,
           isAuthenticated: false,
         }));
@@ -63,6 +78,7 @@ export const useAuth = () => {
       console.error("Error loading auth state:", error);
       setAuthState((prev) => ({
         ...prev,
+        user: null,
         isLoading: false,
       }));
     }
@@ -77,6 +93,7 @@ export const useAuth = () => {
 
       setAuthState({
         token,
+        user: null, // User data will be fetched separately
         isLoading: false,
         isAuthenticated: true,
       });
@@ -96,6 +113,7 @@ export const useAuth = () => {
 
       setAuthState({
         token: null,
+        user: null,
         isLoading: false,
         isAuthenticated: false,
       });
@@ -158,6 +176,33 @@ export const useAuth = () => {
     }
   };
 
+  const fetchUserProfile = async (): Promise<User | null> => {
+    try {
+      const { apiClient } = await import("@/utils/apiClient");
+      const response = await apiClient.get("/auth/profile");
+
+      if (response.data) {
+        const userData = response.data;
+
+        // Store user data in AsyncStorage
+        await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+
+        // Update auth state with user data
+        setAuthState((prev) => ({
+          ...prev,
+          user: userData,
+        }));
+
+        return userData;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+  };
+
   const forceLogout = async () => {
     try {
       await Promise.all([
@@ -168,6 +213,7 @@ export const useAuth = () => {
 
       setAuthState({
         token: null,
+        user: null,
         isLoading: false,
         isAuthenticated: false,
       });
@@ -184,5 +230,6 @@ export const useAuth = () => {
     refreshToken,
     updateTokens,
     forceLogout,
+    fetchUserProfile,
   };
 };

@@ -1,4 +1,6 @@
+import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -13,6 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DriverProfileScreen = () => {
+  const { logout } = useAuth();
+
   const [driverInfo, setDriverInfo] = useState({
     name: "John Smith",
     email: "john.smith@email.com",
@@ -38,6 +42,11 @@ const DriverProfileScreen = () => {
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.replace("/auth");
   };
 
   const menuItems = [
@@ -87,7 +96,7 @@ const DriverProfileScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity style={styles.editButton}>
-          <Ionicons name="create-outline" size={24} color="#FF6B35" />
+          <Ionicons name="create-outline" size={24} color="#4CAF50" />
         </TouchableOpacity>
       </View>
 
@@ -166,7 +175,7 @@ const DriverProfileScreen = () => {
             <Switch
               value={notifications.orderAlerts}
               onValueChange={() => toggleNotification("orderAlerts")}
-              trackColor={{ false: "#E0E0E0", true: "#FF6B35" }}
+              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -181,7 +190,7 @@ const DriverProfileScreen = () => {
             <Switch
               value={notifications.promotions}
               onValueChange={() => toggleNotification("promotions")}
-              trackColor={{ false: "#E0E0E0", true: "#FF6B35" }}
+              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -196,7 +205,7 @@ const DriverProfileScreen = () => {
             <Switch
               value={notifications.earnings}
               onValueChange={() => toggleNotification("earnings")}
-              trackColor={{ false: "#E0E0E0", true: "#FF6B35" }}
+              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -211,7 +220,7 @@ const DriverProfileScreen = () => {
             <Switch
               value={notifications.newFeatures}
               onValueChange={() => toggleNotification("newFeatures")}
-              trackColor={{ false: "#E0E0E0", true: "#FF6B35" }}
+              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -238,7 +247,7 @@ const DriverProfileScreen = () => {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={24} color="#FF5722" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
@@ -355,7 +364,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#FF6B35",
+    color: "#4CAF50",
     marginBottom: 4,
   },
   statLabel: {

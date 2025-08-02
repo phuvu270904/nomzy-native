@@ -143,7 +143,7 @@ const DriverActivityScreen = () => {
               "bicycle-outline",
               "Deliveries",
               currentData.deliveries.toString(),
-              "#FF6B35",
+              "#4CAF50",
             )}
           </View>
           <View style={styles.statsRow}>
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   periodButtonActive: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#4CAF50",
   },
   periodButtonText: {
     fontSize: 14,
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   performanceValue: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#FF6B35",
+    color: "#4CAF50",
     marginBottom: 4,
   },
   performanceLabel: {

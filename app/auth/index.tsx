@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -29,30 +29,29 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [activeTab, setActiveTab] = useState<UserType>("User");
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, fetchUserProfile } = useAuth();
 
-  // Check if user is already authenticated and redirect to home
-  useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        router.replace("/(tabs)");
-      } else {
-        setIsCheckingAuth(false);
-      }
-    }
-  }, [isAuthenticated, isLoading]);
+  // // Check if user is already authenticated and redirect to home
+  // useEffect(() => {
+  //   if (!isLoading) {
+  //     if (isAuthenticated) {
+  //       router.replace("/(tabs)");
+  //     } else {
+  //       setIsCheckingAuth(false);
+  //     }
+  //   }
+  // }, [isAuthenticated, isLoading]);
 
-  // Show loading while checking authentication status
-  if (isCheckingAuth || isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ThemedText style={styles.loadingText}>Loading...</ThemedText>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  // // Show loading while checking authentication status
+  // if (isCheckingAuth || isLoading) {
+  //   return (
+  //     <SafeAreaView style={styles.container}>
+  //       <View style={styles.loadingContainer}>
+  //         <ThemedText style={styles.loadingText}>Loading...</ThemedText>
+  //       </View>
+  //     </SafeAreaView>
+  //   );
+  // }
 
   const handleSignIn = async () => {
     if (!email.trim()) {
@@ -83,9 +82,13 @@ export default function LoginScreen() {
         const { jwt, refresh } = response.data;
 
         await login(jwt, refresh);
+        router.replace("/(tabs)");
+
+        // Fetch user profile data after successful login
+        await fetchUserProfile();
+        console.log("User logged in successfully");
 
         // Navigate to the main app
-        router.replace("/(tabs)");
       } else {
         const response = await apiClient.post("/auth/login/driver", {
           email: email.trim(),
@@ -95,9 +98,12 @@ export default function LoginScreen() {
         const { jwt, refresh } = response.data;
 
         await login(jwt, refresh);
+        router.replace("/(driver-tabs)");
 
-        // Navigate to the main app
-        router.replace("/(tabs)");
+        // Fetch user profile data after successful login
+        await fetchUserProfile();
+
+        console.log("Driver logged in successfully");
       }
     } catch (error: any) {
       console.log(error);
