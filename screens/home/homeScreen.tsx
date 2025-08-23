@@ -31,8 +31,6 @@ const HomeScreen = () => {
   } = useProducts(10);
 
   const distance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    console.log(lat1, lon1, lat2, lon2);
-
     const R = 6371; // Radius of the Earth in km
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -51,7 +49,6 @@ const HomeScreen = () => {
   const getRestaurantsInfo = async () => {
     try {
       const response = await apiClient.get("/restaurants");
-      console.log(response.data, "dsas");
 
       const rcmItems = response.data.map((restaurant: any) => ({
         ...restaurant,
@@ -87,12 +84,36 @@ const HomeScreen = () => {
     router.push("/carts");
   };
 
-  const handleToggleRecommendedLike = (id: number) => {
-    setRecommendedItems((prevItems) =>
-      prevItems.map((rec) =>
-        rec.id === id ? { ...rec, liked: !rec.liked } : rec,
-      ),
-    );
+  const handleToggleRecommendedLike = async (id: number) => {
+    try {
+      // Find the current item to determine if it's currently liked
+      const currentItem = recommendedItems.find((rec) => rec.id === id);
+      const isCurrentlyLiked = currentItem?.liked || false;
+
+      // Optimistically update the UI first
+      setRecommendedItems((prevItems) =>
+        prevItems.map((rec) =>
+          rec.id === id ? { ...rec, liked: !rec.liked } : rec,
+        ),
+      );
+
+      // Make the API call based on current state
+      if (isCurrentlyLiked) {
+        // Unlike - call delete
+        await apiClient.delete(`/restaurants/${id}/favorite`);
+      } else {
+        // Like - call post
+        await apiClient.post(`/restaurants/${id}/favorite`);
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      // Revert the optimistic update on error
+      setRecommendedItems((prevItems) =>
+        prevItems.map((rec) =>
+          rec.id === id ? { ...rec, liked: !rec.liked } : rec,
+        ),
+      );
+    }
   };
 
   const handleToggleProductLike = (id: number) => {
