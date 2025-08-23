@@ -13,11 +13,12 @@ import RecommendedList from "../../components/ui/HomeAndAction/RecommendedList";
 import SearchBar from "../../components/ui/HomeAndAction/SearchBar";
 import SpecialOffers from "../../components/ui/HomeAndAction/SpecialOffers";
 
-// Import hooks
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { useProducts } from "../../hooks/useProducts";
 
 const HomeScreen = () => {
-  // Use the products hook for API integration
+  const userLocation = useUserLocation();
+
   const {
     products: apiProducts,
     loading: productsLoading,
