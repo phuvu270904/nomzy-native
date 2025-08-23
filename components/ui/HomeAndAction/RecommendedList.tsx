@@ -39,9 +39,13 @@ export default function RecommendedList({
             />
             <View style={styles.recommendedInfo}>
               <Text style={styles.recommendedName}>{item.name}</Text>
-              <View style={styles.recommendedDetails}>
-                <Text style={styles.recommendedDistance}>{item.distance}</Text>
-              </View>
+              {item.distance !== "NaN km" && (
+                <View style={styles.recommendedDetails}>
+                  <Text style={styles.recommendedDistance}>
+                    {item.distance}
+                  </Text>
+                </View>
+              )}
               <Text style={styles.recommendedRating}>
                 ⭐ {item.rating} ({item.reviews})
               </Text>

@@ -1,26 +1,37 @@
-import { useMemo } from "react";
-import { useAuth } from "./useAuth";
+import apiClient from "@/utils/apiClient";
+import { useEffect, useState } from "react";
 
 interface UserLocation {
-  lng: number | undefined;
-  lat: number | undefined;
+  lng: number;
+  lat: number;
   hasLocation: boolean;
 }
 
 export const useUserLocation = (): UserLocation => {
-  const { user } = useAuth();
+  const [location, setLocation] = useState<UserLocation>({
+    lng: 0,
+    lat: 0,
+    hasLocation: false,
+  });
 
-  const location = useMemo(() => {
-    const defaultAddress = user?.user.addresses.find(
-      (address: any) => address.isDefault,
-    );
+  useEffect(() => {
+    const fetchDefaultLocation = async () => {
+      try {
+        const response = await apiClient.get("/addresses/default");
+        const data = response.data;
 
-    return {
-      lng: defaultAddress?.lng,
-      lat: defaultAddress?.lat,
-      hasLocation: !!(defaultAddress?.lng && defaultAddress?.lat),
+        setLocation({
+          lng: data?.longitude,
+          lat: data?.latitude,
+          hasLocation: !!(data?.longitude && data?.latitude),
+        });
+      } catch (error) {
+        console.error("Failed to fetch default location:", error);
+      }
     };
-  }, [user]);
+
+    fetchDefaultLocation();
+  }, []);
 
   return location;
 };
