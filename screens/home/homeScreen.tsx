@@ -1,3 +1,4 @@
+import { apiClient } from "@/utils/apiClient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ScrollView, StatusBar, StyleSheet } from "react-native";
@@ -28,59 +29,28 @@ const HomeScreen = () => {
     toggleLike,
   } = useProducts(10);
 
+  const getRestaurantsInfo = async () => {
+    try {
+      const response = await apiClient.get("/restaurants");
+
+      const rcmItems = response.data.map((restaurant: any) => ({
+        ...restaurant,
+        liked: false,
+      }));
+      setRecommendedItems(rcmItems);
+    } catch (error) {
+      console.error("Error fetching restaurants:", error);
+      return [];
+    }
+  };
+
   // Load products on component mount
   useEffect(() => {
     fetchProducts(1, 10, true);
+    getRestaurantsInfo();
   }, []);
 
-  const [recommendedItems, setRecommendedItems] = useState([
-    {
-      id: 1,
-      name: "Vegetarian Noodles",
-      distance: "800 m",
-      rating: 4.9,
-      reviews: 236,
-      price: 2.0,
-      image:
-        "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=80&h=80&fit=crop&crop=center",
-      liked: true,
-    },
-    {
-      id: 2,
-      name: "Pizza Hut - Lumintu",
-      distance: "1.2 km",
-      rating: 4.5,
-      reviews: 179,
-      price: 1.5,
-      image:
-        "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=80&h=80&fit=crop&crop=center",
-      liked: false,
-    },
-    {
-      id: 3,
-      name: "Mozzarella Cheese Burger",
-      distance: "1.6 km",
-      rating: 4.6,
-      reviews: 156,
-      price: 2.5,
-      image:
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=80&h=80&fit=crop&crop=center",
-      liked: true,
-    },
-    {
-      id: 4,
-      name: "Fruit Salad - Kumpa",
-      distance: "1.4 km",
-      rating: 4.7,
-      reviews: 174,
-      price: 2.0,
-      image:
-        "https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=80&h=80&fit=crop&crop=center",
-      liked: false,
-    },
-  ]);
-
-  const filterOptions = ["All", "Hamburger", "Pizza", "Indian"];
+  const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
 
   const handleNavigateNotification = () => {
     router.push("/notifications");
@@ -143,7 +113,6 @@ const HomeScreen = () => {
         <RecommendedList
           recommendedItems={recommendedItems}
           onToggleLike={handleToggleRecommendedLike}
-          filterOptions={filterOptions}
         />
         <ProductList
           products={apiProducts}

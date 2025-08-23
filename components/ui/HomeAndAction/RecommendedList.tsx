@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface RecommendedItem {
   id: number;
@@ -14,7 +7,6 @@ interface RecommendedItem {
   distance: string;
   rating: number;
   reviews: number;
-  price: number;
   image: string;
   liked: boolean;
 }
@@ -22,13 +14,11 @@ interface RecommendedItem {
 interface RecommendedListProps {
   recommendedItems: RecommendedItem[];
   onToggleLike: (id: number) => void;
-  filterOptions: string[];
 }
 
 export default function RecommendedList({
   recommendedItems,
   onToggleLike,
-  filterOptions,
 }: RecommendedListProps) {
   return (
     <View style={styles.container}>
@@ -38,32 +28,6 @@ export default function RecommendedList({
           <Text style={styles.seeAllText}>See All</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Filter Options */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-      >
-        {filterOptions.map((filter, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.filterButton,
-              index === 0 && styles.filterButtonActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                index === 0 && styles.filterTextActive,
-              ]}
-            >
-              {filter}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
       {/* Recommended Items */}
       <View style={styles.recommendedContainer}>
@@ -77,12 +41,9 @@ export default function RecommendedList({
               <Text style={styles.recommendedName}>{item.name}</Text>
               <View style={styles.recommendedDetails}>
                 <Text style={styles.recommendedDistance}>{item.distance}</Text>
-                <Text style={styles.recommendedRating}>
-                  ⭐ {item.rating} ({item.reviews})
-                </Text>
               </View>
-              <Text style={styles.recommendedPrice}>
-                ${item.price.toFixed(2)}
+              <Text style={styles.recommendedRating}>
+                ⭐ {item.rating} ({item.reviews})
               </Text>
             </View>
             <TouchableOpacity
