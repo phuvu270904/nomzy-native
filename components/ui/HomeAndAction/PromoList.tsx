@@ -98,7 +98,7 @@ export default function PromoList() {
         <View style={styles.header}>
           <Text style={styles.title}>Discount Guaranteed!</Text>
         </View>
-        <Text>Loading promos...</Text>
+        <Text style={styles.loadingText}>Loading promos...</Text>
       </View>
     );
   }
@@ -173,6 +173,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,
+    paddingHorizontal: 20,
+  },
+  loadingText: {
     paddingHorizontal: 20,
   },
   title: {
