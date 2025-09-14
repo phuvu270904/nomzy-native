@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -20,6 +21,10 @@ export default function RecommendedList({
   recommendedItems,
   onToggleLike,
 }: RecommendedListProps) {
+  const handleRestaurantPress = (id: number) => {
+    router.push(`/restaurant/${id}`);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
@@ -32,7 +37,12 @@ export default function RecommendedList({
       {/* Recommended Items */}
       <View style={styles.recommendedContainer}>
         {recommendedItems.map((item) => (
-          <View key={item.id} style={styles.recommendedItem}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.recommendedItem}
+            onPress={() => handleRestaurantPress(item.id)}
+            activeOpacity={0.7}
+          >
             <Image
               source={{ uri: item.image }}
               style={styles.recommendedImage}
@@ -52,11 +62,14 @@ export default function RecommendedList({
             </View>
             <TouchableOpacity
               style={styles.heartButton}
-              onPress={() => onToggleLike(item.id)}
+              onPress={(e) => {
+                e.stopPropagation();
+                onToggleLike(item.id);
+              }}
             >
               <Text style={styles.heartIcon}>{item.liked ? "❤️" : "🤍"}</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </View>
