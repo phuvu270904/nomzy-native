@@ -71,8 +71,12 @@ const HomeScreen = () => {
   // Load products on component mount
   useEffect(() => {
     fetchProducts(1, 10, true);
-    getRestaurantsInfo();
   }, []);
+
+  // Load restaurants when user location is available
+  useEffect(() => {
+    getRestaurantsInfo();
+  }, [userLocation.hasLocation]);
 
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
 
