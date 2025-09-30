@@ -33,7 +33,6 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
             ]}
           >
             {tab.label}
-            {tab.count !== undefined && ` (${tab.count})`}
           </Text>
           {activeTabId === tab.id && <View style={styles.indicator} />}
         </TouchableOpacity>

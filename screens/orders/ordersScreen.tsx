@@ -76,9 +76,9 @@ export default function OrdersScreen() {
   );
 
   const tabs: Tab[] = [
-    { id: "active", label: "Active", count: activeOrders.length },
-    { id: "completed", label: "Completed", count: completedOrders.length },
-    { id: "cancelled", label: "Cancelled", count: cancelledOrders.length },
+    { id: "active", label: "Active" },
+    { id: "completed", label: "Completed" },
+    { id: "cancelled", label: "Cancelled" },
   ];
 
   const getCurrentOrders = () => {
@@ -120,6 +120,14 @@ export default function OrdersScreen() {
     Alert.alert("Reorder", `Reordering from ${order.restaurantName}`);
   };
 
+  const handleSearchPress = () => {
+    Alert.alert("Search", "Search functionality coming soon");
+  };
+
+  const handleMorePress = () => {
+    Alert.alert("More Options", "Additional options coming soon");
+  };
+
   const getEmptyStateContent = () => {
     switch (activeTab) {
       case "active":
@@ -158,7 +166,10 @@ export default function OrdersScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <OrdersHeader />
+      <OrdersHeader
+        onSearchPress={handleSearchPress}
+        onMorePress={handleMorePress}
+      />
 
       <View style={styles.tabContainer}>
         <TabNavigation
