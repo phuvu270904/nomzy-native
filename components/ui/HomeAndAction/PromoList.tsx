@@ -1,13 +1,14 @@
 import { ApiProduct } from "@/hooks/useProducts";
 import { apiClient } from "@/utils/apiClient";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface PromoItem {
@@ -53,6 +54,10 @@ export default function PromoList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProductPress = (productId: number) => {
+    router.push(`/product/${productId}`);
   };
 
   const toggleLikeLocal = (productId: number) => {
@@ -131,7 +136,11 @@ export default function PromoList() {
         style={styles.promoItemsContainer}
       >
         {promoItems.map((item) => (
-          <View key={item.id} style={styles.promoItemCard}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.promoItemCard}
+            onPress={() => handleProductPress(item.id)}
+          >
             <View style={styles.promoBadge}>
               <Text style={styles.promoBadgeText}>PROMO</Text>
             </View>
@@ -161,7 +170,7 @@ export default function PromoList() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>

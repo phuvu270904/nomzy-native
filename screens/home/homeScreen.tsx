@@ -155,7 +155,7 @@ const HomeScreen = () => {
 
   const handleProductPress = (product: any) => {
     console.log("Product pressed:", product);
-    // You can navigate to product detail screen here
+    router.push(`/product/${product.id}`);
   };
 
   const handleLoadMoreProducts = async () => {
