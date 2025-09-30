@@ -50,17 +50,46 @@ const HomeScreen = () => {
     try {
       const response = await apiClient.get("/restaurants");
 
-      const rcmItems = response.data.map((restaurant: any) => ({
-        ...restaurant,
-        distance: userLocation.hasLocation
-          ? distance(
-              userLocation.lat,
-              userLocation.lng,
-              restaurant.addresses[0]?.latitude,
-              restaurant.addresses[0]?.longitude,
-            )
-          : undefined,
-      }));
+      const rcmItems = response.data.map((restaurant: any) => {
+        // derive feedbacks/rating info for the UI
+        const feedbacks = Array.isArray(restaurant.feedbacks)
+          ? restaurant.feedbacks
+          : [];
+        const reviewsCount =
+          feedbacks.length > 0 ? feedbacks.length : (restaurant.reviews ?? 0);
+
+        const averageFromFeedbacks =
+          feedbacks.length > 0
+            ? feedbacks.reduce((s: number, f: any) => s + (f?.rating || 0), 0) /
+              feedbacks.length
+            : null;
+
+        const rating =
+          averageFromFeedbacks !== null
+            ? Number(averageFromFeedbacks.toFixed(1))
+            : Number((restaurant.averageRating ?? restaurant.rating ?? 0) || 0);
+
+        return {
+          ...restaurant,
+          distance: userLocation.hasLocation
+            ? distance(
+                userLocation.lat,
+                userLocation.lng,
+                restaurant.addresses?.[0]?.latitude,
+                restaurant.addresses?.[0]?.longitude,
+              )
+            : undefined,
+          // UI-friendly fields consumed by RecommendedList
+          rating,
+          reviews: reviewsCount,
+          image:
+            restaurant.image ||
+            restaurant.avatar ||
+            restaurant.products?.[0]?.imageUrl ||
+            "",
+          liked: restaurant.liked ?? false,
+        };
+      });
       setRecommendedItems(rcmItems);
     } catch (error) {
       console.error("Error fetching restaurants:", error);
