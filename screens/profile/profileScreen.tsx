@@ -1,7 +1,15 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -13,6 +21,7 @@ import {
   UserProfile,
 } from "@/components/profile";
 import { useAuth } from "@/hooks";
+import { apiClient } from "@/utils/apiClient";
 
 // Mock user data
 const mockUser: UserProfile = {
@@ -34,8 +43,10 @@ const mockStats: ProfileStatsData = {
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
-  const [user] = useState<UserProfile>(mockUser);
-  const [stats] = useState<ProfileStatsData>(mockStats);
+  const [user, setUser] = useState<UserProfile | null>(mockUser);
+  const [stats, setStats] = useState<ProfileStatsData | null>(mockStats);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -57,6 +68,53 @@ export default function ProfileScreen() {
       "Edit profile functionality would be implemented here",
     );
   };
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.get("/auth/profile");
+      const data = response.data;
+
+      // Map API response to UI model
+      const apiUser = data.user;
+      const mappedUser: UserProfile = {
+        id: String(apiUser.id),
+        name: apiUser.name || "",
+        email: apiUser.email || "",
+        phone: apiUser.phone_number || apiUser.phone || undefined,
+        avatar: apiUser.avatar || "https://via.placeholder.com/80",
+        memberSince: apiUser.createdAt
+          ? new Date(apiUser.createdAt).toLocaleString(undefined, {
+              month: "long",
+              year: "numeric",
+            })
+          : undefined,
+        verified: apiUser.role === "user" ? true : false,
+      };
+
+      setUser(mappedUser);
+
+      // Basic stats derivation: orders, favorites, reviews, points are not provided in response
+      setStats(
+        (prev) =>
+          prev || {
+            totalOrders: 0,
+            favoriteRestaurants: 0,
+            reviews: 0,
+            points: 0,
+          },
+      );
+    } catch (err: any) {
+      setError(err.message || "Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchProfile();
+  }, []);
 
   // Profile menu sections
   const accountSection: ProfileMenuItemData[] = [
@@ -90,7 +148,7 @@ export default function ProfileScreen() {
     {
       id: "favorites",
       title: "Favorite Restaurants",
-      subtitle: `${stats.favoriteRestaurants} restaurants`,
+      subtitle: `${stats?.favoriteRestaurants ?? 0} restaurants`,
       icon: "heart-outline",
       iconColor: "#FF6B6B",
       onPress: () => Alert.alert("Favorites", "Favorite restaurants screen"),
@@ -137,20 +195,45 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        <ProfileHeader user={user} onEditPress={handleEditProfile} />
+      {loading ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color="#22C55E" />
+          <Text style={{ marginTop: 12 }}>Loading profile...</Text>
+        </View>
+      ) : error ? (
+        <View style={{ padding: 20 }}>
+          <Text style={{ color: "#FF4757", marginBottom: 12 }}>{error}</Text>
+          <TouchableOpacity
+            onPress={fetchProfile}
+            style={{ backgroundColor: "#22C55E", padding: 12, borderRadius: 8 }}
+          >
+            <Text style={{ color: "#fff", textAlign: "center" }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+        >
+          {user && (
+            <ProfileHeader user={user} onEditPress={handleEditProfile} />
+          )}
 
-        <ProfileStats stats={stats} />
+          {stats && <ProfileStats stats={stats} />}
 
-        <ProfileSection title="Account" items={accountSection} />
+          <ProfileSection title="Account" items={accountSection} />
 
-        <ProfileSection title="Preferences" items={preferencesSection} />
+          <ProfileSection title="Preferences" items={preferencesSection} />
 
-        <ProfileSection title="Support" items={supportSection} />
-      </ScrollView>
+          <ProfileSection title="Support" items={supportSection} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
