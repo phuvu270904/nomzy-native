@@ -1,5 +1,7 @@
+import { useAuth } from "@/hooks/useAuth";
+import apiClient from "@/utils/apiClient";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface HeaderProps {
@@ -7,26 +9,63 @@ interface HeaderProps {
   onCartPress?: () => void;
 }
 
+interface UserAddress {
+  streetAddress?: string;
+  city?: string;
+  country?: string;
+  state?: string;
+  label?: string;
+}
+
 export default function Header({
   onNotificationPress,
   onCartPress,
 }: HeaderProps) {
+  const { user } = useAuth();
+  const [userAddress, setUserAddress] = useState<UserAddress | null>(null);
+
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      try {
+        const response = await apiClient.get("/addresses/default");
+        setUserAddress(response.data);
+      } catch (error) {
+        console.error("Failed to fetch user address:", error);
+      }
+    };
+
+    fetchUserAddress();
+  }, []);
+
+  const getDisplayAddress = () => {
+    if (userAddress) {
+      if (userAddress.streetAddress && userAddress.city) {
+        return `${userAddress.streetAddress}, ${userAddress.city}`;
+      }
+      if (userAddress.city) return userAddress.city;
+      if (userAddress.streetAddress) return userAddress.streetAddress;
+    }
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        <Image
-          source={{
-            uri: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-          }}
-          style={styles.avatar}
-        />
-        <View>
-          <Text style={styles.deliver}>Deliver to</Text>
-          <View style={styles.location}>
-            <Text style={styles.locationText}>Times Square</Text>
-            <Text style={styles.dropdownIcon}>▼</Text>
+        {user?.avatar ? (
+          <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons name="person" size={24} color="#666" />
           </View>
-        </View>
+        )}
+        {userAddress && (
+          <View>
+            <Text style={styles.deliver}>Deliver to</Text>
+            <View style={styles.location}>
+              <Text style={styles.locationText}>{getDisplayAddress()}</Text>
+            </View>
+          </View>
+        )}
       </View>
       <View style={styles.right}>
         <TouchableOpacity
@@ -79,6 +118,15 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginRight: 10,
+  },
+  avatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   right: {
     flexDirection: "row",
