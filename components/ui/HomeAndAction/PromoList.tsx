@@ -109,7 +109,7 @@ export default function PromoList() {
         <View style={styles.header}>
           <Text style={styles.title}>Discount Guaranteed!</Text>
         </View>
-        <Text>Error loading promos: {error}</Text>
+        <Text style={styles.errorText}>Error loading promos: {error}</Text>
       </View>
     );
   }
@@ -173,6 +173,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    color: "red",
     paddingHorizontal: 20,
   },
   loadingText: {
