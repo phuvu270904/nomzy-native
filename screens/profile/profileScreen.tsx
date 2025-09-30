@@ -104,14 +104,6 @@ export default function ProfileScreen() {
       onPress: () =>
         Alert.alert("Notifications", "Notification settings screen"),
     },
-    {
-      id: "language",
-      title: "Language",
-      subtitle: "English",
-      icon: "language-outline",
-      iconColor: "#9B59B6",
-      onPress: () => Alert.alert("Language", "Language selection screen"),
-    },
   ];
 
   const supportSection: ProfileMenuItemData[] = [
@@ -167,7 +159,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: -45,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#FFFFFF",
   },
   scrollView: {
     flex: 1,
