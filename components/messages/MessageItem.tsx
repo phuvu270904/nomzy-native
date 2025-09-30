@@ -50,10 +50,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onPress }) => {
           </Text>
           <View style={styles.rightSection}>
             <Text style={styles.time}>{message.time}</Text>
-            {message.unreadCount && message.unreadCount > 0 && (
+            {(message.unreadCount ?? 0) > 0 && (
               <View style={styles.unreadBadge}>
                 <Text style={styles.unreadText}>
-                  {message.unreadCount > 99 ? "99+" : message.unreadCount}
+                  {message.unreadCount! > 99 ? "99+" : message.unreadCount}
                 </Text>
               </View>
             )}
