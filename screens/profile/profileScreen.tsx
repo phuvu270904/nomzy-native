@@ -22,6 +22,7 @@ import {
 } from "@/components/profile";
 import { useAuth } from "@/hooks";
 import { apiClient } from "@/utils/apiClient";
+import { resetOnboardingStatus } from "@/utils/onboarding";
 
 const mockStats: ProfileStatsData = {
   totalOrders: 47,
@@ -169,6 +170,14 @@ export default function ProfileScreen() {
       icon: "information-circle-outline",
       iconColor: "#95A5A6",
       onPress: () => Alert.alert("About", "About app screen"),
+    },
+    {
+      id: "terms",
+      title: "Terms of Service",
+      subtitle: "Read our terms and conditions",
+      icon: "document-text-outline",
+      iconColor: "#8E44AD",
+      onPress: () => resetOnboardingStatus(),
     },
     {
       id: "logout",

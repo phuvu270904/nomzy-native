@@ -3,12 +3,13 @@ import { apiClient } from "@/utils/apiClient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface PromoItem {
@@ -99,10 +100,8 @@ export default function PromoList() {
 
   if (loading) {
     return (
-      <View>
-        <View style={styles.header}>
-          <Text style={styles.title}>Discount Guaranteed!</Text>
-        </View>
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#4CAF50" />
         <Text style={styles.loadingText}>Loading promos...</Text>
       </View>
     );
@@ -178,110 +177,122 @@ export default function PromoList() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    color: "red",
-    paddingHorizontal: 20,
-  },
-  loadingText: {
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#000",
-  },
-  seeAll: {
-    color: "green",
-    fontWeight: "bold",
-  },
-  promoItemsContainer: {
-    paddingLeft: 20,
-    paddingBottom: 20,
-  },
-  promoItemCard: {
-    width: 180,
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    marginRight: 15,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-    position: "relative",
-  },
-  promoBadge: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    backgroundColor: "#4CAF50",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    zIndex: 1,
-  },
-  promoBadgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  promoItemImage: {
-    width: "100%",
-    height: 120,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-  },
-  promoItemInfo: {
-    padding: 15,
-  },
-  promoItemName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#000",
-    marginBottom: 5,
-  },
-  promoItemDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  promoItemDistance: {
-    fontSize: 12,
-    color: "#666",
-  },
-  promoItemRating: {
-    fontSize: 12,
-    color: "#666",
-  },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  currentPrice: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#4CAF50",
-    marginRight: 8,
-  },
-  originalPrice: {
-    fontSize: 12,
-    color: "#999",
-    textDecorationLine: "line-through",
-    flex: 1,
-  },
-  heartButton: {
-    padding: 5,
-  },
-  heartIcon: {
-    fontSize: 16,
-  },
-});
+	header: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		marginBottom: 12,
+		paddingHorizontal: 20,
+	},
+	container: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		marginBottom: 16,
+		paddingHorizontal: 20,
+		marginTop: 20,
+	},
+	centered: {
+		justifyContent: "center",
+		alignItems: "center",
+		minHeight: 100,
+	},
+	errorText: {
+		color: "red",
+		paddingHorizontal: 20,
+	},
+	loadingText: {
+		paddingHorizontal: 20,
+	},
+	title: {
+		fontSize: 18,
+		fontWeight: "700",
+		color: "#000",
+	},
+	seeAll: {
+		color: "green",
+		fontWeight: "bold",
+	},
+	promoItemsContainer: {
+		paddingLeft: 20,
+		paddingBottom: 20,
+	},
+	promoItemCard: {
+		width: 180,
+		backgroundColor: "#fff",
+		borderRadius: 15,
+		marginRight: 15,
+		shadowColor: "#000",
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.1,
+		shadowRadius: 3.84,
+		elevation: 5,
+		position: "relative",
+	},
+	promoBadge: {
+		position: "absolute",
+		top: 10,
+		left: 10,
+		backgroundColor: "#4CAF50",
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 6,
+		zIndex: 1,
+	},
+	promoBadgeText: {
+		color: "#fff",
+		fontSize: 10,
+		fontWeight: "700",
+	},
+	promoItemImage: {
+		width: "100%",
+		height: 120,
+		borderTopLeftRadius: 15,
+		borderTopRightRadius: 15,
+	},
+	promoItemInfo: {
+		padding: 15,
+	},
+	promoItemName: {
+		fontSize: 14,
+		fontWeight: "600",
+		color: "#000",
+		marginBottom: 5,
+	},
+	promoItemDetails: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		marginBottom: 10,
+	},
+	promoItemDistance: {
+		fontSize: 12,
+		color: "#666",
+	},
+	promoItemRating: {
+		fontSize: 12,
+		color: "#666",
+	},
+	priceContainer: {
+		flexDirection: "row",
+		alignItems: "center",
+	},
+	currentPrice: {
+		fontSize: 16,
+		fontWeight: "700",
+		color: "#4CAF50",
+		marginRight: 8,
+	},
+	originalPrice: {
+		fontSize: 12,
+		color: "#999",
+		textDecorationLine: "line-through",
+		flex: 1,
+	},
+	heartButton: {
+		padding: 5,
+	},
+	heartIcon: {
+		fontSize: 16,
+	},
+})
