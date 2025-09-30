@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/useAuth";
 import apiClient from "@/utils/apiClient";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -9,32 +8,29 @@ interface HeaderProps {
   onCartPress?: () => void;
 }
 
-interface UserAddress {
-  streetAddress?: string;
-  city?: string;
-  country?: string;
-  state?: string;
-  label?: string;
-}
-
 export default function Header({
   onNotificationPress,
   onCartPress,
 }: HeaderProps) {
-  const { user } = useAuth();
-  const [userAddress, setUserAddress] = useState<UserAddress | null>(null);
+  const [userAddress, setUserAddress] = useState<any | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserAddress = async () => {
+    const fetchUserProfile = async () => {
       try {
-        const response = await apiClient.get("/addresses/default");
-        setUserAddress(response.data);
+        const response = await apiClient.get("/auth/profile");
+
+        setUserAddress(
+          response.data.user.addresses?.find((addr: any) => addr.isDefault) ||
+            null,
+        );
+        setUserAvatar(response.data.user.avatar || null);
       } catch (error) {
-        console.error("Failed to fetch user address:", error);
+        console.error("Failed to fetch user profile:", error);
       }
     };
 
-    fetchUserAddress();
+    fetchUserProfile();
   }, []);
 
   const getDisplayAddress = () => {
@@ -51,8 +47,8 @@ export default function Header({
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        {user?.avatar ? (
-          <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        {userAvatar ? (
+          <Image source={{ uri: userAvatar }} style={styles.avatar} />
         ) : (
           <View style={styles.avatarPlaceholder}>
             <Ionicons name="person" size={24} color="#666" />
