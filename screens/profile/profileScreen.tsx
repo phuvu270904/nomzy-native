@@ -23,17 +23,6 @@ import {
 import { useAuth } from "@/hooks";
 import { apiClient } from "@/utils/apiClient";
 
-// Mock user data
-const mockUser: UserProfile = {
-  id: "1",
-  name: "John Doe",
-  email: "john.doe@example.com",
-  phone: "+1 (555) 123-4567",
-  avatar: "https://via.placeholder.com/80",
-  memberSince: "January 2023",
-  verified: true,
-};
-
 const mockStats: ProfileStatsData = {
   totalOrders: 47,
   favoriteRestaurants: 12,
@@ -43,7 +32,7 @@ const mockStats: ProfileStatsData = {
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
-  const [user, setUser] = useState<UserProfile | null>(mockUser);
+  const [user, setUser] = useState<UserProfile | null>();
   const [stats, setStats] = useState<ProfileStatsData | null>(mockStats);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
