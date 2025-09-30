@@ -37,16 +37,27 @@ export default function LoginScreen() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        if (user?.jwt.role === "driver") {
-          router.replace("/(driver-tabs)");
+        if (user?.jwt?.role) {
+          if (user.jwt.role === "driver") {
+            router.replace("/(driver-tabs)");
+          } else {
+            router.replace("/(tabs)");
+          }
         } else {
-          router.replace("/(tabs)");
+          (async () => {
+            try {
+              await fetchUserProfile();
+            } catch (e) {
+              console.log("failed to fetch profile during auth check", e);
+              setIsCheckingAuth(false);
+            }
+          })();
         }
       } else {
         setIsCheckingAuth(false);
       }
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, user?.jwt?.role]);
 
   // Show loading while checking authentication status
   if (isCheckingAuth || isLoading) {
