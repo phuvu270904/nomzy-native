@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { apiClient } from "@/utils/apiClient";
 
@@ -83,6 +82,9 @@ export default function RestaurantDetailScreen() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"About" | "Offers" | "Reviews">(
+    "About",
+  );
 
   useEffect(() => {
     if (id) {
@@ -109,21 +111,6 @@ export default function RestaurantDetailScreen() {
     router.back();
   };
 
-  const handleCall = () => {
-    const phone = restaurant?.phone_number || restaurant?.phone;
-    if (phone) {
-      // Handle phone call
-      console.log("Calling:", phone);
-    }
-  };
-
-  const handleDirections = () => {
-    if (restaurant?.addresses?.[0]) {
-      // Handle directions
-      console.log("Getting directions to:", restaurant.addresses[0]);
-    }
-  };
-
   const handleFavorite = () => {
     // Handle favorite toggle
     console.log("Toggle favorite for restaurant:", id);
@@ -131,20 +118,20 @@ export default function RestaurantDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <View style={styles.container}>
+        <StatusBar style="light" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
           <Text style={styles.loadingText}>Loading restaurant details...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error || !restaurant) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <View style={styles.container}>
+        <StatusBar style="light" />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
             {error || "Restaurant not found"}
@@ -159,207 +146,209 @@ export default function RestaurantDetailScreen() {
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Restaurant Details</Text>
-        <TouchableOpacity onPress={handleFavorite} style={styles.headerButton}>
-          <Ionicons name="heart-outline" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <StatusBar style="light" />
 
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Restaurant Image (avatar) */}
-        {(restaurant.avatar || restaurant.products?.[0]?.imageUrl) && (
+        {/* Hero Section with Image */}
+        <View style={styles.heroSection}>
           <Image
             source={{
               uri:
                 restaurant.avatar ||
                 restaurant.products?.[0]?.imageUrl ||
-                undefined,
+                "https://via.placeholder.com/400x300",
             }}
-            style={styles.restaurantImage}
+            style={styles.heroImage}
           />
-        )}
 
-        {/* Restaurant Info */}
-        <View style={styles.infoContainer}>
+          {/* Header Overlay */}
+          <View style={styles.headerOverlay}>
+            <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
+              <Ionicons name="arrow-back" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleFavorite}
+              style={styles.headerButton}
+            >
+              <Ionicons
+                name={restaurant.liked ? "heart" : "heart-outline"}
+                size={24}
+                color={restaurant.liked ? "#FF4B4B" : "#FFF"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Restaurant Info Card */}
+        <View style={styles.restaurantInfoCard}>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
 
-          {/* The API doesn't include a top-level description; show email/phone instead */}
-          {restaurant.email && (
-            <Text style={styles.description}>{restaurant.email}</Text>
-          )}
-          {restaurant.phone_number && (
-            <Text style={styles.description}>
-              Phone: {restaurant.phone_number}
-            </Text>
-          )}
-
-          {/* Rating and Reviews */}
-          {(restaurant.rating || restaurant.reviews) && (
+          <View style={styles.ratingRow}>
             <View style={styles.ratingContainer}>
-              {restaurant.rating && (
-                <View style={styles.ratingItem}>
-                  <Ionicons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                </View>
-              )}
-              {restaurant.reviews && (
-                <Text style={styles.reviewsText}>
-                  ({restaurant.reviews} reviews)
-                </Text>
-              )}
+              <Ionicons name="star" size={16} color="#FFD700" />
+              <Text style={styles.ratingText}>
+                {restaurant.averageRating?.toFixed(1) || "4.5"}
+              </Text>
             </View>
-          )}
+            <Text style={styles.reviewCount}>
+              ({restaurant.feedbacks?.length || 0} reviews)
+            </Text>
+            <Text style={styles.deliveryTime}>• 25-30 min</Text>
+          </View>
 
-          {/* Additional Info */}
-          <View style={styles.detailsContainer}>
+          <View style={styles.tagsContainer}>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Free Delivery</Text>
+            </View>
             {restaurant.cuisine && (
-              <View style={styles.detailItem}>
-                <Ionicons name="restaurant-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>{restaurant.cuisine}</Text>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{restaurant.cuisine}</Text>
               </View>
-            )}
-
-            {restaurant.priceRange && (
-              <View style={styles.detailItem}>
-                <Ionicons name="cash-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>{restaurant.priceRange}</Text>
-              </View>
-            )}
-
-            {restaurant.openingHours && (
-              <View style={styles.detailItem}>
-                <Ionicons name="time-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>{restaurant.openingHours}</Text>
-              </View>
-            )}
-
-            {restaurant.addresses?.[0] && (
-              <View style={styles.detailItem}>
-                <Ionicons name="location-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>
-                  {restaurant.addresses[0].streetAddress ||
-                    restaurant.addresses[0].label}
-                  , {restaurant.addresses[0].city}
-                </Text>
-              </View>
-            )}
-
-            {restaurant.phone_number && (
-              <View style={styles.detailItem}>
-                <Ionicons name="call-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>{restaurant.phone_number}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            {restaurant.phone_number && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleCall}
-              >
-                <Ionicons name="call" size={20} color="#4CAF50" />
-                <Text style={styles.actionButtonText}>Call</Text>
-              </TouchableOpacity>
-            )}
-
-            {restaurant.addresses?.[0] && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleDirections}
-              >
-                <Ionicons name="navigate" size={20} color="#4CAF50" />
-                <Text style={styles.actionButtonText}>Directions</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Products List */}
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 10 }}>
-              Menu
-            </Text>
-            {restaurant.products && restaurant.products.length > 0 ? (
-              restaurant.products.map((p) => (
-                <View key={p.id} style={styles.productCard}>
-                  {p.imageUrl ? (
-                    <Image
-                      source={{ uri: p.imageUrl }}
-                      style={styles.productImage}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.productImage,
-                        styles.productImagePlaceholder,
-                      ]}
-                    />
-                  )}
-                  <View style={styles.productInfo}>
-                    <Text style={styles.productName}>{p.name}</Text>
-                    {p.description ? (
-                      <Text style={styles.productDescription}>
-                        {p.description}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.productPrice}>
-                      {p.discountPrice ? `$${p.discountPrice}` : `$${p.price}`}
-                    </Text>
-                  </View>
-                </View>
-              ))
-            ) : (
-              <Text style={{ color: "#666" }}>No products available.</Text>
-            )}
-          </View>
-
-          {/* Feedbacks */}
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 10 }}>
-              Reviews
-            </Text>
-            {restaurant.feedbacks && restaurant.feedbacks.length > 0 ? (
-              restaurant.feedbacks.map((f) => (
-                <View key={f.id} style={styles.feedbackCard}>
-                  <View style={styles.feedbackHeader}>
-                    <Text style={styles.feedbackRating}>{f.rating} ★</Text>
-                    <Text style={styles.feedbackDate}>
-                      {f.createdAt
-                        ? new Date(f.createdAt).toLocaleDateString()
-                        : ""}
-                    </Text>
-                  </View>
-                  {f.review ? (
-                    <Text style={styles.feedbackText}>{f.review}</Text>
-                  ) : (
-                    <Text style={styles.feedbackText}>(No review text)</Text>
-                  )}
-                </View>
-              ))
-            ) : (
-              <Text style={{ color: "#666" }}>No reviews yet.</Text>
             )}
           </View>
         </View>
+
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          {["About", "Offers", "Reviews"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.tabButton,
+                activeTab === tab && styles.activeTabButton,
+              ]}
+              onPress={() => setActiveTab(tab as any)}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab && styles.activeTabText,
+                ]}
+              >
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tab Content */}
+        {activeTab === "About" && (
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.aboutText}>
+              {restaurant.email ||
+                "Welcome to our restaurant! We serve delicious food with the finest ingredients."}
+            </Text>
+
+            {restaurant.addresses?.[0] && (
+              <View style={styles.addressSection}>
+                <Text style={styles.sectionTitle}>Location</Text>
+                <Text style={styles.addressText}>
+                  {restaurant.addresses[0].streetAddress},{" "}
+                  {restaurant.addresses[0].city}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {activeTab === "Offers" && (
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Special Offers</Text>
+            <View style={styles.offerCard}>
+              <Text style={styles.offerTitle}>Free Delivery</Text>
+              <Text style={styles.offerDescription}>
+                Free delivery on orders above $25
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {activeTab === "Reviews" && (
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            {restaurant.feedbacks && restaurant.feedbacks.length > 0 ? (
+              restaurant.feedbacks.map((feedback) => (
+                <View key={feedback.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewRating}>
+                      {[...Array(5)].map((_, index) => (
+                        <Ionicons
+                          key={index}
+                          name="star"
+                          size={14}
+                          color={
+                            index < feedback.rating ? "#FFD700" : "#E0E0E0"
+                          }
+                        />
+                      ))}
+                    </View>
+                    <Text style={styles.reviewDate}>
+                      {feedback.createdAt
+                        ? new Date(feedback.createdAt).toLocaleDateString()
+                        : ""}
+                    </Text>
+                  </View>
+                  <Text style={styles.reviewText}>
+                    {feedback.review || "Great food and service!"}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noReviewsText}>No reviews yet</Text>
+            )}
+          </View>
+        )}
+
+        {/* Menu Section */}
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>Menu</Text>
+          {restaurant.products && restaurant.products.length > 0 ? (
+            restaurant.products.map((product) => (
+              <View key={product.id} style={styles.menuItem}>
+                <View style={styles.menuItemContent}>
+                  <View style={styles.menuItemInfo}>
+                    <Text style={styles.menuItemName}>{product.name}</Text>
+                    <Text style={styles.menuItemDescription}>
+                      {product.description || "Delicious and fresh"}
+                    </Text>
+                    <Text style={styles.menuItemPrice}>
+                      ${product.discountPrice || product.price}
+                    </Text>
+                  </View>
+                  <View style={styles.menuItemImageContainer}>
+                    {product.imageUrl ? (
+                      <Image
+                        source={{ uri: product.imageUrl }}
+                        style={styles.menuItemImage}
+                      />
+                    ) : (
+                      <View style={styles.menuItemImagePlaceholder}>
+                        <Ionicons name="restaurant" size={24} color="#999" />
+                      </View>
+                    )}
+                    <TouchableOpacity style={styles.addButton}>
+                      <Ionicons name="add" size={20} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noMenuText}>No menu items available</Text>
+          )}
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -413,169 +402,287 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  header: {
+  scrollView: {
+    flex: 1,
+  },
+  heroSection: {
+    position: "relative",
+    height: 300,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  headerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   headerButton: {
-    padding: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  restaurantImage: {
-    width: "100%",
-    height: 250,
-    resizeMode: "cover",
-  },
-  infoContainer: {
+  restaurantInfoCard: {
+    backgroundColor: "#FFFFFF",
     padding: 20,
+    marginTop: -20,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   restaurantName: {
     fontSize: 24,
     fontWeight: "700",
     color: "#000",
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  description: {
-    fontSize: 16,
-    color: "#666",
-    lineHeight: 24,
-    marginBottom: 15,
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-  },
-  ratingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 10,
+    marginRight: 8,
   },
   ratingText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: "#000",
-    marginLeft: 5,
+    marginLeft: 4,
   },
-  reviewsText: {
+  reviewCount: {
+    fontSize: 14,
+    color: "#666",
+    marginRight: 8,
+  },
+  deliveryTime: {
     fontSize: 14,
     color: "#666",
   },
-  detailsContainer: {
-    marginBottom: 20,
-  },
-  detailItem: {
+  tagsContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
+    gap: 8,
   },
-  detailText: {
-    fontSize: 16,
-    color: "#666",
-    marginLeft: 10,
-    flex: 1,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F8F8F8",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#4CAF50",
-  },
-  actionButtonText: {
-    fontSize: 16,
-    color: "#4CAF50",
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  productCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#EAEAEA",
-  },
-  productImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    resizeMode: "cover",
+  tag: {
     backgroundColor: "#F0F0F0",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
-  productImagePlaceholder: {
-    justifyContent: "center",
-    alignItems: "center",
+  tagText: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "500",
   },
-  productInfo: {
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F8F8F8",
+    marginHorizontal: 16,
+    marginTop: 20,
+    borderRadius: 12,
+    padding: 4,
+  },
+  tabButton: {
     flex: 1,
-    marginLeft: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 8,
   },
-  productName: {
+  activeTabButton: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#666",
+  },
+  activeTabText: {
+    color: "#000",
+    fontWeight: "600",
+  },
+  tabContent: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 12,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+  },
+  addressSection: {
+    marginTop: 20,
+  },
+  addressText: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+  },
+  offerCard: {
+    backgroundColor: "#F0F9FF",
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CAF50",
+  },
+  offerTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#000",
+    marginBottom: 4,
   },
-  productDescription: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 4,
-  },
-  productPrice: {
+  offerDescription: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#4CAF50",
-    marginTop: 6,
+    color: "#666",
   },
-  feedbackCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#EAEAEA",
+  reviewCard: {
+    backgroundColor: "#F8F8F8",
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 12,
   },
-  feedbackHeader: {
+  reviewHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  feedbackRating: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFD700",
+  reviewRating: {
+    flexDirection: "row",
+    gap: 2,
   },
-  feedbackDate: {
+  reviewDate: {
     fontSize: 12,
     color: "#999",
   },
-  feedbackText: {
+  reviewText: {
     fontSize: 14,
     color: "#333",
+    lineHeight: 20,
+  },
+  noReviewsText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    padding: 20,
+  },
+  menuSection: {
+    padding: 20,
+  },
+  menuItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  menuItemContent: {
+    flexDirection: "row",
+    padding: 16,
+  },
+  menuItemInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  menuItemName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 4,
+  },
+  menuItemDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  menuItemPrice: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#4CAF50",
+  },
+  menuItemImageContainer: {
+    position: "relative",
+    width: 80,
+    height: 80,
+  },
+  menuItemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    resizeMode: "cover",
+  },
+  menuItemImagePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButton: {
+    position: "absolute",
+    bottom: -8,
+    right: -8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#4CAF50",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  noMenuText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    padding: 20,
   },
 });
