@@ -29,7 +29,6 @@ export interface Product {
   price: number;
   image: string;
   category: string;
-  rating: number;
   liked?: boolean;
   description?: string;
 }
@@ -102,7 +101,6 @@ export const useProducts = (initialLimit: number = 10) => {
             price: parseFloat(apiProduct.price),
             image: imageUrl,
             category: apiProduct.category.name,
-            rating: 4.5, // Default rating since API doesn't provide it
             liked: false, // Default to false since API doesn't provide it
             description: apiProduct.description,
           };

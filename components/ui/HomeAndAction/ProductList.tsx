@@ -14,7 +14,6 @@ interface Product {
   price: number;
   image: string;
   category: string;
-  rating: number;
   liked?: boolean;
   description?: string;
 }
@@ -52,7 +51,6 @@ export default function ProductList({
         </Text>
         <View style={styles.productDetails}>
           <Text style={styles.productCategory}>{item.category}</Text>
-          <Text style={styles.productRating}>⭐ {item.rating}</Text>
         </View>
         <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
       </View>
