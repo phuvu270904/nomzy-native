@@ -1,24 +1,29 @@
 import { CartItem as ApiCartItem } from "@/api/cartApi";
 import { ThemedText } from "@/components/ThemedText";
+import {
+  removeCartItemAsync,
+  removeItemOptimistic,
+  updateCartItemAsync,
+  updateQuantityOptimistic,
+} from "@/store/slices/cartSlice";
+import { useAppDispatch } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface CartItemProps {
   item: ApiCartItem;
-  onRemove?: (itemId: number) => void;
   onPress?: (item: ApiCartItem) => void;
-  onUpdateQuantity?: (itemId: number, quantity: number) => void;
 }
 
-export function CartItem({
-  item,
-  onRemove,
-  onPress,
-  onUpdateQuantity,
-}: CartItemProps) {
+export function CartItem({ item, onPress }: CartItemProps) {
+  const dispatch = useAppDispatch();
+
   const handleRemove = () => {
-    onRemove?.(item.id);
+    // Optimistic update first for better UX
+    dispatch(removeItemOptimistic(item.id));
+    // Then sync with backend
+    dispatch(removeCartItemAsync(item.id));
   };
 
   const handlePress = () => {
@@ -27,12 +32,24 @@ export function CartItem({
 
   const handleDecreaseQuantity = () => {
     if (item.quantity > 1) {
-      onUpdateQuantity?.(item.id, item.quantity - 1);
+      const newQuantity = item.quantity - 1;
+      // Optimistic update first for better UX
+      dispatch(
+        updateQuantityOptimistic({ itemId: item.id, quantity: newQuantity }),
+      );
+      // Then sync with backend
+      dispatch(updateCartItemAsync({ itemId: item.id, quantity: newQuantity }));
     }
   };
 
   const handleIncreaseQuantity = () => {
-    onUpdateQuantity?.(item.id, item.quantity + 1);
+    const newQuantity = item.quantity + 1;
+    // Optimistic update first for better UX
+    dispatch(
+      updateQuantityOptimistic({ itemId: item.id, quantity: newQuantity }),
+    );
+    // Then sync with backend
+    dispatch(updateCartItemAsync({ itemId: item.id, quantity: newQuantity }));
   };
 
   // Calculate item total price

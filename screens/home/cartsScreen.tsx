@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,18 +17,17 @@ import { CartItem } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { useCart } from "@/hooks/useCart";
+import { clearError, fetchCart } from "@/store/slices/cartSlice";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 
 export default function CartsScreen() {
-  const {
-    cart,
-    isLoading,
-    error,
-    refetch,
-    updateCartItem,
-    removeCartItem,
-    clearError,
-  } = useCart();
+  const dispatch = useAppDispatch();
+  const { cart, isLoading, error } = useAppSelector((state) => state.cart);
+
+  // Fetch cart data when component mounts
+  useEffect(() => {
+    dispatch(fetchCart());
+  }, [dispatch]);
 
   // Calculate totals from API data
   const { subtotal, deliveryFee, tax, total, itemCount } = useMemo(() => {
@@ -63,39 +62,6 @@ export default function CartsScreen() {
     // Show action sheet or navigate to cart options
   };
 
-  const handleRemoveItem = async (itemId: number) => {
-    const item = cart?.cartItems.find((item) => item.id === itemId);
-    if (!item) return;
-
-    Alert.alert(
-      "Remove Item",
-      `Are you sure you want to remove "${item.product.name}" from your cart?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            const success = await removeCartItem(itemId);
-            if (!success) {
-              Alert.alert("Error", "Failed to remove item from cart");
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleUpdateQuantity = async (itemId: number, quantity: number) => {
-    const success = await updateCartItem(itemId, quantity);
-    if (!success) {
-      Alert.alert("Error", "Failed to update item quantity");
-    }
-  };
-
   const handleItemPress = (item: ApiCartItem) => {
     console.log("Item pressed:", item.product.name);
     // Navigate to item details or edit quantity
@@ -117,17 +83,12 @@ export default function CartsScreen() {
   };
 
   const handleRetry = () => {
-    clearError();
-    refetch();
+    dispatch(clearError());
+    dispatch(fetchCart());
   };
 
   const renderCartItem = ({ item }: { item: ApiCartItem }) => (
-    <CartItem
-      item={item}
-      onRemove={handleRemoveItem}
-      onPress={handleItemPress}
-      onUpdateQuantity={handleUpdateQuantity}
-    />
+    <CartItem item={item} onPress={handleItemPress} />
   );
 
   const renderEmptyCart = () => (

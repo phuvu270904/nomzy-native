@@ -1,10 +1,12 @@
 import { Action, configureStore, ThunkAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import cartReducer from "./slices/cartSlice";
 import onboardingReducer from "./slices/onboardingSlice";
 
 export const store = configureStore({
   reducer: {
     onboarding: onboardingReducer,
+    cart: cartReducer,
     // Add other reducers here as needed
   },
 });
