@@ -2,12 +2,12 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useMemo } from "react";
 import {
-    Alert,
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -89,7 +89,7 @@ export default function CheckoutScreen() {
           onPress: () => {
             // TODO: Implement order placement logic
             Alert.alert("Success", "Order placed successfully!");
-            router.push("/(tabs)");
+            router.push("/searching-driver/" as any);
           },
         },
       ],
