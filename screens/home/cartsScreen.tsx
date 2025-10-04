@@ -85,7 +85,7 @@ export default function CartsScreen() {
 
     console.log("Proceeding to checkout with total:", total);
     // Navigate to checkout screen
-    // router.push('/checkout');
+    router.push("/checkout");
   };
 
   const handleRetry = () => {
