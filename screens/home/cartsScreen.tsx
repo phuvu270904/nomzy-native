@@ -36,6 +36,12 @@ export default function CartsScreen() {
     }
 
     const subtotal = cart.cartItems.reduce((sum, item) => {
+      // Add null checking for product data
+      if (!item.product) {
+        console.warn("Cart item missing product data:", item);
+        return sum;
+      }
+
       const price = item.product.discountPrice
         ? parseFloat(item.product.discountPrice)
         : parseFloat(item.product.price);

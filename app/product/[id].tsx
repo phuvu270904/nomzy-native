@@ -2,17 +2,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { addToCartAsync } from "@/store/slices/cartSlice";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { apiClient } from "@/utils/apiClient";
 
 interface Product {
@@ -41,11 +43,15 @@ interface Product {
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const dispatch = useAppDispatch();
+  const { error: cartError } = useAppSelector((state) => state.cart);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -78,21 +84,59 @@ export default function ProductDetailScreen() {
     setQuantity(Math.max(1, quantity + delta));
   };
 
-  const handleAddToCart = () => {
-    Alert.alert(
-      "Added to Cart",
-      `${product?.name} (${quantity}x) has been added to your cart.`,
-      [
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    try {
+      setAddingToCart(true);
+
+      // Dispatch add to cart action
+      const result = await dispatch(
+        addToCartAsync({
+          productId: product.id,
+          quantity,
+        }),
+      );
+
+      if (addToCartAsync.fulfilled.match(result)) {
+        // Success - show confirmation
+        Alert.alert(
+          "Added to Cart",
+          `${product.name} (${quantity}x) has been added to your cart.`,
+          [
+            {
+              text: "Continue Shopping",
+              style: "cancel",
+            },
+            {
+              text: "View Cart",
+              onPress: () => router.push("/carts"),
+            },
+          ],
+        );
+      } else {
+        // Handle error
+        const errorMessage =
+          (result.payload as string) ||
+          cartError ||
+          "Failed to add item to cart";
+        Alert.alert("Error", errorMessage, [
+          {
+            text: "OK",
+            style: "default",
+          },
+        ]);
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to add item to cart", [
         {
-          text: "Continue Shopping",
-          style: "cancel",
+          text: "OK",
+          style: "default",
         },
-        {
-          text: "View Cart",
-          onPress: () => router.push("/carts"),
-        },
-      ],
-    );
+      ]);
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   if (loading) {
@@ -221,12 +265,25 @@ export default function ProductDetailScreen() {
         </View>
 
         <TouchableOpacity
-          style={styles.addToCartButton}
+          style={[
+            styles.addToCartButton,
+            addingToCart && styles.addToCartButtonDisabled,
+          ]}
           onPress={handleAddToCart}
+          disabled={addingToCart}
         >
-          <Text style={styles.addToCartText}>
-            Add to Cart - ${(parseFloat(currentPrice) * quantity).toFixed(2)}
-          </Text>
+          {addingToCart ? (
+            <View style={styles.addToCartLoading}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <Text style={[styles.addToCartText, { marginLeft: 8 }]}>
+                Adding...
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.addToCartText}>
+              Add to Cart - ${(parseFloat(currentPrice) * quantity).toFixed(2)}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -437,6 +494,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#22C55E",
     paddingVertical: 16,
     borderRadius: 12,
+    alignItems: "center",
+  },
+  addToCartButtonDisabled: {
+    backgroundColor: "#9CA3AF",
+  },
+  addToCartLoading: {
+    flexDirection: "row",
     alignItems: "center",
   },
   addToCartText: {

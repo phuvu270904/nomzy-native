@@ -19,6 +19,12 @@ interface CartItemProps {
 export function CartItem({ item, onPress }: CartItemProps) {
   const dispatch = useAppDispatch();
 
+  // Early return if product data is missing
+  if (!item.product) {
+    console.warn("Cart item missing product data:", item);
+    return null;
+  }
+
   const handleRemove = () => {
     // Optimistic update first for better UX
     dispatch(removeItemOptimistic(item.id));

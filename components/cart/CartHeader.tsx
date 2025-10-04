@@ -22,9 +22,6 @@ export function CartHeader({ onBack, onMore, itemCount = 0 }: CartHeaderProps) {
 
       <View style={styles.titleContainer}>
         <ThemedText style={styles.title}>My Cart</ThemedText>
-        {itemCount > 0 && (
-          <ThemedText style={styles.itemCount}>({itemCount} items)</ThemedText>
-        )}
       </View>
 
       <TouchableOpacity
