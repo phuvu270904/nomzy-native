@@ -59,7 +59,9 @@ export function CartItem({ item, onPress }: CartItemProps) {
   };
 
   // Calculate item total price
-  const itemTotal = parseFloat(item.price) * item.quantity;
+  const itemTotal = item.product.discountPrice
+    ? parseFloat(item.product.discountPrice) * item.quantity
+    : parseFloat(item.price) * item.quantity;
   const hasDiscount =
     item.product.discountPrice &&
     parseFloat(item.product.discountPrice) < parseFloat(item.product.price);
