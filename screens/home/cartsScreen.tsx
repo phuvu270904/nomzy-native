@@ -1,71 +1,58 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useMemo, useState } from "react";
-import { Alert, FlatList, StyleSheet, View } from "react-native";
+import React, { useMemo } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CartHeader } from "@/components/cart/CartHeader";
-import { CartItem, CartItemData } from "@/components/cart/CartItem";
+import { CartItem } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-
-// Sample cart data
-const sampleCartItems: CartItemData[] = [
-  {
-    id: "1",
-    name: "Mixed Salad Bowl",
-    image: "/placeholder.svg?height=60&width=60",
-    quantity: 3,
-    details: "1.5 km",
-    price: 18.0,
-  },
-  {
-    id: "2",
-    name: "Dessert Cake - Lemon",
-    image: "/placeholder.svg?height=60&width=60",
-    quantity: 4,
-    details: "2.1 km",
-    price: 22.0,
-  },
-  {
-    id: "3",
-    name: "Japanese Kumpa",
-    image: "/placeholder.svg?height=60&width=60",
-    quantity: 2,
-    details: "1.8 km",
-    price: 25.0,
-  },
-  {
-    id: "4",
-    name: "Vegetable Salad",
-    image: "/placeholder.svg?height=60&width=60",
-    quantity: 5,
-    details: "2.8 km",
-    price: 20.0,
-  },
-  {
-    id: "5",
-    name: "Noodles & Beacon",
-    image: "/placeholder.svg?height=60&width=60",
-    quantity: 3,
-    details: "1.5 km",
-    price: 19.0,
-  },
-];
+import { useCart } from "@/hooks/useCart";
+import { CartItem as ApiCartItem } from "@/utils/cartApi";
 
 export default function CartsScreen() {
-  const [cartItems, setCartItems] = useState<CartItemData[]>(sampleCartItems);
+  const {
+    cart,
+    isLoading,
+    error,
+    refetch,
+    updateCartItem,
+    removeCartItem,
+    clearError,
+  } = useCart();
 
-  // Calculate totals
-  const { subtotal, deliveryFee, tax, total } = useMemo(() => {
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
+  // Calculate totals from API data
+  const { subtotal, deliveryFee, tax, total, itemCount } = useMemo(() => {
+    if (!cart?.cartItems) {
+      return { subtotal: 0, deliveryFee: 0, tax: 0, total: 0, itemCount: 0 };
+    }
+
+    const subtotal = cart.cartItems.reduce((sum, item) => {
+      const price = item.product.discountPrice
+        ? parseFloat(item.product.discountPrice)
+        : parseFloat(item.product.price);
+      return sum + price * item.quantity;
+    }, 0);
+
     const deliveryFee = subtotal > 50 ? 0 : 3.99; // Free delivery over $50
     const tax = subtotal * 0.08; // 8% tax
     const total = subtotal + deliveryFee + tax;
+    const itemCount = cart.cartItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
 
-    return { subtotal, deliveryFee, tax, total };
-  }, [cartItems]);
+    return { subtotal, deliveryFee, tax, total, itemCount };
+  }, [cart?.cartItems]);
 
   const handleBack = () => {
     router.back();
@@ -76,13 +63,13 @@ export default function CartsScreen() {
     // Show action sheet or navigate to cart options
   };
 
-  const handleRemoveItem = (itemId: string) => {
-    const item = cartItems.find((item) => item.id === itemId);
+  const handleRemoveItem = async (itemId: number) => {
+    const item = cart?.cartItems.find((item) => item.id === itemId);
     if (!item) return;
 
     Alert.alert(
       "Remove Item",
-      `Are you sure you want to remove "${item.name}" from your cart?`,
+      `Are you sure you want to remove "${item.product.name}" from your cart?`,
       [
         {
           text: "Cancel",
@@ -91,22 +78,32 @@ export default function CartsScreen() {
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => {
-            setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+          onPress: async () => {
+            const success = await removeCartItem(itemId);
+            if (!success) {
+              Alert.alert("Error", "Failed to remove item from cart");
+            }
           },
         },
       ],
     );
   };
 
-  const handleItemPress = (item: CartItemData) => {
-    console.log("Item pressed:", item.name);
+  const handleUpdateQuantity = async (itemId: number, quantity: number) => {
+    const success = await updateCartItem(itemId, quantity);
+    if (!success) {
+      Alert.alert("Error", "Failed to update item quantity");
+    }
+  };
+
+  const handleItemPress = (item: ApiCartItem) => {
+    console.log("Item pressed:", item.product.name);
     // Navigate to item details or edit quantity
-    // router.navigate(`/food-details/${item.id}`);
+    // router.push(`/product/${item.productId}`);
   };
 
   const handleCheckout = () => {
-    if (cartItems.length === 0) {
+    if (!cart?.cartItems || cart.cartItems.length === 0) {
       Alert.alert(
         "Empty Cart",
         "Please add items to your cart before checkout.",
@@ -116,14 +113,20 @@ export default function CartsScreen() {
 
     console.log("Proceeding to checkout with total:", total);
     // Navigate to checkout screen
-    // router.navigate('/checkout');
+    // router.push('/checkout');
   };
 
-  const renderCartItem = ({ item }: { item: CartItemData }) => (
+  const handleRetry = () => {
+    clearError();
+    refetch();
+  };
+
+  const renderCartItem = ({ item }: { item: ApiCartItem }) => (
     <CartItem
       item={item}
       onRemove={handleRemoveItem}
       onPress={handleItemPress}
+      onUpdateQuantity={handleUpdateQuantity}
     />
   );
 
@@ -136,6 +139,25 @@ export default function CartsScreen() {
     </View>
   );
 
+  const renderError = () => (
+    <View style={styles.errorContainer}>
+      <ThemedText style={styles.errorTitle}>
+        Oops! Something went wrong
+      </ThemedText>
+      <ThemedText style={styles.errorMessage}>{error}</ThemedText>
+      <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+        <ThemedText style={styles.retryButtonText}>Try Again</ThemedText>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderLoading = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#4CAF50" />
+      <ThemedText style={styles.loadingText}>Loading your cart...</ThemedText>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -143,16 +165,20 @@ export default function CartsScreen() {
       <CartHeader
         onBack={handleBack}
         onMore={handleMore}
-        itemCount={cartItems.length}
+        itemCount={itemCount}
       />
 
       <ThemedView style={styles.content}>
-        {cartItems.length > 0 ? (
+        {isLoading ? (
+          renderLoading()
+        ) : error ? (
+          renderError()
+        ) : cart?.cartItems && cart.cartItems.length > 0 ? (
           <>
             <FlatList
-              data={cartItems}
+              data={cart.cartItems}
               renderItem={renderCartItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.listContainer}
             />
@@ -204,5 +230,49 @@ const styles = StyleSheet.create({
     color: "#9E9E9E",
     textAlign: "center",
     lineHeight: 24,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FF5252",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: "#9E9E9E",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#9E9E9E",
+    textAlign: "center",
+    marginTop: 16,
   },
 });

@@ -1,24 +1,22 @@
 import { ThemedText } from "@/components/ThemedText";
+import { CartItem as ApiCartItem } from "@/utils/cartApi";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
-export interface CartItemData {
-  id: string;
-  name: string;
-  image: string;
-  quantity: number;
-  details: string; // e.g., "1.5 km" or size info
-  price: number;
-}
-
 interface CartItemProps {
-  item: CartItemData;
-  onRemove?: (itemId: string) => void;
-  onPress?: (item: CartItemData) => void;
+  item: ApiCartItem;
+  onRemove?: (itemId: number) => void;
+  onPress?: (item: ApiCartItem) => void;
+  onUpdateQuantity?: (itemId: number, quantity: number) => void;
 }
 
-export function CartItem({ item, onRemove, onPress }: CartItemProps) {
+export function CartItem({
+  item,
+  onRemove,
+  onPress,
+  onUpdateQuantity,
+}: CartItemProps) {
   const handleRemove = () => {
     onRemove?.(item.id);
   };
@@ -26,6 +24,22 @@ export function CartItem({ item, onRemove, onPress }: CartItemProps) {
   const handlePress = () => {
     onPress?.(item);
   };
+
+  const handleDecreaseQuantity = () => {
+    if (item.quantity > 1) {
+      onUpdateQuantity?.(item.id, item.quantity - 1);
+    }
+  };
+
+  const handleIncreaseQuantity = () => {
+    onUpdateQuantity?.(item.id, item.quantity + 1);
+  };
+
+  // Calculate item total price
+  const itemTotal = parseFloat(item.price) * item.quantity;
+  const hasDiscount =
+    item.product.discountPrice &&
+    parseFloat(item.product.discountPrice) < parseFloat(item.product.price);
 
   return (
     <TouchableOpacity
@@ -35,17 +49,67 @@ export function CartItem({ item, onRemove, onPress }: CartItemProps) {
     >
       <View style={styles.content}>
         {/* Food Image */}
-        <Image source={{ uri: item.image }} style={styles.foodImage} />
+        <Image
+          source={{ uri: item.product.imageUrl }}
+          style={styles.foodImage}
+        />
 
         {/* Item Details */}
         <View style={styles.itemInfo}>
-          <ThemedText style={styles.itemName}>{item.name}</ThemedText>
-          <ThemedText style={styles.itemDetails}>
-            {item.quantity} items | {item.details}
+          <ThemedText style={styles.itemName}>{item.product.name}</ThemedText>
+          <ThemedText style={styles.itemDescription} numberOfLines={2}>
+            {item.product.description}
           </ThemedText>
-          <ThemedText style={styles.itemPrice}>
-            ${item.price.toFixed(2)}
-          </ThemedText>
+
+          {/* Price section */}
+          <View style={styles.priceSection}>
+            {hasDiscount ? (
+              <View style={styles.priceContainer}>
+                <ThemedText style={styles.originalPrice}>
+                  ${parseFloat(item.product.price).toFixed(2)}
+                </ThemedText>
+                <ThemedText style={styles.discountPrice}>
+                  ${parseFloat(item.product.discountPrice!).toFixed(2)}
+                </ThemedText>
+              </View>
+            ) : (
+              <ThemedText style={styles.itemPrice}>
+                ${parseFloat(item.product.price).toFixed(2)}
+              </ThemedText>
+            )}
+          </View>
+
+          {/* Quantity controls and total */}
+          <View style={styles.quantitySection}>
+            <View style={styles.quantityControls}>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={handleDecreaseQuantity}
+                disabled={item.quantity <= 1}
+              >
+                <Ionicons
+                  name="remove"
+                  size={16}
+                  color={item.quantity <= 1 ? "#ccc" : "#666"}
+                />
+              </TouchableOpacity>
+
+              <ThemedText style={styles.quantityText}>
+                {item.quantity}
+              </ThemedText>
+
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={handleIncreaseQuantity}
+              >
+                <Ionicons name="add" size={16} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <ThemedText style={styles.totalPrice}>
+              Total: ${itemTotal.toFixed(2)}
+            </ThemedText>
+          </View>
         </View>
 
         {/* Remove Button */}
@@ -79,7 +143,7 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     padding: 16,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   foodImage: {
     width: 60,
@@ -96,15 +160,68 @@ const styles = StyleSheet.create({
     color: "#2E2E2E",
     marginBottom: 4,
   },
-  itemDetails: {
+  itemDescription: {
     fontSize: 12,
     color: "#9E9E9E",
     marginBottom: 8,
+    lineHeight: 16,
+  },
+  priceSection: {
+    marginBottom: 8,
+  },
+  priceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: "#9E9E9E",
+    textDecorationLine: "line-through",
+  },
+  discountPrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4CAF50",
   },
   itemPrice: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
     color: "#4CAF50",
+  },
+  quantitySection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  quantityControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
+    paddingHorizontal: 4,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    margin: 2,
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginHorizontal: 12,
+    minWidth: 20,
+    textAlign: "center",
+  },
+  totalPrice: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#2E2E2E",
   },
   removeButton: {
     backgroundColor: "#FF5252",
