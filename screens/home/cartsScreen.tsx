@@ -11,13 +11,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CartItem as ApiCartItem } from "@/api/cartApi";
 import { CartHeader } from "@/components/cart/CartHeader";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useCart } from "@/hooks/useCart";
-import { CartItem as ApiCartItem } from "@/utils/cartApi";
 
 export default function CartsScreen() {
   const {

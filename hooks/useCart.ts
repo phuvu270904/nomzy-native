@@ -5,7 +5,7 @@ import {
     Cart,
     cartApi,
     UpdateCartItemRequest,
-} from "@/utils/cartApi";
+} from "@/api/cartApi";
 
 interface UseCartReturn {
   cart: Cart | null;

@@ -1,6 +1,6 @@
 import { Alert } from "react-native";
 
-import { cartApi } from "@/utils/cartApi";
+import { cartApi } from "@/api/cartApi";
 
 /**
  * Utility function to add an item to cart with proper error handling
