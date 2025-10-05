@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,9 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
-import { useOrderSocket } from "@/hooks/useOrderSocket";
-import { CreateOrderRequest } from "@/services/orderSocketService";
 import { useAppSelector } from "@/store/store";
+import { apiClient } from "@/utils/apiClient";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Address {
@@ -35,20 +34,30 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
+interface CreateOrderRequest {
+  userId: number;
+  restaurantId: number;
+  addressId: number;
+  orderItems: {
+    productId: number;
+    quantity: number;
+    unitPrice: number;
+    discount?: number;
+    subtotal: number;
+  }[];
+  subtotal: number;
+  deliveryFee: number;
+  discount?: number;
+  total: number;
+  couponId?: number;
+  paymentMethod: string;
+  notes?: string;
+}
+
 export default function CheckoutScreen() {
   const { cart } = useAppSelector((state) => state.cart);
   const { user, isAuthenticated } = useAuth();
-  const {
-    createOrder,
-    currentOrder,
-    isConnected,
-    isConnecting,
-    connectionError,
-    clearError,
-  } = useOrderSocket();
-
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
 
   const selectedAddress: Address = {
     id: "1",
@@ -109,14 +118,6 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (!isConnected && !isConnecting) {
-      Alert.alert(
-        "Connection Error",
-        "Unable to connect to order service. Please try again.",
-      );
-      return;
-    }
-
     Alert.alert(
       "Place Order",
       `Your order total is $${total.toFixed(2)}. Confirm to place order?`,
@@ -126,8 +127,6 @@ export default function CheckoutScreen() {
           text: "Confirm",
           onPress: async () => {
             setIsPlacingOrder(true);
-            setOrderError(null);
-            clearError();
 
             try {
               // Prepare order data
@@ -159,14 +158,21 @@ export default function CheckoutScreen() {
               };
 
               console.log("Creating order with data:", orderData);
-              const createdOrder = await createOrder(orderData);
+
+              // Create order via REST API
+              const response = await apiClient.post("/orders", orderData);
+              const createdOrder = response.data;
 
               if (createdOrder) {
                 Alert.alert("Success", "Order placed successfully!", [
                   {
                     text: "OK",
                     onPress: () => {
-                      router.push("/searching-driver/" as any);
+                      // Pass the order ID to the driver search screen
+                      router.push({
+                        pathname: "/searching-driver/",
+                        params: { orderId: createdOrder.id.toString() },
+                      } as any);
                     },
                   },
                 ]);
@@ -179,7 +185,6 @@ export default function CheckoutScreen() {
                 error instanceof Error
                   ? error.message
                   : "Failed to place order";
-              setOrderError(errorMessage);
               Alert.alert("Error", `Failed to place order: ${errorMessage}`);
             } finally {
               setIsPlacingOrder(false);
@@ -189,21 +194,6 @@ export default function CheckoutScreen() {
       ],
     );
   };
-
-  // Monitor connection errors
-  useEffect(() => {
-    if (connectionError) {
-      console.error("Order socket connection error:", connectionError);
-      setOrderError(connectionError);
-    }
-  }, [connectionError]);
-
-  // Monitor order creation success
-  useEffect(() => {
-    if (currentOrder) {
-      console.log("Order created successfully:", currentOrder);
-    }
-  }, [currentOrder]);
 
   const renderOrderItem = ({ item }: { item: any }) => (
     <View style={styles.orderItem}>

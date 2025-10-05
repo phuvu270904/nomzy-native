@@ -1,22 +1,115 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
+import { useOrderSocket } from "@/hooks/useOrderSocket";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function SearchingDriverScreen() {
+  const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  const {
+    isConnected,
+    isConnecting,
+    connect,
+    joinOrderRoom,
+    orderStatus,
+    driverInfo,
+  } = useOrderSocket();
+
   const [searchProgress, setSearchProgress] = useState(0);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+
+  useEffect(() => {
+    // Initialize socket connection and join order room
+    const initializeOrderTracking = async () => {
+      try {
+        console.log("Initializing order tracking for order:", orderId);
+
+        if (!isConnected && !isConnecting) {
+          console.log("Connecting to socket for order tracking...");
+          const connected = await connect();
+          if (!connected) {
+            console.warn("Failed to connect to order tracking service");
+            return;
+          }
+        }
+
+        // Join order room if we have an orderId and haven't joined yet
+        if (orderId && isConnected && !hasJoinedRoom) {
+          console.log("Joining order room:", orderId);
+          joinOrderRoom(parseInt(orderId, 10));
+          setHasJoinedRoom(true);
+        }
+      } catch (error) {
+        console.error("Error initializing order tracking:", error);
+      }
+    };
+
+    initializeOrderTracking();
+  }, [
+    orderId,
+    isConnected,
+    isConnecting,
+    hasJoinedRoom,
+    connect,
+    joinOrderRoom,
+  ]);
+
+  // Handle order status updates
+  useEffect(() => {
+    if (orderStatus) {
+      console.log("Order status updated:", orderStatus);
+
+      // Handle different order statuses
+      switch (orderStatus) {
+        case "confirmed":
+          setSearchProgress(25);
+          break;
+        case "preparing":
+          setSearchProgress(50);
+          break;
+        case "ready_for_pickup":
+          setSearchProgress(75);
+          break;
+        case "out_for_delivery":
+          setSearchProgress(90);
+          // Driver found, could navigate to tracking screen
+          break;
+        case "delivered":
+          setSearchProgress(100);
+          // Navigate to completion screen
+          setTimeout(() => {
+            router.replace("/(tabs)");
+          }, 2000);
+          break;
+        default:
+          break;
+      }
+    }
+  }, [orderStatus]);
+
+  // Handle driver assignment
+  useEffect(() => {
+    if (driverInfo) {
+      console.log("Driver assigned:", driverInfo);
+      setSearchProgress(100);
+      // Could show driver details and navigate to tracking
+      setTimeout(() => {
+        router.replace("/(tabs)");
+      }, 2000);
+    }
+  }, [driverInfo]);
 
   useEffect(() => {
     // Start fade in animation
@@ -101,11 +194,29 @@ export default function SearchingDriverScreen() {
           </Animated.View>
 
           <ThemedText style={styles.searchTitle}>
-            Finding nearby drivers
+            {driverInfo ? "Driver Found!" : "Finding nearby drivers"}
           </ThemedText>
           <ThemedText style={styles.searchSubtitle}>
-            Please wait while we connect you with a driver
+            {driverInfo
+              ? `${driverInfo.name} will deliver your order`
+              : orderStatus
+                ? `Order Status: ${orderStatus.replace("_", " ").toUpperCase()}`
+                : "Please wait while we connect you with a driver"}
           </ThemedText>
+
+          {/* Order ID Display */}
+          {orderId && (
+            <ThemedText style={styles.orderIdText}>Order #{orderId}</ThemedText>
+          )}
+
+          {/* Connection Status */}
+          {!isConnected && (
+            <ThemedText style={styles.connectionStatus}>
+              {isConnecting
+                ? "Connecting..."
+                : "Connection lost - Updates may be delayed"}
+            </ThemedText>
+          )}
 
           {/* Driver Search Animation */}
           <View style={styles.driverImageContainer}>
@@ -259,6 +370,19 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
     marginTop: 12,
     fontWeight: "500",
+  },
+  orderIdText: {
+    fontSize: 14,
+    color: "#666666",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  connectionStatus: {
+    fontSize: 12,
+    color: "#FF6B35",
+    marginTop: 8,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   bottomSection: {
     paddingHorizontal: 24,
