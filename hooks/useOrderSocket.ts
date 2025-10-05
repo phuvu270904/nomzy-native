@@ -1,0 +1,269 @@
+import { useAuth } from "@/hooks/useAuth";
+import {
+    CreateOrderRequest,
+    Order,
+    orderSocketService,
+    OrderStatusUpdate,
+} from "@/services/orderSocketService";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+export interface UseOrderSocketReturn {
+  // Connection state
+  isConnected: boolean;
+  isConnecting: boolean;
+  connectionError: string | null;
+
+  // Order operations
+  createOrder: (orderData: CreateOrderRequest) => Promise<Order | null>;
+  joinOrderRoom: (orderId: number) => void;
+
+  // Current order tracking
+  currentOrder: Order | null;
+  orderStatus: string | null;
+  driverInfo: any | null;
+
+  // Manual connection control
+  connect: () => Promise<boolean>;
+  disconnect: () => void;
+
+  // Clear states
+  clearError: () => void;
+  clearCurrentOrder: () => void;
+}
+
+export const useOrderSocket = (): UseOrderSocketReturn => {
+  const { isAuthenticated, user } = useAuth();
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
+  const [driverInfo, setDriverInfo] = useState<any | null>(null);
+
+  // Use ref to track if we've set up listeners to avoid duplicates
+  const listenersSetup = useRef(false);
+  const hasTriedAutoConnect = useRef(false);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (listenersSetup.current) return;
+
+    console.log("Setting up order socket event listeners");
+
+    // Connection events
+    orderSocketService.onConnected(() => {
+      console.log("Order socket connected");
+      setIsConnected(true);
+      setIsConnecting(false);
+      setConnectionError(null);
+    });
+
+    orderSocketService.onDisconnected(() => {
+      console.log("Order socket disconnected");
+      setIsConnected(false);
+      setIsConnecting(false);
+    });
+
+    orderSocketService.onError((error: string) => {
+      console.error("Order socket error:", error);
+      setConnectionError(error);
+      setIsConnecting(false);
+    });
+
+    // Order events
+    orderSocketService.onNewOrder((order: Order) => {
+      console.log("New order received in hook:", order);
+      setCurrentOrder(order);
+      setOrderStatus(order.status);
+    });
+
+    orderSocketService.onOrderStatusUpdated((data: OrderStatusUpdate) => {
+      console.log("Order status updated in hook:", data);
+      setOrderStatus(data.status);
+
+      // If we have a current order and it matches the updated order
+      if (currentOrder && currentOrder.id === data.orderId) {
+        setCurrentOrder((prev) =>
+          prev ? { ...prev, status: data.status } : null,
+        );
+      }
+    });
+
+    orderSocketService.onDriverAssigned((data: any) => {
+      console.log("Driver assigned in hook:", data);
+      setDriverInfo(data.driver || data);
+    });
+
+    orderSocketService.onOrderCancelled((data: any) => {
+      console.log("Order cancelled in hook:", data);
+      if (currentOrder && currentOrder.id === data.orderId) {
+        setOrderStatus("cancelled");
+        setCurrentOrder((prev) =>
+          prev ? { ...prev, status: "cancelled" } : null,
+        );
+      }
+    });
+
+    listenersSetup.current = true;
+
+    // Cleanup function
+    return () => {
+      console.log("Cleaning up order socket listeners");
+      // Note: We don't actually clean up listeners here since the service is a singleton
+      // and might be used by other components. The service manages its own lifecycle.
+    };
+  }, [currentOrder]);
+
+  // Connect function
+  const connect = useCallback(async (): Promise<boolean> => {
+    if (isConnected || isConnecting) {
+      return isConnected;
+    }
+
+    setIsConnecting(true);
+    setConnectionError(null);
+
+    try {
+      const connected = await orderSocketService.connect();
+      if (connected) {
+        setIsConnected(true);
+        setConnectionError(null);
+      } else {
+        setConnectionError("Failed to connect to order service");
+      }
+      setIsConnecting(false);
+      return connected;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Connection failed";
+      setConnectionError(errorMessage);
+      setIsConnecting(false);
+      return false;
+    }
+  }, [isConnected, isConnecting]);
+
+  // Disconnect function
+  const disconnect = useCallback(() => {
+    orderSocketService.disconnect();
+    setIsConnected(false);
+    setIsConnecting(false);
+    setConnectionError(null);
+  }, []);
+
+  // Create order function
+  const createOrder = useCallback(
+    async (orderData: CreateOrderRequest): Promise<Order | null> => {
+      try {
+        // Ensure we're connected before creating order
+        if (!isConnected) {
+          const connected = await connect();
+          if (!connected) {
+            throw new Error("Could not connect to order service");
+          }
+        }
+
+        const order = await orderSocketService.createOrder(orderData);
+        if (order) {
+          setCurrentOrder(order);
+          setOrderStatus(order.status);
+          setDriverInfo(null); // Reset driver info for new order
+        }
+        return order;
+      } catch (error) {
+        console.error("Failed to create order in hook:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to create order";
+        setConnectionError(errorMessage);
+        return null;
+      }
+    },
+    [isConnected, connect],
+  );
+
+  // Join order room function
+  const joinOrderRoom = useCallback(
+    (orderId: number) => {
+      if (!isConnected) {
+        console.warn("Cannot join order room: not connected to socket");
+        return;
+      }
+      orderSocketService.joinOrderRoom(orderId);
+    },
+    [isConnected],
+  );
+
+  // Clear error function
+  const clearError = useCallback(() => {
+    setConnectionError(null);
+  }, []);
+
+  // Clear current order function
+  const clearCurrentOrder = useCallback(() => {
+    setCurrentOrder(null);
+    setOrderStatus(null);
+    setDriverInfo(null);
+  }, []);
+
+  // Auto-connect when user becomes authenticated
+  useEffect(() => {
+    let mounted = true;
+
+    const autoConnect = async () => {
+      // Only auto-connect if user is authenticated and we haven't tried yet
+      if (
+        isAuthenticated &&
+        user &&
+        !isConnected &&
+        !isConnecting &&
+        !hasTriedAutoConnect.current
+      ) {
+        console.log("User authenticated, auto-connecting to order socket...");
+        hasTriedAutoConnect.current = true;
+        const connected = await connect();
+        if (mounted) {
+          console.log("Auto-connect result:", connected);
+        }
+      }
+    };
+
+    autoConnect();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAuthenticated, user, isConnected, isConnecting, connect]);
+
+  // Reset auto-connect flag when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      hasTriedAutoConnect.current = false;
+      if (isConnected) {
+        disconnect();
+      }
+    }
+  }, [isAuthenticated, isConnected]);
+
+  return {
+    // Connection state
+    isConnected,
+    isConnecting,
+    connectionError,
+
+    // Order operations
+    createOrder,
+    joinOrderRoom,
+
+    // Current order tracking
+    currentOrder,
+    orderStatus,
+    driverInfo,
+
+    // Manual connection control
+    connect,
+    disconnect,
+
+    // Clear states
+    clearError,
+    clearCurrentOrder,
+  };
+};

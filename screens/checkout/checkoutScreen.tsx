@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   ScrollView,
@@ -12,6 +13,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
+import { useAuth } from "@/hooks/useAuth";
+import { useOrderSocket } from "@/hooks/useOrderSocket";
+import { CreateOrderRequest } from "@/services/orderSocketService";
 import { useAppSelector } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -25,7 +29,7 @@ interface Address {
 
 interface PaymentMethod {
   id: string;
-  type: "card" | "cash" | "digital_wallet";
+  type: "credit_card" | "cash_on_delivery" | "digital_wallet";
   name: string;
   details: string;
   isDefault: boolean;
@@ -33,6 +37,19 @@ interface PaymentMethod {
 
 export default function CheckoutScreen() {
   const { cart } = useAppSelector((state) => state.cart);
+  const { user, isAuthenticated } = useAuth();
+  const {
+    createOrder,
+    currentOrder,
+    isConnected,
+    isConnecting,
+    connectionError,
+    clearError,
+  } = useOrderSocket();
+
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+
   const selectedAddress: Address = {
     id: "1",
     name: "Home",
@@ -43,7 +60,7 @@ export default function CheckoutScreen() {
 
   const selectedPayment: PaymentMethod = {
     id: "1",
-    type: "card",
+    type: "credit_card",
     name: "Credit Card",
     details: "**** **** **** 1234",
     isDefault: true,
@@ -78,7 +95,28 @@ export default function CheckoutScreen() {
     router.back();
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
+    if (
+      !isAuthenticated ||
+      !user ||
+      !cart?.cartItems ||
+      cart.cartItems.length === 0
+    ) {
+      Alert.alert(
+        "Error",
+        "Please ensure you are logged in and have items in your cart.",
+      );
+      return;
+    }
+
+    if (!isConnected && !isConnecting) {
+      Alert.alert(
+        "Connection Error",
+        "Unable to connect to order service. Please try again.",
+      );
+      return;
+    }
+
     Alert.alert(
       "Place Order",
       `Your order total is $${total.toFixed(2)}. Confirm to place order?`,
@@ -86,15 +124,86 @@ export default function CheckoutScreen() {
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm",
-          onPress: () => {
-            // TODO: Implement order placement logic
-            Alert.alert("Success", "Order placed successfully!");
-            router.push("/searching-driver/" as any);
+          onPress: async () => {
+            setIsPlacingOrder(true);
+            setOrderError(null);
+            clearError();
+
+            try {
+              // Prepare order data
+              const orderItems = cart.cartItems.map((item) => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+                unitPrice: parseFloat(
+                  item.product.discountPrice || item.product.price,
+                ),
+                subtotal:
+                  parseFloat(item.product.discountPrice || item.product.price) *
+                  item.quantity,
+              }));
+
+              // Get restaurant ID from first cart item
+              const restaurantId =
+                cart.cartItems[0]?.product?.restaurantId || 1;
+
+              const orderData: CreateOrderRequest = {
+                userId: parseInt(user.user.id),
+                restaurantId,
+                addressId: 1, // Use hardcoded address for now
+                orderItems,
+                subtotal: parseFloat(subtotal.toFixed(2)),
+                deliveryFee: parseFloat(deliveryFee.toFixed(2)),
+                total: parseFloat(total.toFixed(2)),
+                paymentMethod: selectedPayment.type,
+                notes: "Order placed via mobile app",
+              };
+
+              console.log("Creating order with data:", orderData);
+              const createdOrder = await createOrder(orderData);
+
+              if (createdOrder) {
+                Alert.alert("Success", "Order placed successfully!", [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      router.push("/searching-driver/" as any);
+                    },
+                  },
+                ]);
+              } else {
+                throw new Error("Failed to create order");
+              }
+            } catch (error) {
+              console.error("Error placing order:", error);
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Failed to place order";
+              setOrderError(errorMessage);
+              Alert.alert("Error", `Failed to place order: ${errorMessage}`);
+            } finally {
+              setIsPlacingOrder(false);
+            }
           },
         },
       ],
     );
   };
+
+  // Monitor connection errors
+  useEffect(() => {
+    if (connectionError) {
+      console.error("Order socket connection error:", connectionError);
+      setOrderError(connectionError);
+    }
+  }, [connectionError]);
+
+  // Monitor order creation success
+  useEffect(() => {
+    if (currentOrder) {
+      console.log("Order created successfully:", currentOrder);
+    }
+  }, [currentOrder]);
 
   const renderOrderItem = ({ item }: { item: any }) => (
     <View style={styles.orderItem}>
@@ -188,9 +297,9 @@ export default function CheckoutScreen() {
             <View style={styles.paymentInfo}>
               <Ionicons
                 name={
-                  selectedPayment.type === "card"
+                  selectedPayment.type === "credit_card"
                     ? "card"
-                    : selectedPayment.type === "cash"
+                    : selectedPayment.type === "cash_on_delivery"
                       ? "cash"
                       : "wallet"
                 }
@@ -251,9 +360,22 @@ export default function CheckoutScreen() {
           onPress={handlePlaceOrder}
           activeOpacity={0.8}
         >
-          <ThemedText style={styles.placeOrderText}>
-            Place Order • ${total.toFixed(2)}
-          </ThemedText>
+          {isPlacingOrder ? (
+            <View style={styles.buttonContent}>
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+                style={{ marginRight: 8 }}
+              />
+              <ThemedText style={styles.placeOrderText}>
+                Placing Order...
+              </ThemedText>
+            </View>
+          ) : (
+            <ThemedText style={styles.placeOrderText}>
+              Place Order • ${total.toFixed(2)}
+            </ThemedText>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -467,5 +589,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
