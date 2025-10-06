@@ -1,13 +1,15 @@
 import {
   AvailableOrders,
   OrderHistory,
+  OrderRequestPopup,
   SearchingState,
   StatusToggle,
   type HistoryOrder,
   type OrderRequest,
 } from "@/components/driver";
+import { useDriverSocket } from "@/hooks/useDriverSocket";
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, StatusBar, StyleSheet } from "react-native";
+import { Alert, ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const fakeHistory: HistoryOrder[] = [
@@ -115,10 +117,21 @@ const fakeHistory: HistoryOrder[] = [
 ];
 
 const DriverHomeScreen = () => {
-  const [isOnline, setIsOnline] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
-
   const [orderHistory] = useState(fakeHistory);
+
+  // Driver WebSocket hook
+  const {
+    isOnline,
+    setOnline,
+    isConnected,
+    connectionError,
+    currentOrderRequest,
+    acceptOrder,
+    declineOrder,
+    clearError,
+    clearOrderRequest,
+  } = useDriverSocket();
 
   // Group orders by date
   const groupedOrders = orderHistory.reduce(
@@ -142,7 +155,7 @@ const DriverHomeScreen = () => {
     "searching",
   );
 
-  // Available orders for acceptance
+  // Available orders for acceptance (fallback fake data when not connected)
   const [availableOrders] = useState<OrderRequest[]>([
     {
       id: "REQ-001",
@@ -185,33 +198,83 @@ const DriverHomeScreen = () => {
     },
   ]);
 
-  // Simulate switching between states for demo
+  // Show connection errors
   useEffect(() => {
-    if (isOnline) {
-      // Start with searching state
+    if (connectionError) {
+      Alert.alert("Connection Error", connectionError, [
+        {
+          text: "OK",
+          onPress: clearError,
+        },
+      ]);
+    }
+  }, [connectionError, clearError]);
+
+  // Handle online state changes based on connection status
+  useEffect(() => {
+    if (isOnline && isConnected) {
+      // Start with searching state when online and connected
       setOnlineState("searching");
 
-      // After 3 seconds, show available orders
+      // After 3 seconds, show available orders if no real orders come through
       const timer = setTimeout(() => {
-        setOnlineState("has_orders");
+        if (!currentOrderRequest) {
+          setOnlineState("has_orders");
+        }
       }, 3000);
 
       return () => clearTimeout(timer);
     }
-  }, [isOnline]);
+  }, [isOnline, isConnected, currentOrderRequest]);
 
-  const handleStatusChange = (newStatus: boolean) => {
-    setIsOnline(newStatus);
+  const handleStatusChange = async (newStatus: boolean) => {
+    await setOnline(newStatus);
   };
 
   const handleAcceptOrder = (orderId: string) => {
-    console.log("Accept order:", orderId);
-    // Handle order acceptance logic
+    // Try to accept via WebSocket first
+    const orderIdNum = parseInt(orderId.replace(/\D/g, ""));
+    if (currentOrderRequest && !isNaN(orderIdNum)) {
+      acceptOrder(orderIdNum);
+    } else {
+      // Fallback for fake orders
+      console.log("Accept order:", orderId);
+      Alert.alert("Order Accepted", `You have accepted order ${orderId}`);
+    }
   };
 
   const handleDeclineOrder = (orderId: string) => {
-    console.log("Decline order:", orderId);
-    // Handle order decline logic
+    // Try to decline via WebSocket first
+    const orderIdNum = parseInt(orderId.replace(/\D/g, ""));
+    if (currentOrderRequest && !isNaN(orderIdNum)) {
+      declineOrder(orderIdNum);
+    } else {
+      // Fallback for fake orders
+      console.log("Decline order:", orderId);
+      Alert.alert("Order Declined", `You have declined order ${orderId}`);
+    }
+  };
+
+  const handleOrderRequestAccept = (orderId: number) => {
+    acceptOrder(orderId);
+    Alert.alert("Order Accepted", `You have accepted order #${orderId}`);
+  };
+
+  const handleOrderRequestDecline = (orderId: number) => {
+    declineOrder(orderId);
+  };
+
+  const handleOrderRequestTimeout = () => {
+    Alert.alert(
+      "Order Timeout",
+      "The order request has timed out and was automatically declined.",
+      [
+        {
+          text: "OK",
+          onPress: clearOrderRequest,
+        },
+      ],
+    );
   };
 
   return (
@@ -247,6 +310,15 @@ const DriverHomeScreen = () => {
           scrollViewRef={scrollViewRef}
         />
       )}
+
+      {/* Order Request Popup */}
+      <OrderRequestPopup
+        visible={!!currentOrderRequest}
+        orderRequest={currentOrderRequest}
+        onAccept={handleOrderRequestAccept}
+        onDecline={handleOrderRequestDecline}
+        onTimeout={handleOrderRequestTimeout}
+      />
     </SafeAreaView>
   );
 };
