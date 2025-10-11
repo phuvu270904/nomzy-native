@@ -1,8 +1,8 @@
 import {
-    AddToCartRequest,
-    Cart,
-    cartApi,
-    UpdateCartItemRequest,
+  AddToCartRequest,
+  Cart,
+  cartApi,
+  UpdateCartItemRequest,
 } from "@/api/cartApi";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
@@ -62,8 +62,23 @@ export const updateCartItemAsync = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
+      console.log("Updating cart item:", itemId, "to quantity:", quantity);
+
       const request: UpdateCartItemRequest = { quantity };
       const updatedCartItem = await cartApi.updateCartItem(itemId, request);
+
+      // If API returns a Cart object instead of CartItem, extract the updated item
+      if ((updatedCartItem as any).cartItems) {
+        const cartResponse = updatedCartItem as any as Cart;
+        const updatedItem = cartResponse.cartItems.find(
+          (item) => item.id === itemId,
+        );
+        if (updatedItem) {
+          console.log("Extracted cart item from cart response:", updatedItem);
+          return updatedItem;
+        }
+      }
+
       return updatedCartItem;
     } catch (error: any) {
       return rejectWithValue(
@@ -175,7 +190,16 @@ const cartSlice = createSlice({
             (item) => item.id === action.payload.id,
           );
           if (itemIndex !== -1) {
-            state.cart.cartItems[itemIndex] = action.payload;
+            // Preserve existing product data if the API response doesn't include it
+            const existingItem = state.cart.cartItems[itemIndex];
+            const updatedItem = action.payload;
+
+            // Merge the update with existing data, preserving product info
+            state.cart.cartItems[itemIndex] = {
+              ...existingItem,
+              ...updatedItem,
+              product: updatedItem.product || existingItem.product,
+            };
           }
         }
         state.error = null;
