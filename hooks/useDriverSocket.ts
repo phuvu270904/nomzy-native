@@ -166,29 +166,49 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
         // Driver-specific event listeners
         newSocket.on("order-request", (data: any) => {
           console.log("Order request received:", data);
+          console.log(
+            "Order request data structure:",
+            JSON.stringify(data, null, 2),
+          );
+
+          // Extract the order from the nested structure
+          const orderData = data.order || data;
 
           // Transform the data to match our OrderRequest interface
           const orderRequest: OrderRequest = {
-            id: data.id || `req-${data.orderId}`,
-            orderId: data.orderId,
-            customerName: data.customerName || "Unknown Customer",
+            id: orderData.id?.toString() || `req-${orderData.id}`,
+            orderId: orderData.id, // Use order.id as the orderId
+            customerName:
+              orderData.user?.name ||
+              orderData.customerName ||
+              "Unknown Customer",
             pickupLocation:
-              data.pickupLocation ||
-              data.restaurantAddress ||
-              "Unknown Location",
+              orderData.restaurant?.address ||
+              orderData.pickupLocation ||
+              orderData.restaurantAddress ||
+              `${orderData.restaurant?.name || "Restaurant"}`,
             destination:
-              data.destination || data.customerAddress || "Unknown Destination",
-            duration: data.estimatedDuration || "N/A",
-            distance: data.estimatedDistance || "N/A",
-            payment: data.paymentMethod || "Unknown",
-            amount: data.total || data.amount || 0,
-            currency: data.currency || "VND",
-            orderTime: data.orderTime ? new Date(data.orderTime) : new Date(),
-            restaurantName: data.restaurantName,
-            customerPhone: data.customerPhone,
-            notes: data.notes,
+              orderData.address?.streetAddress ||
+              orderData.destination ||
+              orderData.customerAddress ||
+              `${orderData.address?.city || "Unknown"}, ${orderData.address?.state || ""}`.trim(),
+            duration:
+              orderData.estimatedDuration || data.estimatedDuration || "N/A",
+            distance:
+              orderData.estimatedDistance || data.estimatedDistance || "N/A",
+            payment: orderData.paymentMethod || "Unknown",
+            amount: parseFloat(orderData.total) || orderData.amount || 0,
+            currency: orderData.currency || "USD",
+            orderTime: orderData.createdAt
+              ? new Date(orderData.createdAt)
+              : new Date(),
+            restaurantName: orderData.restaurant?.name,
+            customerPhone: orderData.user?.phone_number,
+            notes: orderData.notes,
           };
 
+          console.log("Transformed order request:", orderRequest);
+          console.log("Order ID being set:", orderRequest.orderId);
           setCurrentOrderRequest(orderRequest);
         });
 
@@ -204,18 +224,20 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
 
         newSocket.on("driver-assigned", (data: any) => {
           console.log("Driver assigned to order:", data);
+          console.log(
+            "Driver assigned data structure:",
+            JSON.stringify(data, null, 2),
+          );
+
+          if (data.order && data.order.id) {
+            console.log("Assigned to order ID:", data.order.id);
+          } else {
+            console.log("No order ID found in assignment data");
+          }
+
           // Clear the current order request since it's been accepted
           setCurrentOrderRequest(null);
         });
-
-        // Set a timeout for connection
-        setTimeout(() => {
-          if (!isConnected) {
-            newSocket.disconnect();
-            setIsConnecting(false);
-            resolve(false);
-          }
-        }, 10000);
       });
     } catch (error) {
       console.error("Failed to connect driver socket:", error);
@@ -268,12 +290,33 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
       }
 
       console.log("Driver accepting order:", orderId);
+      console.log("Order ID type:", typeof orderId);
+      console.log("Is orderId valid?", orderId && !isNaN(orderId));
+      console.log("Current order request:", currentOrderRequest);
+
+      if (!orderId || isNaN(orderId)) {
+        console.error("Invalid order ID provided:", orderId);
+        return;
+      }
+
+      // Validate that the orderId matches the current order request
+      if (currentOrderRequest && currentOrderRequest.orderId !== orderId) {
+        console.error(
+          "Order ID mismatch! Trying to accept order:",
+          orderId,
+          "but current request is for order:",
+          currentOrderRequest.orderId,
+        );
+        return;
+      }
+
+      console.log("Emitting driver-accept-order with orderId:", orderId);
       socket.emit("driver-accept-order", { orderId });
 
       // Clear the current order request
       setCurrentOrderRequest(null);
     },
-    [socket, isConnected],
+    [socket, isConnected, currentOrderRequest],
   );
 
   // Decline order function

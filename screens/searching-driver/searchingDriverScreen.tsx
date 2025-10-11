@@ -75,16 +75,33 @@ export default function SearchingDriverScreen() {
       switch (orderStatus) {
         case "confirmed":
           setSearchProgress(25);
+          // If we have driver info and confirmed status, navigate to tracking
+          if (driverInfo && orderId) {
+            setTimeout(() => {
+              router.replace(`/order-tracking/${orderId}`);
+            }, 1000);
+          }
           break;
         case "preparing":
           setSearchProgress(50);
+          // Navigate to tracking if we have driver info
+          if (driverInfo && orderId) {
+            router.replace(`/order-tracking/${orderId}`);
+          }
           break;
         case "ready_for_pickup":
           setSearchProgress(75);
+          // Navigate to tracking if we have driver info
+          if (driverInfo && orderId) {
+            router.replace(`/order-tracking/${orderId}`);
+          }
           break;
         case "out_for_delivery":
           setSearchProgress(90);
-          // Driver found, could navigate to tracking screen
+          // Navigate to tracking if we have driver info
+          if (driverInfo && orderId) {
+            router.replace(`/order-tracking/${orderId}`);
+          }
           break;
         case "delivered":
           setSearchProgress(100);
@@ -97,19 +114,19 @@ export default function SearchingDriverScreen() {
           break;
       }
     }
-  }, [orderStatus]);
+  }, [orderStatus, driverInfo, orderId]);
 
   // Handle driver assignment
   useEffect(() => {
-    if (driverInfo) {
+    if (driverInfo && orderId) {
       console.log("Driver assigned:", driverInfo);
       setSearchProgress(100);
-      // Could show driver details and navigate to tracking
+      // Navigate to order tracking screen with driver info
       setTimeout(() => {
-        router.replace("/(tabs)");
-      }, 2000);
+        router.replace(`/order-tracking/${orderId}`);
+      }, 1500);
     }
-  }, [driverInfo]);
+  }, [driverInfo, orderId]);
 
   useEffect(() => {
     // Start fade in animation

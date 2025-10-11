@@ -53,6 +53,18 @@ export const OrderRequestPopup: React.FC<OrderRequestPopupProps> = ({
 
   const handleAccept = () => {
     if (orderRequest) {
+      console.log("OrderRequestPopup - accepting order:", orderRequest.orderId);
+      console.log("OrderRequestPopup - full order request:", orderRequest);
+
+      if (!orderRequest.orderId) {
+        console.error(
+          "OrderRequestPopup - orderId is missing or invalid:",
+          orderRequest.orderId,
+        );
+        Alert.alert("Error", "Order ID is invalid. Cannot accept order.");
+        return;
+      }
+
       Alert.alert(
         "Accept Order",
         "Are you sure you want to accept this order?",
@@ -63,10 +75,18 @@ export const OrderRequestPopup: React.FC<OrderRequestPopupProps> = ({
           },
           {
             text: "Accept",
-            onPress: () => onAccept(orderRequest.orderId),
+            onPress: () => {
+              console.log(
+                "OrderRequestPopup - calling onAccept with:",
+                orderRequest.orderId,
+              );
+              onAccept(orderRequest.orderId);
+            },
           },
         ],
       );
+    } else {
+      console.error("OrderRequestPopup - No order request available");
     }
   };
 
