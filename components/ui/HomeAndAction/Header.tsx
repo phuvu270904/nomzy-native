@@ -58,7 +58,13 @@ export default function Header({
           <View>
             <Text style={styles.deliver}>Deliver to</Text>
             <View style={styles.location}>
-              <Text style={styles.locationText}>{getDisplayAddress()}</Text>
+              <Text
+                style={styles.locationText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {getDisplayAddress()}
+              </Text>
             </View>
           </View>
         )}
@@ -103,7 +109,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#000",
-    marginRight: 4,
+    maxWidth: 200,
   },
   dropdownIcon: {
     marginLeft: 4,
