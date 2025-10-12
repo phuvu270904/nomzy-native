@@ -4,7 +4,6 @@ import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import "react-native-reanimated";
 import { Provider, useDispatch, useSelector } from "react-redux";
 
 import { ThemedText } from "@/components/ThemedText";
