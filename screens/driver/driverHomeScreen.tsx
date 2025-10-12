@@ -1,5 +1,4 @@
 import {
-  AvailableOrders,
   OrderHistory,
   OrderRequestPopup,
   SearchingState,
@@ -290,15 +289,7 @@ const DriverHomeScreen = () => {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
-          {onlineState === "searching" ? (
-            <SearchingState />
-          ) : (
-            <AvailableOrders
-              orders={availableOrders}
-              onAcceptOrder={handleAcceptOrder}
-              onDeclineOrder={handleDeclineOrder}
-            />
-          )}
+          <SearchingState />
         </ScrollView>
       )}
 
