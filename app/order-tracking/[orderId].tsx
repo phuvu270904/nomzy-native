@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
-import { DriverInfoCard } from "@/components/driver/DriverInfoCard";
-import { OrderStatusTracker } from "@/components/orders/OrderStatusTracker";
+import { FloatingDriverInfo } from "@/components/driver/FloatingDriverInfo";
+import { FloatingOrderInfo } from "@/components/orders/FloatingOrderInfo";
+import { MapView } from "@/components/ui/MapView";
 import { useOrderSocket } from "@/hooks/useOrderSocket";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -19,7 +20,6 @@ export default function OrderTrackingScreen() {
     joinOrderRoom,
     orderStatus,
     driverInfo,
-    currentOrder,
   } = useOrderSocket();
 
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
@@ -73,6 +73,22 @@ export default function OrderTrackingScreen() {
     router.replace("/(tabs)");
   };
 
+  const getEstimatedTime = () => {
+    if (orderStatus === "delivered") {
+      return "Order Delivered!";
+    }
+    if (orderStatus === "cancelled") {
+      return "Order Cancelled";
+    }
+    return "Estimated delivery: 25-35 minutes";
+  };
+
+  // Mock locations for demo - in real app these would come from the socket
+  const driverLocation = driverInfo
+    ? { latitude: 37.7849, longitude: -122.4094 }
+    : undefined;
+  const customerLocation = { latitude: 37.7749, longitude: -122.4194 };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -87,34 +103,23 @@ export default function OrderTrackingScreen() {
           <Ionicons name="arrow-back" size={24} color="#2E2E2E" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Order Tracking</ThemedText>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity style={styles.headerRight} activeOpacity={0.7}>
+          <Ionicons name="refresh" size={20} color="#666666" />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Order Info */}
-        <View style={styles.orderInfoSection}>
-          <ThemedText style={styles.orderIdText}>Order #{orderId}</ThemedText>
-          <ThemedText style={styles.estimatedTime}>
-            {orderStatus === "delivered"
-              ? "Order Delivered!"
-              : orderStatus === "cancelled"
-                ? "Order Cancelled"
-                : "Estimated delivery: 25-35 minutes"}
-          </ThemedText>
-        </View>
+      {/* Map View */}
+      <View style={styles.mapContainer}>
+        <MapView
+          latitude={customerLocation.latitude}
+          longitude={customerLocation.longitude}
+          driverLocation={driverLocation}
+          customerLocation={customerLocation}
+          showRoute={!!driverLocation}
+          style={styles.map}
+        />
 
-        {/* Driver Info Card */}
-        {driverInfo && (
-          <DriverInfoCard
-            driverInfo={driverInfo}
-            style={styles.driverCardMargin}
-          />
-        )}
-
-        {/* Order Status Progress */}
-        <OrderStatusTracker currentStatus={orderStatus} />
-
-        {/* Connection Status */}
+        {/* Connection Status Overlay */}
         {!isConnected && (
           <View style={styles.connectionAlert}>
             <Ionicons name="warning" size={16} color="#FF6B35" />
@@ -125,41 +130,25 @@ export default function OrderTrackingScreen() {
             </ThemedText>
           </View>
         )}
+      </View>
 
-        {/* Order Details */}
-        {currentOrder && (
-          <View style={styles.orderDetailsSection}>
-            <ThemedText style={styles.sectionTitle}>Order Details</ThemedText>
-            <View style={styles.orderDetails}>
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>
-                  Total Amount:
-                </ThemedText>
-                <ThemedText style={styles.detailValue}>
-                  ${currentOrder.total?.toFixed(2) || "0.00"}
-                </ThemedText>
-              </View>
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>
-                  Order Status:
-                </ThemedText>
-                <ThemedText style={styles.detailValue}>
-                  {currentOrder.status?.replace("_", " ").toUpperCase() ||
-                    "PENDING"}
-                </ThemedText>
-              </View>
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>Created At:</ThemedText>
-                <ThemedText style={styles.detailValue}>
-                  {currentOrder.createdAt
-                    ? new Date(currentOrder.createdAt).toLocaleString()
-                    : "N/A"}
-                </ThemedText>
-              </View>
-            </View>
-          </View>
-        )}
-      </ScrollView>
+      {/* Floating Order Info */}
+      <FloatingOrderInfo
+        orderId={orderId || "N/A"}
+        estimatedTime={getEstimatedTime()}
+        status={orderStatus || "pending"}
+      />
+
+      {/* Floating Driver Info */}
+      {driverInfo && (
+        <FloatingDriverInfo
+          driverInfo={{
+            ...driverInfo,
+            estimatedArrival: "5-10 min",
+            plateNumber: "ABC-123",
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -175,8 +164,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
+    zIndex: 100,
   },
   backButton: {
     padding: 8,
@@ -186,216 +177,32 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2E2E2E",
   },
-  headerSpacer: {
-    width: 40,
+  headerRight: {
+    padding: 8,
   },
-  content: {
+  mapContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    position: "relative",
   },
-  driverCardMargin: {
-    marginVertical: 16,
-  },
-  orderInfoSection: {
-    paddingVertical: 20,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  orderIdText: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#2E2E2E",
-    marginBottom: 8,
-  },
-  estimatedTime: {
-    fontSize: 14,
-    color: "#666666",
-  },
-  driverCard: {
-    backgroundColor: "#F8F9FA",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 16,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  driverHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  driverTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#2E2E2E",
-  },
-  driverActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#4CAF50",
-  },
-  driverInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  driverImageContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#E8F5E8",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  driverDetails: {
+  map: {
     flex: 1,
-  },
-  driverName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#2E2E2E",
-    marginBottom: 4,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  rating: {
-    fontSize: 14,
-    color: "#666666",
-    marginLeft: 4,
-  },
-  vehicle: {
-    fontSize: 12,
-    color: "#999999",
-  },
-  statusSection: {
-    paddingVertical: 20,
-  },
-  statusTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#2E2E2E",
-    marginBottom: 16,
-  },
-  statusTracker: {
-    paddingLeft: 8,
-  },
-  statusItem: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-  statusLine: {
-    alignItems: "center",
-    marginRight: 16,
-  },
-  statusCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-  },
-  statusCircleCompleted: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
-  },
-  statusCircleCurrent: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#4CAF50",
-  },
-  statusCirclePending: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CCCCCC",
-  },
-  statusConnector: {
-    width: 2,
-    height: 24,
-    marginTop: 4,
-  },
-  statusConnectorCompleted: {
-    backgroundColor: "#4CAF50",
-  },
-  statusConnectorPending: {
-    backgroundColor: "#CCCCCC",
-  },
-  statusLabelContainer: {
-    flex: 1,
-    paddingTop: 4,
-  },
-  statusLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 2,
-  },
-  statusLabelCompleted: {
-    color: "#4CAF50",
-  },
-  statusLabelCurrent: {
-    color: "#2E2E2E",
-  },
-  statusLabelPending: {
-    color: "#999999",
-  },
-  statusTime: {
-    fontSize: 12,
-    color: "#666666",
   },
   connectionAlert: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    right: 16,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFF3E0",
     padding: 12,
     borderRadius: 8,
-    marginVertical: 8,
+    zIndex: 200,
   },
   connectionText: {
     fontSize: 12,
     color: "#FF6B35",
     marginLeft: 8,
     flex: 1,
-  },
-  orderDetailsSection: {
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#2E2E2E",
-    marginBottom: 12,
-  },
-  orderDetails: {
-    backgroundColor: "#F8F9FA",
-    borderRadius: 8,
-    padding: 16,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: "#666666",
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#2E2E2E",
   },
 });

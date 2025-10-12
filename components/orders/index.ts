@@ -6,3 +6,6 @@ export { default as EmptyState } from "./EmptyState";
 export { default as TabNavigation } from "./TabNavigation";
 export type { Tab } from "./TabNavigation";
 
+export { FloatingOrderInfo } from "./FloatingOrderInfo";
+export { OrderStatusTracker } from "./OrderStatusTracker";
+

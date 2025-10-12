@@ -1,4 +1,6 @@
 export { AvailableOrders } from "./AvailableOrders";
+export { DriverInfoCard } from "./DriverInfoCard";
+export { FloatingDriverInfo } from "./FloatingDriverInfo";
 export { HistoryOrderCard, type HistoryOrder } from "./HistoryOrderCard";
 export { OrderHistory } from "./OrderHistory";
 export { OrderRequestCard, type OrderRequest } from "./OrderRequestCard";
