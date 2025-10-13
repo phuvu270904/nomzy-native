@@ -70,7 +70,7 @@ export default function OrderTrackingScreen() {
   }, [orderStatus]);
 
   const handleBackHome = () => {
-    router.replace("/(tabs)");
+    router.back();
   };
 
   const getEstimatedTime = () => {

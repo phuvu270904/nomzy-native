@@ -107,15 +107,15 @@ export default function OrdersScreen() {
     }
   };
 
-  const handleOrderPress = async (order: Order) => {
-    Alert.alert(
-      "Order Details",
-      `Order #${order.orderNumber} from ${order.restaurantName}`,
-    );
-  };
+  // const handleOrderPress = async (order: Order) => {
+  //   Alert.alert(
+  //     "Order Details",
+  //     `Order #${order.orderNumber} from ${order.restaurantName}`,
+  //   );
+  // };
 
   const handleTrackOrder = (order: Order) => {
-    router.replace(`/order-tracking/${order.id}`);
+    router.push(`/order-tracking/${order.id}`);
   };
 
   const handleCancelOrder = async (order: Order) => {
@@ -227,7 +227,6 @@ export default function OrdersScreen() {
             <OrderCard
               key={order.id}
               order={order}
-              onPress={() => handleOrderPress(order)}
               onTrackOrder={() => handleTrackOrder(order)}
               onCancelOrder={() => handleCancelOrder(order)}
               onReorder={() => handleReorder(order)}
