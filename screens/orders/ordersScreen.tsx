@@ -1,82 +1,89 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import {
+  convertApiOrderToUIOrder,
+  ordersApi,
+  OrderStatus,
+} from "@/api/ordersApi";
 import EmptyState from "@/components/orders/EmptyState";
 import OrderCard, { Order } from "@/components/orders/OrderCard";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import TabNavigation, { Tab } from "@/components/orders/TabNavigation";
 
-// Mock data for demonstration
-const mockOrders: Order[] = [
-	{
-		id: "1",
-		restaurantName: "Pizza Palace",
-		restaurantImage:
-			"https://img1.wsimg.com/isteam/ip/538bcd6d-a924-461e-a467-d49ed06293ca/SRO_1507-7e12095.jpg",
-		items: ["Margherita Pizza", "Caesar Salad", "Coca Cola"],
-		total: 24.99,
-		status: "active",
-		orderDate: "Today, 2:30 PM",
-		estimatedTime: "25 mins",
-		orderNumber: "ORD001",
-	},
-	{
-		id: "2",
-		restaurantName: "Burger House",
-		restaurantImage:
-			"https://dynamic-media-cdn.tripadvisor.com/media/photo-o/19/19/ae/42/burger.jpg?w=500&h=-1&s=1",
-		items: ["Cheeseburger", "French Fries", "Milkshake"],
-		total: 18.5,
-		status: "active",
-		orderDate: "Today, 1:15 PM",
-		estimatedTime: "15 mins",
-		orderNumber: "ORD002",
-	},
-	{
-		id: "3",
-		restaurantName: "Sushi Express",
-		restaurantImage:
-			"https://media.licdn.com/dms/image/v2/C4E0BAQFiS0kuRmXfSg/company-logo_200_200/company-logo_200_200/0/1630898371571/_logo?e=2147483647&v=beta&t=sFMcU-IEPLeMCdajx4PmOx7axI3RozI85tZ9CfEpspU",
-		items: ["California Roll", "Salmon Nigiri", "Miso Soup"],
-		total: 32.75,
-		status: "completed",
-		orderDate: "Yesterday, 7:45 PM",
-		orderNumber: "ORD003",
-	},
-	{
-		id: "4",
-		restaurantName: "Thai Garden",
-		restaurantImage:
-			"https://static.wixstatic.com/media/689e13_2c1386e11e254fa48c759adfb61eb631~mv2.jpg/v1/fill/w_980,h_1249,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/689e13_2c1386e11e254fa48c759adfb61eb631~mv2.jpg",
-		items: ["Pad Thai", "Green Curry", "Spring Rolls"],
-		total: 28.9,
-		status: "completed",
-		orderDate: "2 days ago, 6:30 PM",
-		orderNumber: "ORD004",
-	},
-	{
-		id: "5",
-		restaurantName: "Mexican Cantina",
-		restaurantImage:
-			"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaO3ma8KILAhs0V_xcX0sOl9IotVP-tuDQWw&s",
-		items: ["Chicken Burrito", "Guacamole", "Nachos"],
-		total: 21.45,
-		status: "cancelled",
-		orderDate: "3 days ago, 8:00 PM",
-		orderNumber: "ORD005",
-	},
-]
-
 export default function OrdersScreen() {
   const [activeTab, setActiveTab] = useState("active");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const activeOrders = mockOrders.filter((order) => order.status === "active");
-  const completedOrders = mockOrders.filter(
+  const fetchOrders = useCallback(async (status?: OrderStatus) => {
+    try {
+      const apiOrders = await ordersApi.getMyOrders(status);
+      const convertedOrders = apiOrders.map(convertApiOrderToUIOrder);
+      setOrders(convertedOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      Alert.alert("Error", "Failed to load orders. Please try again.", [
+        { text: "OK" },
+      ]);
+    }
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    const status =
+      activeTab === "active"
+        ? "active"
+        : activeTab === "completed"
+          ? "completed"
+          : activeTab === "cancelled"
+            ? "cancelled"
+            : null;
+    await fetchOrders(status);
+    setRefreshing(false);
+  }, [activeTab, fetchOrders]);
+
+  const handleTabPress = useCallback(
+    (tabId: string) => {
+      setActiveTab(tabId);
+      const status =
+        tabId === "active"
+          ? "active"
+          : tabId === "completed"
+            ? "completed"
+            : tabId === "cancelled"
+              ? "cancelled"
+              : null;
+      fetchOrders(status);
+    },
+    [fetchOrders],
+  );
+
+  useEffect(() => {
+    const status =
+      activeTab === "active"
+        ? "active"
+        : activeTab === "completed"
+          ? "completed"
+          : activeTab === "cancelled"
+            ? "cancelled"
+            : null;
+    fetchOrders(status);
+  }, [activeTab, fetchOrders]);
+
+  const activeOrders = orders.filter((order) => order.status === "active");
+  const completedOrders = orders.filter(
     (order) => order.status === "completed",
   );
-  const cancelledOrders = mockOrders.filter(
+  const cancelledOrders = orders.filter(
     (order) => order.status === "cancelled",
   );
 
@@ -99,7 +106,7 @@ export default function OrdersScreen() {
     }
   };
 
-  const handleOrderPress = (order: Order) => {
+  const handleOrderPress = async (order: Order) => {
     Alert.alert(
       "Order Details",
       `Order #${order.orderNumber} from ${order.restaurantName}`,
@@ -110,13 +117,35 @@ export default function OrdersScreen() {
     Alert.alert("Track Order", `Tracking order #${order.orderNumber}`);
   };
 
-  const handleCancelOrder = (order: Order) => {
+  const handleCancelOrder = async (order: Order) => {
     Alert.alert(
       "Cancel Order",
       `Are you sure you want to cancel order #${order.orderNumber}?`,
       [
         { text: "No", style: "cancel" },
-        { text: "Yes", style: "destructive" },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await ordersApi.cancelOrder(parseInt(order.id));
+              // Refresh orders after cancellation
+              const status =
+                activeTab === "active"
+                  ? "active"
+                  : activeTab === "completed"
+                    ? "completed"
+                    : activeTab === "cancelled"
+                      ? "cancelled"
+                      : null;
+              await fetchOrders(status);
+              Alert.alert("Success", "Order cancelled successfully");
+            } catch (error) {
+              console.error("Error cancelling order:", error);
+              Alert.alert("Error", "Failed to cancel order. Please try again.");
+            }
+          },
+        },
       ],
     );
   };
@@ -180,7 +209,7 @@ export default function OrdersScreen() {
         <TabNavigation
           tabs={tabs}
           activeTabId={activeTab}
-          onTabPress={setActiveTab}
+          onTabPress={handleTabPress}
         />
       </View>
 
@@ -189,6 +218,9 @@ export default function OrdersScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           {currentOrders.map((order) => (
             <OrderCard
@@ -202,11 +234,19 @@ export default function OrdersScreen() {
           ))}
         </ScrollView>
       ) : (
-        <EmptyState
-          icon={emptyState.icon}
-          title={emptyState.title}
-          subtitle={emptyState.subtitle}
-        />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.emptyContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <EmptyState
+            icon={emptyState.icon}
+            title={emptyState.title}
+            subtitle={emptyState.subtitle}
+          />
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -226,5 +266,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 24,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
   },
 });
