@@ -18,6 +18,7 @@ import EmptyState from "@/components/orders/EmptyState";
 import OrderCard, { Order } from "@/components/orders/OrderCard";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import TabNavigation, { Tab } from "@/components/orders/TabNavigation";
+import { router } from "expo-router";
 
 export default function OrdersScreen() {
   const [activeTab, setActiveTab] = useState("active");
@@ -114,7 +115,7 @@ export default function OrdersScreen() {
   };
 
   const handleTrackOrder = (order: Order) => {
-    Alert.alert("Track Order", `Tracking order #${order.orderNumber}`);
+    router.replace(`/order-tracking/${order.id}`);
   };
 
   const handleCancelOrder = async (order: Order) => {
