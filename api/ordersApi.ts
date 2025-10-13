@@ -49,6 +49,10 @@ export interface OrderItem {
   subtotal: string;
   createdAt: string;
   updatedAt: string;
+  product: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface Address {
@@ -143,7 +147,7 @@ export const convertApiOrderToUIOrder = (apiOrder: ApiOrder): Order => {
 
   // Extract item names from orderItems
   const items = apiOrder.orderItems.map(
-    (item) => `${item.quantity}x Product ID ${item.productId}`,
+    (item) => `${item.quantity}x ${item.product.name}`,
   );
 
   // Format date
