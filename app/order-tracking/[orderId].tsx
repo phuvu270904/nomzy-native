@@ -1,13 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
 import { FloatingDriverInfo } from "@/components/driver/FloatingDriverInfo";
 import { FloatingOrderInfo } from "@/components/orders/FloatingOrderInfo";
-import { MapView } from "@/components/ui/MapView";
+import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useOrderSocket } from "@/hooks/useOrderSocket";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -23,6 +23,7 @@ export default function OrderTrackingScreen() {
   } = useOrderSocket();
 
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+  const mapRef = useRef<MapViewRef>(null);
 
   useEffect(() => {
     // Initialize socket connection and join order room
@@ -60,6 +61,15 @@ export default function OrderTrackingScreen() {
     joinOrderRoom,
   ]);
 
+  // Mock locations for demo - in real app these would come from the socket/API
+  const driverLocation = { latitude: 37.7849, longitude: -122.4094 }; // Driver location (e.g., Chinatown)
+
+  // Restaurant location (e.g., Chinatown restaurant)
+  const restaurantLocation = { latitude: 37.7949, longitude: -122.4034 };
+
+  // Customer delivery location (e.g., Mission District)
+  const customerLocation = { latitude: 37.7749, longitude: -122.4194 };
+
   // Handle order completion
   useEffect(() => {
     if (orderStatus === "delivered") {
@@ -69,8 +79,44 @@ export default function OrderTrackingScreen() {
     }
   }, [orderStatus]);
 
+  // Update map when order status changes
+  useEffect(() => {
+    if (mapRef.current && orderStatus) {
+      mapRef.current.updateOrderStatus(orderStatus);
+    }
+  }, [orderStatus]);
+
+  // Simulate driver movement for demo purposes
+  useEffect(() => {
+    if (!driverLocation || !mapRef.current) return;
+
+    const interval = setInterval(() => {
+      // Simulate slight movement for demo
+      const newLat = driverLocation.latitude + (Math.random() - 0.5) * 0.001;
+      const newLng = driverLocation.longitude + (Math.random() - 0.5) * 0.001;
+      mapRef.current?.updateDriverLocation(newLat, newLng);
+    }, 5000); // Update every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [driverLocation]);
+
   const handleBackHome = () => {
     router.back();
+  };
+
+  // Debug function to test different order statuses
+  const simulateOrderStatusChange = () => {
+    const statuses = [
+      "pending",
+      "preparing",
+      "ready",
+      "picked_up",
+      "out_for_delivery",
+    ];
+    const currentIndex = statuses.indexOf(orderStatus || "pending");
+    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+    console.log("Simulating order status change to:", nextStatus);
+    mapRef.current?.updateOrderStatus(nextStatus);
   };
 
   const getEstimatedTime = () => {
@@ -82,12 +128,6 @@ export default function OrderTrackingScreen() {
     }
     return "Estimated delivery: 25-35 minutes";
   };
-
-  // Mock locations for demo - in real app these would come from the socket
-  const driverLocation = driverInfo
-    ? { latitude: 37.7849, longitude: -122.4094 }
-    : undefined;
-  const customerLocation = { latitude: 37.7749, longitude: -122.4194 };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,7 +143,11 @@ export default function OrderTrackingScreen() {
           <Ionicons name="arrow-back" size={24} color="#2E2E2E" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Order Tracking</ThemedText>
-        <TouchableOpacity style={styles.headerRight} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerRight}
+          activeOpacity={0.7}
+          onPress={simulateOrderStatusChange}
+        >
           <Ionicons name="refresh" size={20} color="#666666" />
         </TouchableOpacity>
       </View>
@@ -111,10 +155,21 @@ export default function OrderTrackingScreen() {
       {/* Map View */}
       <View style={styles.mapContainer}>
         <MapView
+          ref={mapRef}
           latitude={customerLocation.latitude}
           longitude={customerLocation.longitude}
           driverLocation={driverLocation}
+          restaurantLocation={restaurantLocation}
           customerLocation={customerLocation}
+          orderStatus={
+            (orderStatus as
+              | "pending"
+              | "preparing"
+              | "ready"
+              | "picked_up"
+              | "out_for_delivery"
+              | "delivered") || "pending"
+          }
           showRoute={!!driverLocation}
           style={styles.map}
         />
@@ -130,6 +185,18 @@ export default function OrderTrackingScreen() {
             </ThemedText>
           </View>
         )}
+
+        {/* Order Status Indicator */}
+        <View style={styles.statusIndicator}>
+          <ThemedText style={styles.statusText}>
+            Status: {orderStatus || "pending"}
+          </ThemedText>
+          <ThemedText style={styles.routeText}>
+            {orderStatus === "out_for_delivery"
+              ? "🔴 Route to Customer"
+              : "🟠 Route to Restaurant"}
+          </ThemedText>
+        </View>
       </View>
 
       {/* Floating Order Info */}
@@ -140,7 +207,7 @@ export default function OrderTrackingScreen() {
       />
 
       {/* Floating Driver Info */}
-      {driverInfo && (
+      {true && (
         <FloatingDriverInfo
           driverInfo={{
             ...driverInfo,
@@ -204,5 +271,24 @@ const styles = StyleSheet.create({
     color: "#FF6B35",
     marginLeft: 8,
     flex: 1,
+  },
+  statusIndicator: {
+    position: "absolute",
+    top: 70,
+    left: 16,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 8,
+    borderRadius: 8,
+    zIndex: 200,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 4,
+  },
+  routeText: {
+    fontSize: 11,
+    color: "#666666",
   },
 });
