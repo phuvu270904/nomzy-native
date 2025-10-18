@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { ThemedText } from "@/components/ThemedText";
 import { FloatingDriverInfo } from "@/components/driver/FloatingDriverInfo";
 import { FloatingOrderInfo } from "@/components/orders/FloatingOrderInfo";
@@ -20,9 +21,12 @@ export default function OrderTrackingScreen() {
     joinOrderRoom,
     orderStatus,
     driverInfo,
+    driverLocation,
   } = useOrderSocket();
 
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+  const [orderData, setOrderData] = useState<ApiOrder | null>(null);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const mapRef = useRef<MapViewRef>(null);
 
   useEffect(() => {
@@ -61,14 +65,57 @@ export default function OrderTrackingScreen() {
     joinOrderRoom,
   ]);
 
-  // Mock locations for demo - in real app these would come from the socket/API
-  const driverLocation = { latitude: 37.7849, longitude: -122.4094 }; // Driver location (e.g., Chinatown)
+  // Fetch order details
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (!orderId) return;
 
-  // Restaurant location (e.g., Chinatown restaurant)
-  const restaurantLocation = { latitude: 37.7949, longitude: -122.4034 };
+      try {
+        setIsLoadingOrder(true);
+        const order = await ordersApi.getOrderById(parseInt(orderId, 10));
+        setOrderData(order);
+      } catch (error) {
+        console.error("Failed to fetch order:", error);
+      } finally {
+        setIsLoadingOrder(false);
+      }
+    };
 
-  // Customer delivery location (e.g., Mission District)
-  const customerLocation = { latitude: 37.7749, longitude: -122.4194 };
+    fetchOrderData();
+  }, [orderId]);
+
+  // Get restaurant location from addresses
+  const getRestaurantLocation = () => {
+    if (!orderData?.restaurant?.addresses) return null;
+
+    const defaultAddress = orderData.restaurant.addresses.find(
+      (addr) => addr.isDefault,
+    );
+    const address = defaultAddress || orderData.restaurant.addresses[0];
+
+    if (address?.latitude && address?.longitude) {
+      return {
+        latitude: parseFloat(address.latitude),
+        longitude: parseFloat(address.longitude),
+      };
+    }
+    return null;
+  };
+
+  // Get customer location
+  const getCustomerLocation = () => {
+    if (!orderData?.address?.latitude || !orderData?.address?.longitude) {
+      return null;
+    }
+
+    return {
+      latitude: parseFloat(orderData.address.latitude),
+      longitude: parseFloat(orderData.address.longitude),
+    };
+  };
+
+  const restaurantLocation = getRestaurantLocation();
+  const customerLocation = getCustomerLocation();
 
   // Handle order completion
   useEffect(() => {
@@ -86,38 +133,32 @@ export default function OrderTrackingScreen() {
     }
   }, [orderStatus]);
 
-  // Simulate driver movement for demo purposes
+  // Update map when driver location changes
   useEffect(() => {
-    if (!driverLocation || !mapRef.current) return;
-
-    const interval = setInterval(() => {
-      // Simulate slight movement for demo
-      const newLat = driverLocation.latitude + (Math.random() - 0.5) * 0.001;
-      const newLng = driverLocation.longitude + (Math.random() - 0.5) * 0.001;
-      mapRef.current?.updateDriverLocation(newLat, newLng);
-    }, 5000); // Update every 5 seconds
-
-    return () => clearInterval(interval);
+    if (mapRef.current && driverLocation) {
+      mapRef.current.updateDriverLocation(
+        driverLocation.latitude,
+        driverLocation.longitude,
+      );
+    }
   }, [driverLocation]);
 
   const handleBackHome = () => {
     router.back();
   };
 
-  // Debug function to test different order statuses
-  const simulateOrderStatusChange = () => {
-    const statuses = [
-      "pending",
-      "preparing",
-      "ready",
-      "picked_up",
-      "out_for_delivery",
-    ];
-    const currentIndex = statuses.indexOf(orderStatus || "pending");
-    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-    console.log("Simulating order status change to:", nextStatus);
-    mapRef.current?.updateOrderStatus(nextStatus);
-  };
+  if (isLoadingOrder) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <ThemedText style={styles.loadingText}>
+            Loading order details...
+          </ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const getEstimatedTime = () => {
     if (orderStatus === "delivered") {
@@ -125,6 +166,9 @@ export default function OrderTrackingScreen() {
     }
     if (orderStatus === "cancelled") {
       return "Order Cancelled";
+    }
+    if (orderData?.estimatedDeliveryTime) {
+      return `Estimated delivery: ${orderData.estimatedDeliveryTime}`;
     }
     return "Estimated delivery: 25-35 minutes";
   };
@@ -143,24 +187,26 @@ export default function OrderTrackingScreen() {
           <Ionicons name="arrow-back" size={24} color="#2E2E2E" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Order Tracking</ThemedText>
-        <TouchableOpacity
-          style={styles.headerRight}
-          activeOpacity={0.7}
-          onPress={simulateOrderStatusChange}
-        >
-          <Ionicons name="refresh" size={20} color="#666666" />
-        </TouchableOpacity>
+        <View style={styles.headerRight} />
       </View>
 
       {/* Map View */}
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
-          latitude={customerLocation.latitude}
-          longitude={customerLocation.longitude}
-          driverLocation={driverLocation}
-          restaurantLocation={restaurantLocation}
-          customerLocation={customerLocation}
+          latitude={
+            customerLocation?.latitude ||
+            restaurantLocation?.latitude ||
+            37.7749
+          }
+          longitude={
+            customerLocation?.longitude ||
+            restaurantLocation?.longitude ||
+            -122.4194
+          }
+          driverLocation={driverLocation || undefined}
+          restaurantLocation={restaurantLocation || undefined}
+          customerLocation={customerLocation || undefined}
           orderStatus={
             (orderStatus as
               | "pending"
@@ -207,12 +253,12 @@ export default function OrderTrackingScreen() {
       />
 
       {/* Floating Driver Info */}
-      {true && (
+      {driverInfo && (
         <FloatingDriverInfo
           driverInfo={{
             ...driverInfo,
             estimatedArrival: "5-10 min",
-            plateNumber: "ABC-123",
+            plateNumber: driverInfo.plateNumber || "ABC-123",
           }}
         />
       )}
@@ -224,6 +270,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666666",
   },
   header: {
     flexDirection: "row",
@@ -245,7 +301,7 @@ const styles = StyleSheet.create({
     color: "#2E2E2E",
   },
   headerRight: {
-    padding: 8,
+    width: 40,
   },
   mapContainer: {
     flex: 1,

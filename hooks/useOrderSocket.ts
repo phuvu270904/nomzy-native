@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
 import {
-    CreateOrderRequest,
-    Order,
-    orderSocketService,
-    OrderStatusUpdate,
+  CreateOrderRequest,
+  DriverLocationUpdate,
+  Order,
+  orderSocketService,
+  OrderStatusUpdate,
 } from "@/services/orderSocketService";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -21,6 +22,7 @@ export interface UseOrderSocketReturn {
   currentOrder: Order | null;
   orderStatus: string | null;
   driverInfo: any | null;
+  driverLocation: { latitude: number; longitude: number } | null;
 
   // Manual connection control
   connect: () => Promise<boolean>;
@@ -39,6 +41,10 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [orderStatus, setOrderStatus] = useState<string | null>(null);
   const [driverInfo, setDriverInfo] = useState<any | null>(null);
+  const [driverLocation, setDriverLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   // Use ref to track if we've set up listeners to avoid duplicates
   const listenersSetup = useRef(false);
@@ -101,6 +107,20 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
         setCurrentOrder((prev) =>
           prev ? { ...prev, status: "cancelled" } : null,
         );
+      }
+    });
+
+    orderSocketService.onDriverLocationUpdate((data: DriverLocationUpdate) => {
+      console.log("Driver location updated in hook:", data);
+      if (
+        currentOrder &&
+        currentOrder.id === data.orderId &&
+        data.location
+      ) {
+        setDriverLocation({
+          latitude: data.location.latitude,
+          longitude: data.location.longitude,
+        });
       }
     });
 
@@ -202,6 +222,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     setCurrentOrder(null);
     setOrderStatus(null);
     setDriverInfo(null);
+    setDriverLocation(null);
   }, []);
 
   // Auto-connect when user becomes authenticated
@@ -257,6 +278,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     currentOrder,
     orderStatus,
     driverInfo,
+    driverLocation,
 
     // Manual connection control
     connect,

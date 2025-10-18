@@ -7,6 +7,7 @@ import {
   type OrderRequest,
 } from "@/components/driver";
 import { useDriverSocket } from "@/hooks/useDriverSocket";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -256,7 +257,8 @@ const DriverHomeScreen = () => {
 
   const handleOrderRequestAccept = (orderId: number) => {
     acceptOrder(orderId);
-    Alert.alert("Order Accepted", `You have accepted order #${orderId}`);
+    // Navigate to driver tracking screen
+    router.push(`/driver-tracking/${orderId}`);
   };
 
   const handleOrderRequestDecline = (orderId: number) => {

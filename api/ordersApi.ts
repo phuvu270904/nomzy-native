@@ -14,6 +14,22 @@ export interface Order {
 }
 
 // Types based on API response structure
+export interface RestaurantAddress {
+  id: number;
+  restaurantId: number;
+  streetAddress: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  state: string;
+  isDefault: boolean;
+  label: string;
+  latitude: string;
+  longitude: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Restaurant {
   id: number;
   name: string;
@@ -27,6 +43,7 @@ export interface Restaurant {
   resetToken?: string;
   createdAt: string;
   updatedAt: string;
+  addresses?: RestaurantAddress[];
 }
 
 export interface Driver {

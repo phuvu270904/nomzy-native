@@ -49,6 +49,15 @@ export interface Order {
   updatedAt: string;
 }
 
+export interface DriverLocationUpdate {
+  orderId: number;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  timestamp?: string;
+}
+
 // Get WebSocket base URL
 const getSocketUrl = () => {
   if (!__DEV__) {
@@ -74,6 +83,7 @@ export class OrderSocketService {
   private onOrderStatusUpdatedCallback?: (data: OrderStatusUpdate) => void;
   private onDriverAssignedCallback?: (data: any) => void;
   private onOrderCancelledCallback?: (data: any) => void;
+  private onDriverLocationUpdateCallback?: (data: DriverLocationUpdate) => void;
   private onConnectedCallback?: () => void;
   private onDisconnectedCallback?: () => void;
   private onErrorCallback?: (error: string) => void;
@@ -185,6 +195,11 @@ export class OrderSocketService {
           this.onOrderCancelledCallback?.(data);
         });
 
+        this.socket.on("driver-location-update", (data: DriverLocationUpdate) => {
+          console.log("Driver location updated:", data);
+          this.onDriverLocationUpdateCallback?.(data);
+        });
+
         this.socket.on("joined-order-room", (data: { orderId: number }) => {
           console.log("Joined order room:", data.orderId);
         });
@@ -283,6 +298,10 @@ export class OrderSocketService {
 
   onOrderCancelled(callback: (data: any) => void) {
     this.onOrderCancelledCallback = callback;
+  }
+
+  onDriverLocationUpdate(callback: (data: DriverLocationUpdate) => void) {
+    this.onDriverLocationUpdateCallback = callback;
   }
 
   onConnected(callback: () => void) {

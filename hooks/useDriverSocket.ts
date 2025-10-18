@@ -36,6 +36,17 @@ export interface UseDriverSocketReturn {
   acceptOrder: (orderId: number) => void;
   declineOrder: (orderId: number) => void;
 
+  // Driver location and order status
+  updateDriverLocation: (
+    orderId: number,
+    latitude: number,
+    longitude: number,
+  ) => void;
+  updateOrderStatus: (
+    orderId: number,
+    status: string,
+  ) => void;
+
   // Manual connection control
   connect: () => Promise<boolean>;
   disconnect: () => void;
@@ -346,6 +357,40 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
     setCurrentOrderRequest(null);
   }, []);
 
+  // Update driver location function
+  const updateDriverLocation = useCallback(
+    (orderId: number, latitude: number, longitude: number) => {
+      if (!socket || !isConnected) {
+        console.error("Cannot update location: socket not connected");
+        return;
+      }
+
+      console.log("Driver updating location for order:", orderId, {
+        latitude,
+        longitude,
+      });
+      socket.emit("driver-location-update", {
+        orderId,
+        location: { latitude, longitude },
+      });
+    },
+    [socket, isConnected],
+  );
+
+  // Update order status function
+  const updateOrderStatus = useCallback(
+    (orderId: number, status: string) => {
+      if (!socket || !isConnected) {
+        console.error("Cannot update order status: socket not connected");
+        return;
+      }
+
+      console.log("Driver updating order status:", orderId, status);
+      socket.emit("driver-update-order-status", { orderId, status });
+    },
+    [socket, isConnected],
+  );
+
   // Auto-disconnect when user logs out
   useEffect(() => {
     if (!isAuthenticated && socket) {
@@ -368,6 +413,10 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
     currentOrderRequest,
     acceptOrder,
     declineOrder,
+
+    // Driver location and order status
+    updateDriverLocation,
+    updateOrderStatus,
 
     // Manual connection control
     connect,
