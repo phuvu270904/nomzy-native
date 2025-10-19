@@ -205,7 +205,7 @@ export default function DriverTrackingScreen() {
           } catch (error) {
             console.error("Interval location update error:", error);
           }
-        }, 5000); // Every 5 seconds
+        }, 3000); // Every 3 seconds
       } catch (error) {
         console.error("Location error:", error);
         Alert.alert("Error", "Failed to access location");
