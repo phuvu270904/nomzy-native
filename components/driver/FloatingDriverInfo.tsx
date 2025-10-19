@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-    Alert,
-    Image,
-    Linking,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Linking,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -23,11 +24,13 @@ interface FloatingDriverInfoProps {
     estimatedArrival?: string;
   };
   style?: any;
+  onPress?: () => void;
 }
 
 export function FloatingDriverInfo({
   driverInfo,
   style,
+  onPress,
 }: FloatingDriverInfoProps) {
   const handleCall = () => {
     if (driverInfo?.phone) {
@@ -48,7 +51,7 @@ export function FloatingDriverInfo({
 
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.content}>
+      <Pressable style={styles.content} onPress={onPress}>
         <View style={styles.header}>
           <View style={styles.driverSection}>
             <View style={styles.avatarContainer}>
@@ -108,7 +111,15 @@ export function FloatingDriverInfo({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+        
+        {/* Tap to view more indicator */}
+        {onPress && (
+          <View style={styles.tapIndicator}>
+            <ThemedText style={styles.tapText}>Tap for driver details</ThemedText>
+            <Ionicons name="chevron-up" size={16} color="#999999" />
+          </View>
+        )}
+      </Pressable>
     </View>
   );
 }
@@ -205,5 +216,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#E3F2FD",
+  },
+  tapIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+  },
+  tapText: {
+    fontSize: 12,
+    color: "#999999",
+    marginRight: 4,
   },
 });

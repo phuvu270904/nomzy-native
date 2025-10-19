@@ -7,5 +7,6 @@ export { default as TabNavigation } from "./TabNavigation";
 export type { Tab } from "./TabNavigation";
 
 export { FloatingOrderInfo } from "./FloatingOrderInfo";
+export { OrderDetailsModal } from "./OrderDetailsModal";
 export { OrderStatusTracker } from "./OrderStatusTracker";
 

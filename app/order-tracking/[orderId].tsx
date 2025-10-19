@@ -1,17 +1,25 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { ThemedText } from "@/components/ThemedText";
-import { FloatingDriverInfo } from "@/components/driver/FloatingDriverInfo";
-import { FloatingOrderInfo } from "@/components/orders/FloatingOrderInfo";
+import { DriverInfoModal } from "@/components/driver/DriverInfoModal";
+import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal";
 import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useOrderSocket } from "@/hooks/useOrderSocket";
 import { useAppSelector } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
+
+type OrderStatus =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "picked_up"
+  | "out_for_delivery"
+  | "delivered";
 
 export default function OrderTrackingScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
@@ -38,6 +46,8 @@ export default function OrderTrackingScreen() {
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+  const [isDriverModalVisible, setIsDriverModalVisible] = useState(false);
+  const [isOrderDetailsModalVisible, setIsOrderDetailsModalVisible] = useState(false);
   const mapRef = useRef<MapViewRef>(null);
 
   // Fallback connection logic for direct navigation to this screen
@@ -145,6 +155,36 @@ export default function OrderTrackingScreen() {
     router.back();
   };
 
+  // Helper functions for progress steps
+  const getStatusSteps = () => {
+    const steps: { status: OrderStatus; label: string; icon: string }[] = [
+      { status: "preparing", label: "Preparing", icon: "restaurant" },
+      { status: "ready", label: "Ready", icon: "checkmark-circle" },
+      { status: "picked_up", label: "Pickup Up", icon: "bag-handle" },
+      {
+        status: "out_for_delivery",
+        label: "Delivering",
+        icon: "navigate-circle",
+      },
+      { status: "delivered", label: "Delivered", icon: "checkmark-done" },
+    ];
+    return steps;
+  };
+
+  const getCurrentStepIndex = () => {
+    const steps = getStatusSteps();
+    const currentStatus = orderStatus as OrderStatus;
+    return steps.findIndex((step) => step.status === currentStatus);
+  };
+
+  const handleDriverInfoPress = () => {
+    setIsDriverModalVisible(true);
+  };
+
+  const handleOrderDetailsPress = () => {
+    setIsOrderDetailsModalVisible(true);
+  };
+
   if (isLoadingOrder) {
     return (
       <SafeAreaView style={styles.container}>
@@ -206,19 +246,13 @@ export default function OrderTrackingScreen() {
           restaurantLocation={restaurantLocation || undefined}
           customerLocation={customerLocation || undefined}
           orderStatus={
-            (orderStatus as
-              | "pending"
-              | "preparing"
-              | "ready"
-              | "picked_up"
-              | "out_for_delivery"
-              | "delivered") || "pending"
+            (orderStatus as OrderStatus) || "pending"
           }
           showRoute={!!driverLocation}
           style={styles.map}
         />
 
-        {/* Connection Status Overlay */}
+        {/* Connection Status Alert */}
         {!isConnected && (
           <View style={styles.connectionAlert}>
             <Ionicons name="warning" size={16} color="#FF6B35" />
@@ -230,36 +264,143 @@ export default function OrderTrackingScreen() {
           </View>
         )}
 
-        {/* Order Status Indicator */}
+        {/* Status Indicator */}
         <View style={styles.statusIndicator}>
-          <ThemedText style={styles.statusText}>
-            Status: {orderStatus || "pending"}
-          </ThemedText>
+          <View style={styles.statusRow}>
+            <ThemedText style={styles.statusText}>
+              Status: {(orderStatus || "pending").replace(/_/g, " ")}
+            </ThemedText>
+            {isConnected && (
+              <View style={styles.connectedDot} />
+            )}
+          </View>
           <ThemedText style={styles.routeText}>
-            {orderStatus === "out_for_delivery"
+            {orderStatus === "out_for_delivery" ||
+            orderStatus === "picked_up"
               ? "🔴 Route to Customer"
               : "🟠 Route to Restaurant"}
           </ThemedText>
         </View>
       </View>
 
-      {/* Floating Order Info */}
-      <FloatingOrderInfo
-        orderId={orderId || "N/A"}
-        estimatedTime={getEstimatedTime()}
-        status={orderStatus || "pending"}
-      />
+      {/* Order Info Card */}
+      <View style={styles.orderInfoCard}>
+        {/* View Order Details Button */}
+        <Pressable style={styles.viewOrderDetailsButton} onPress={handleOrderDetailsPress}>
+          <View style={styles.orderDetailsContent}>
+            <View style={styles.orderDetailsLeft}>
+              <ThemedText style={styles.orderDetailsTitle}>Order #{orderId}</ThemedText>
+              <ThemedText style={styles.orderDetailsSubtitle}>
+                {orderData?.restaurant?.name || "Restaurant"} • {parseFloat(orderData?.total || "0").toLocaleString("vi-VN")}đ
+              </ThemedText>
+            </View>
+            <View style={styles.orderDetailsRight}>
+              <ThemedText style={styles.viewDetailsText}>View Details</ThemedText>
+              <Ionicons name="chevron-forward" size={20} color="#4CAF50" />
+            </View>
+          </View>
+        </Pressable>
 
-      {/* Floating Driver Info */}
+        {/* Progress Steps */}
+        <View style={styles.progressContainer}>
+          {getStatusSteps().map((step, index) => {
+            const currentIndex = getCurrentStepIndex();
+            const isActive = index <= currentIndex;
+            const isCurrent = index === currentIndex;
+
+            return (
+              <View key={step.status} style={styles.stepItem}>
+                <View
+                  style={[
+                    styles.stepIcon,
+                    isActive && styles.stepIconActive,
+                    isCurrent && styles.stepIconCurrent,
+                  ]}
+                >
+                  <Ionicons
+                    name={step.icon as any}
+                    size={16}
+                    color={isActive ? "#FFFFFF" : "#999999"}
+                  />
+                </View>
+                <ThemedText
+                  style={[
+                    styles.stepLabel,
+                    isActive && styles.stepLabelActive,
+                  ]}
+                >
+                  {step.label}
+                </ThemedText>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Driver Info Section - Only show when driver is assigned */}
+        {driverInfo && (
+          <Pressable style={styles.driverInfoSection} onPress={handleDriverInfoPress}>
+            <View style={styles.driverInfoHeader}>
+              <ThemedText style={styles.driverInfoTitle}>Your Driver</ThemedText>
+              <Ionicons name="chevron-forward" size={20} color="#666666" />
+            </View>
+            
+            <View style={styles.driverInfoContent}>
+              <View style={styles.driverAvatar}>
+                {driverInfo?.photo ? (
+                  <Image
+                    source={{ uri: driverInfo.photo }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Ionicons name="person" size={24} color="#4CAF50" />
+                  </View>
+                )}
+              </View>
+              
+              <View style={styles.driverDetails}>
+                <ThemedText style={styles.driverName}>
+                  {driverInfo?.name || "Super Driver"}
+                </ThemedText>
+                <View style={styles.driverMeta}>
+                  <Ionicons name="star" size={14} color="#FFD700" />
+                  <ThemedText style={styles.driverRating}>
+                    {driverInfo?.rating || "4.8"}
+                  </ThemedText>
+                  <ThemedText style={styles.driverPlate}>
+                    • {driverInfo?.plateNumber || "ABC-123"}
+                  </ThemedText>
+                </View>
+              </View>
+              
+              <View style={styles.driverActions}>
+                <TouchableOpacity style={styles.actionBtn}>
+                  <Ionicons name="chatbubble" size={18} color="#4CAF50" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionBtn}>
+                  <Ionicons name="call" size={18} color="#4CAF50" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Driver Info Modal */}
       {driverInfo && (
-        <FloatingDriverInfo
-          driverInfo={{
-            ...driverInfo,
-            estimatedArrival: "5-10 min",
-            plateNumber: driverInfo.plateNumber || "ABC-123",
-          }}
+        <DriverInfoModal
+          visible={isDriverModalVisible}
+          onClose={() => setIsDriverModalVisible(false)}
+          driverInfo={driverInfo}
         />
       )}
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        visible={isOrderDetailsModalVisible}
+        onClose={() => setIsOrderDetailsModalVisible(false)}
+        orderData={orderData}
+      />
     </SafeAreaView>
   );
 }
@@ -318,31 +459,209 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF3E0",
     padding: 12,
     borderRadius: 8,
-    zIndex: 200,
+    zIndex: 300,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   connectionText: {
     fontSize: 12,
     color: "#FF6B35",
     marginLeft: 8,
     flex: 1,
+    fontWeight: "500",
   },
   statusIndicator: {
     position: "absolute",
-    top: 70,
+    top: 16,
     left: 16,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    padding: 8,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    padding: 12,
     borderRadius: 8,
     zIndex: 200,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minWidth: 180,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
   },
   statusText: {
     fontSize: 12,
     fontWeight: "600",
     color: "#2E2E2E",
-    marginBottom: 4,
+  },
+  connectedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#4CAF50",
+    marginLeft: 8,
   },
   routeText: {
     fontSize: 11,
     color: "#666666",
+  },
+  orderInfoCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  viewOrderDetailsButton: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+  },
+  orderDetailsContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  orderDetailsLeft: {
+    flex: 1,
+  },
+  orderDetailsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 4,
+  },
+  orderDetailsSubtitle: {
+    fontSize: 14,
+    color: "#666666",
+  },
+  orderDetailsRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  viewDetailsText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#4CAF50",
+    marginRight: 4,
+  },
+  progressContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  stepItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  stepIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  stepIconActive: {
+    backgroundColor: "#4CAF50",
+  },
+  stepIconCurrent: {
+    backgroundColor: "#FF6B35",
+  },
+  stepLabel: {
+    fontSize: 10,
+    color: "#999999",
+    textAlign: "center",
+  },
+  stepLabelActive: {
+    color: "#2E2E2E",
+    fontWeight: "600",
+  },
+  driverInfoSection: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  driverInfoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  driverInfoTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E2E2E",
+  },
+  driverInfoContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  driverAvatar: {
+    marginRight: 12,
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  avatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#E8F5E8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  driverDetails: {
+    flex: 1,
+  },
+  driverName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 4,
+  },
+  driverMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  driverRating: {
+    fontSize: 12,
+    color: "#666666",
+    marginLeft: 4,
+  },
+  driverPlate: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  driverActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E3F2FD",
   },
 });
