@@ -133,7 +133,6 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     });
 
     orderSocketService.onDriverLocationUpdate((data: DriverLocationUpdate) => {
-      console.log("Driver location updated in hook:", data);
       // Update driver location for any order we're tracking
       // Don't require currentOrder since we might just be viewing/tracking an order
       if (data.location) {
@@ -142,7 +141,6 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
           longitude: data.location.longitude,
         };
         setDriverLocation(updatedLocation);
-        console.log("Driver location updated to:", updatedLocation);
       }
     });
 

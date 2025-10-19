@@ -270,7 +270,6 @@ const DriverHomeScreen = () => {
                 longitude: location.coords.longitude,
               };
               setCurrentLocation(driverLocation);
-              console.log("Driver location updated:", driverLocation);
             }
           },
         );

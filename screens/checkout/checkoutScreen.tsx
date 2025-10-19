@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { addressApi } from "@/api/addressApi";
 import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppSelector } from "@/store/store";
@@ -58,14 +59,44 @@ export default function CheckoutScreen() {
   const { cart } = useAppSelector((state) => state.cart);
   const { user, isAuthenticated } = useAuth();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(true);
 
-  const selectedAddress: Address = {
-    id: "1",
-    name: "Home",
-    address: "123 Main Street, City, State 12345",
-    phone: "+1 (555) 123-4567",
-    isDefault: true,
-  };
+  // Fetch default address on component mount
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      if (!isAuthenticated) {
+        setIsLoadingAddress(false);
+        return;
+      }
+
+      try {
+        setIsLoadingAddress(true);
+        const defaultAddress = await addressApi.getDefaultAddress();
+        
+        // Convert API response to local Address format
+        const formattedAddress: Address = {
+          id: defaultAddress.id.toString(),
+          name: defaultAddress.label,
+          address: `${defaultAddress.streetAddress}, ${defaultAddress.city}, ${defaultAddress.state} ${defaultAddress.postalCode}`,
+          phone: user?.user?.phone_number || "",
+          isDefault: defaultAddress.isDefault,
+        };
+        
+        setSelectedAddress(formattedAddress);
+      } catch (error) {
+        console.error("Error fetching default address:", error);
+        Alert.alert(
+          "Address Error",
+          "Failed to load default address. Please add an address in your profile.",
+        );
+      } finally {
+        setIsLoadingAddress(false);
+      }
+    };
+
+    fetchDefaultAddress();
+  }, [isAuthenticated, user]);
 
   const selectedPayment: PaymentMethod = {
     id: "1",
@@ -118,6 +149,14 @@ export default function CheckoutScreen() {
       return;
     }
 
+    if (!selectedAddress) {
+      Alert.alert(
+        "Error",
+        "Please select a delivery address before placing the order.",
+      );
+      return;
+    }
+
     Alert.alert(
       "Place Order",
       `Your order total is $${total.toFixed(2)}. Confirm to place order?`,
@@ -148,7 +187,7 @@ export default function CheckoutScreen() {
               const orderData: CreateOrderRequest = {
                 userId: parseInt(user.user.id),
                 restaurantId,
-                addressId: 1, // Use hardcoded address for now
+                addressId: parseInt(selectedAddress.id),
                 orderItems,
                 subtotal: parseFloat(subtotal.toFixed(2)),
                 deliveryFee: parseFloat(deliveryFee.toFixed(2)),
@@ -244,20 +283,41 @@ export default function CheckoutScreen() {
               <ThemedText style={styles.changeButton}>Change</ThemedText>
             </TouchableOpacity>
           </View>
-          <View style={styles.addressCard}>
-            <View style={styles.addressInfo}>
-              <ThemedText style={styles.addressName}>
-                {selectedAddress.name}
-              </ThemedText>
-              <ThemedText style={styles.addressText}>
-                {selectedAddress.address}
-              </ThemedText>
-              <ThemedText style={styles.addressPhone}>
-                {selectedAddress.phone}
+          {isLoadingAddress ? (
+            <View style={[styles.addressCard, styles.loadingCard]}>
+              <ActivityIndicator size="small" color="#4CAF50" />
+              <ThemedText style={styles.loadingText}>
+                Loading address...
               </ThemedText>
             </View>
-            <Ionicons name="location" size={24} color="#4CAF50" />
-          </View>
+          ) : selectedAddress ? (
+            <View style={styles.addressCard}>
+              <View style={styles.addressInfo}>
+                <ThemedText style={styles.addressName}>
+                  {selectedAddress.name}
+                </ThemedText>
+                <ThemedText style={styles.addressText}>
+                  {selectedAddress.address}
+                </ThemedText>
+                <ThemedText style={styles.addressPhone}>
+                  {selectedAddress.phone}
+                </ThemedText>
+              </View>
+              <Ionicons name="location" size={24} color="#4CAF50" />
+            </View>
+          ) : (
+            <View style={[styles.addressCard, styles.emptyCard]}>
+              <View style={styles.addressInfo}>
+                <ThemedText style={styles.emptyText}>
+                  No default address found
+                </ThemedText>
+                <ThemedText style={styles.emptySubtext}>
+                  Please add a delivery address in your profile
+                </ThemedText>
+              </View>
+              <Ionicons name="add-circle" size={24} color="#4CAF50" />
+            </View>
+          )}
         </View>
 
         {/* Order Summary Section */}
@@ -584,5 +644,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  loadingCard: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 32,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666666",
+    marginTop: 8,
+  },
+  emptyCard: {
+    opacity: 0.7,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 12,
+    color: "#666666",
   },
 });
