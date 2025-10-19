@@ -40,9 +40,6 @@ export default function OrderTrackingScreen() {
   // This only provides connection methods, doesn't automatically connect
   const { connect, joinOrderRoom } = useOrderSocket();
 
-  console.log(driverInfo, "driverINFOOO");
-  
-
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
@@ -173,7 +170,7 @@ export default function OrderTrackingScreen() {
 
   const getCurrentStepIndex = () => {
     const steps = getStatusSteps();
-    const currentStatus = orderStatus as OrderStatus;
+    const currentStatus = orderData?.status as OrderStatus;
     return steps.findIndex((step) => step.status === currentStatus);
   };
 
@@ -263,24 +260,6 @@ export default function OrderTrackingScreen() {
             </ThemedText>
           </View>
         )}
-
-        {/* Status Indicator */}
-        <View style={styles.statusIndicator}>
-          <View style={styles.statusRow}>
-            <ThemedText style={styles.statusText}>
-              Status: {(orderStatus || "pending").replace(/_/g, " ")}
-            </ThemedText>
-            {isConnected && (
-              <View style={styles.connectedDot} />
-            )}
-          </View>
-          <ThemedText style={styles.routeText}>
-            {orderStatus === "out_for_delivery" ||
-            orderStatus === "picked_up"
-              ? "🔴 Route to Customer"
-              : "🟠 Route to Restaurant"}
-          </ThemedText>
-        </View>
       </View>
 
       {/* Order Info Card */}

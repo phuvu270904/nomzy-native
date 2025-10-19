@@ -434,24 +434,6 @@ export default function DriverTrackingScreen() {
             </ThemedText>
           </View>
         )}
-
-        {/* Status Indicator */}
-        <View style={styles.statusIndicator}>
-          <View style={styles.statusRow}>
-            <ThemedText style={styles.statusText}>
-              Status: {currentStatus.replace(/_/g, " ")}
-            </ThemedText>
-            {isConnected && (
-              <View style={styles.connectedDot} />
-            )}
-          </View>
-          <ThemedText style={styles.routeText}>
-            {currentStatus === "out_for_delivery" ||
-            currentStatus === "picked_up"
-              ? "🔴 Route to Customer"
-              : "🟠 Route to Restaurant"}
-          </ThemedText>
-        </View>
       </View>
 
       {/* Order Info Card */}
