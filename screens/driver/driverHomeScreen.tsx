@@ -7,6 +7,7 @@ import {
   type OrderRequest,
 } from "@/components/driver";
 import { useDriverSocket } from "@/hooks/useDriverSocket";
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StatusBar, StyleSheet } from "react-native";
@@ -119,6 +120,7 @@ const fakeHistory: HistoryOrder[] = [
 const DriverHomeScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [orderHistory] = useState(fakeHistory);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   // Driver WebSocket hook
   const {
@@ -131,6 +133,8 @@ const DriverHomeScreen = () => {
     declineOrder,
     clearError,
     clearOrderRequest,
+    currentLocation,
+    setCurrentLocation,
   } = useDriverSocket();
 
   // Group orders by date
@@ -210,6 +214,86 @@ const DriverHomeScreen = () => {
     }
   }, [connectionError, clearError]);
 
+  // Request location permissions and start tracking when driver goes online
+  useEffect(() => {
+    let mounted = true;
+
+    const startLocationTracking = async () => {
+      if (!isOnline) {
+        // Stop tracking when offline
+        if (locationSubscription.current) {
+          locationSubscription.current.remove();
+          locationSubscription.current = null;
+        }
+        setCurrentLocation(null);
+        return;
+      }
+
+      try {
+        // Request location permissions
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Required",
+            "Location permission is required when you're online to accept orders",
+          );
+          // Turn driver offline if permission denied
+          setOnline(false);
+          return;
+        }
+
+        // Get initial location
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+
+        if (mounted && isOnline) {
+          const driverLocation = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          };
+          setCurrentLocation(driverLocation);
+          console.log("Driver location initialized:", driverLocation);
+        }
+
+        // Start watching location
+        locationSubscription.current = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 10000, // Update every 10 seconds
+            distanceInterval: 50, // Or when moved 50 meters
+          },
+          (location) => {
+            if (mounted && isOnline) {
+              const driverLocation = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+              };
+              setCurrentLocation(driverLocation);
+              console.log("Driver location updated:", driverLocation);
+            }
+          },
+        );
+      } catch (error) {
+        console.error("Location error:", error);
+        Alert.alert(
+          "Location Error",
+          "Failed to access your location. Please check your device settings.",
+        );
+      }
+    };
+
+    startLocationTracking();
+
+    return () => {
+      mounted = false;
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+    };
+  }, [isOnline, setCurrentLocation, setOnline]);
+
   // Handle online state changes based on connection status
   useEffect(() => {
     if (isOnline && isConnected) {
@@ -256,7 +340,8 @@ const DriverHomeScreen = () => {
   };
 
   const handleOrderRequestAccept = (orderId: number) => {
-    acceptOrder(orderId);
+    // Pass the current location when accepting order
+    acceptOrder(orderId, currentLocation || undefined);
     // Navigate to driver tracking screen
     router.push(`/driver-tracking/${orderId}`);
   };

@@ -46,6 +46,7 @@ export default function DriverTrackingScreen() {
   const locationSubscription = useRef<Location.LocationSubscription | null>(
     null,
   );
+  const locationUpdateInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Ensure socket is connected
   useEffect(() => {
@@ -134,6 +135,7 @@ export default function DriverTrackingScreen() {
               newLocation.latitude,
               newLocation.longitude,
             );
+            console.log("Driver tracking: Initial location sent");
           } else if (orderId && !isConnected) {
             console.warn(
               "Driver tracking: Initial location not sent, socket not connected. Will retry when connected.",
@@ -141,11 +143,11 @@ export default function DriverTrackingScreen() {
           }
         }
 
-        // Start watching location
+        // Start watching location for real-time updates
         locationSubscription.current = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
-            timeInterval: 5000, // Update every 5 seconds
+            timeInterval: 3000, // Update every 3 seconds
             distanceInterval: 10, // Or when moved 10 meters
           },
           (location) => {
@@ -161,22 +163,49 @@ export default function DriverTrackingScreen() {
                 newLocation.latitude,
                 newLocation.longitude,
               );
-
-              // Share location via socket (only if connected)
-              if (orderId && isConnected) {
-                updateDriverLocation(
-                  parseInt(orderId, 10),
-                  newLocation.latitude,
-                  newLocation.longitude,
-                );
-              } else if (orderId && !isConnected) {
-                console.warn(
-                  "Driver tracking: Cannot update location, socket not connected",
-                );
-              }
             }
           },
         );
+
+        // Set up interval to send location updates every 3 seconds
+        locationUpdateInterval.current = setInterval(async () => {
+          if (!mounted) return;
+
+          try {
+            const currentLocation = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+
+            const newLocation = {
+              latitude: currentLocation.coords.latitude,
+              longitude: currentLocation.coords.longitude,
+            };
+
+            setDriverLocation(newLocation);
+
+            // Update map
+            mapRef.current?.updateDriverLocation(
+              newLocation.latitude,
+              newLocation.longitude,
+            );
+
+            // Share location via socket (only if connected)
+            if (orderId && isConnected) {
+              updateDriverLocation(
+                parseInt(orderId, 10),
+                newLocation.latitude,
+                newLocation.longitude,
+              );
+              console.log("Driver tracking: Location update sent via interval");
+            } else if (orderId && !isConnected) {
+              console.warn(
+                "Driver tracking: Cannot update location, socket not connected",
+              );
+            }
+          } catch (error) {
+            console.error("Interval location update error:", error);
+          }
+        }, 5000); // Every 5 seconds
       } catch (error) {
         console.error("Location error:", error);
         Alert.alert("Error", "Failed to access location");
@@ -189,6 +218,9 @@ export default function DriverTrackingScreen() {
       mounted = false;
       if (locationSubscription.current) {
         locationSubscription.current.remove();
+      }
+      if (locationUpdateInterval.current) {
+        clearInterval(locationUpdateInterval.current);
       }
     };
   }, [orderId, updateDriverLocation, isConnected]);

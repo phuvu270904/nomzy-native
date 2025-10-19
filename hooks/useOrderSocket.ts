@@ -52,7 +52,9 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
 
   // Setup event listeners
   useEffect(() => {
-    if (listenersSetup.current) return;
+    if (listenersSetup.current) {
+      return;
+    }
 
     console.log("Setting up order socket event listeners");
 
@@ -87,40 +89,60 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       console.log("Order status updated in hook:", data);
       setOrderStatus(data.status);
 
-      // If we have a current order and it matches the updated order
-      if (currentOrder && currentOrder.id === data.orderId) {
-        setCurrentOrder((prev) =>
-          prev ? { ...prev, status: data.status } : null,
-        );
-      }
+      // Use functional update to avoid dependency on currentOrder
+      setCurrentOrder((prev) => {
+        if (prev && prev.id === data.orderId) {
+          return { ...prev, status: data.status };
+        }
+        return prev;
+      });
     });
 
     orderSocketService.onDriverAssigned((data: any) => {
       console.log("Driver assigned in hook:", data);
-      setDriverInfo(data.driver || data);
+      console.log("Driver assigned event full data:", JSON.stringify(data, null, 2));
+      
+      setDriverInfo(data.order.driver);
+      
+      // Set initial driver location if provided
+      if (data.location) {
+        console.log("Setting initial driver location from driver-assigned:", data.location);
+        const initialLocation = {
+          latitude: data.location.lat,
+          longitude: data.location.lng,
+        };
+        console.log(initialLocation, "location neeee");
+        
+        setDriverLocation(initialLocation);
+        console.log("Initial driver location set to:", initialLocation);
+      } else {
+        console.warn("No location data in driver-assigned event");
+      }
     });
 
     orderSocketService.onOrderCancelled((data: any) => {
       console.log("Order cancelled in hook:", data);
-      if (currentOrder && currentOrder.id === data.orderId) {
-        setOrderStatus("cancelled");
-        setCurrentOrder((prev) =>
-          prev ? { ...prev, status: "cancelled" } : null,
-        );
-      }
+      // Use functional update to avoid dependency on currentOrder
+      setCurrentOrder((prev) => {
+        if (prev && prev.id === data.orderId) {
+          setOrderStatus("cancelled");
+          return { ...prev, status: "cancelled" };
+        }
+        return prev;
+      });
     });
 
     orderSocketService.onDriverLocationUpdate((data: DriverLocationUpdate) => {
       console.log("Driver location updated in hook:", data);
-      if (
-        currentOrder &&
-        currentOrder.id === data.orderId &&
-        data.location
-      ) {
-        setDriverLocation({
+      // Update driver location for any order we're tracking
+      // Don't require currentOrder since we might just be viewing/tracking an order
+      if (data.location) {
+        const updatedLocation = {
           latitude: data.location.latitude,
           longitude: data.location.longitude,
-        });
+        };
+        setDriverLocation(updatedLocation);
+        console.log("Driver location updated to:", updatedLocation);
       }
     });
 
@@ -131,8 +153,9 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       console.log("Cleaning up order socket listeners");
       // Note: We don't actually clean up listeners here since the service is a singleton
       // and might be used by other components. The service manages its own lifecycle.
+      // DO NOT reset listenersSetup.current here as it causes re-registration
     };
-  }, [currentOrder]);
+  }, []); // Remove currentOrder dependency to prevent re-running
 
   // Connect function
   const connect = useCallback(async (): Promise<boolean> => {

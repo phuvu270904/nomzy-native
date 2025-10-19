@@ -31,9 +31,13 @@ export interface UseDriverSocketReturn {
   isOnline: boolean;
   setOnline: (online: boolean) => void;
 
+  // Driver's current location
+  currentLocation: { latitude: number; longitude: number } | null;
+  setCurrentLocation: (location: { latitude: number; longitude: number } | null) => void;
+
   // Order requests
   currentOrderRequest: OrderRequest | null;
-  acceptOrder: (orderId: number) => void;
+  acceptOrder: (orderId: number, location?: { latitude: number; longitude: number }) => void;
   declineOrder: (orderId: number) => void;
 
   // Driver location and order status
@@ -80,6 +84,10 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
   const [isOnline, setIsOnlineState] = useState(false);
   const [currentOrderRequest, setCurrentOrderRequest] =
     useState<OrderRequest | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const userId = useRef<number | null>(null);
 
@@ -294,16 +302,12 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
 
   // Accept order function
   const acceptOrder = useCallback(
-    (orderId: number) => {
+    (orderId: number, location?: { latitude: number; longitude: number }) => {
       if (!socket || !isConnected) {
         console.error("Cannot accept order: socket not connected");
         return;
       }
-
-      console.log("Driver accepting order:", orderId);
-      console.log("Order ID type:", typeof orderId);
-      console.log("Is orderId valid?", orderId && !isNaN(orderId));
-      console.log("Current order request:", currentOrderRequest);
+     
 
       if (!orderId || isNaN(orderId)) {
         console.error("Invalid order ID provided:", orderId);
@@ -321,13 +325,19 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
         return;
       }
 
-      console.log("Emitting driver-accept-order with orderId:", orderId);
-      socket.emit("driver-accept-order", { orderId });
+      // Use provided location or fall back to current location
+      const driverLocation = location;
+      
+      console.log("Emitting driver-accept-order with orderId:", orderId, "and location:", driverLocation);
+      socket.emit("driver-accept-order", { 
+        orderId, 
+        location: driverLocation 
+      });
 
       // Clear the current order request
       setCurrentOrderRequest(null);
     },
-    [socket, isConnected, currentOrderRequest],
+    [socket, isConnected, currentOrderRequest, currentLocation],
   );
 
   // Decline order function
@@ -408,6 +418,10 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
     // Driver status
     isOnline,
     setOnline,
+
+    // Driver's current location
+    currentLocation,
+    setCurrentLocation,
 
     // Order requests
     currentOrderRequest,
