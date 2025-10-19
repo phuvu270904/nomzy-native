@@ -1,3 +1,25 @@
+/**
+ * useOrderSocket Hook
+ * 
+ * This hook manages the WebSocket connection for real-time order tracking.
+ * It uses Redux Toolkit for state management to ensure that order tracking data
+ * (including driver info, location, and order status) persists across component
+ * re-renders and navigation.
+ * 
+ * Key Features:
+ * - Persistent state: Driver info and location remain available when navigating
+ *   between screens (e.g., from searching-driver to order-tracking)
+ * - Real-time updates: Listens to socket events and updates Redux state
+ * - Auto-connection: Automatically connects when user is authenticated
+ * 
+ * State is stored in Redux under the `orderTracking` slice, which includes:
+ * - currentOrder: The active order being tracked
+ * - orderStatus: Current status of the order
+ * - driverInfo: Information about the assigned driver
+ * - driverLocation: Real-time GPS coordinates of the driver
+ * - Connection state: isConnected, isConnecting, connectionError
+ */
+
 import { useAuth } from "@/hooks/useAuth";
 import {
   CreateOrderRequest,
@@ -6,7 +28,21 @@ import {
   orderSocketService,
   OrderStatusUpdate,
 } from "@/services/orderSocketService";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  clearCurrentOrder,
+  clearError,
+  setConnected,
+  setConnecting,
+  setConnectionError,
+  setCurrentOrder,
+  setDriverInfo,
+  setDriverLocation,
+  setOrderStatus,
+  updateDriverLocation,
+  updateOrderStatus
+} from "@/store/slices/orderTrackingSlice";
+import { useAppDispatch, useAppSelector } from "@/store/store";
+import { useCallback, useEffect, useRef } from "react";
 
 export interface UseOrderSocketReturn {
   // Connection state
@@ -35,16 +71,18 @@ export interface UseOrderSocketReturn {
 
 export const useOrderSocket = (): UseOrderSocketReturn => {
   const { isAuthenticated, user } = useAuth();
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [orderStatus, setOrderStatus] = useState<string | null>(null);
-  const [driverInfo, setDriverInfo] = useState<any | null>(null);
-  const [driverLocation, setDriverLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const dispatch = useAppDispatch();
+  
+  // Get state from Redux
+  const {
+    isConnected,
+    isConnecting,
+    connectionError,
+    currentOrder,
+    orderStatus,
+    driverInfo,
+    driverLocation,
+  } = useAppSelector((state) => state.orderTracking);
 
   // Use ref to track if we've set up listeners to avoid duplicates
   const listenersSetup = useRef(false);
@@ -61,59 +99,51 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     // Connection events
     orderSocketService.onConnected(() => {
       console.log("Order socket connected");
-      setIsConnected(true);
-      setIsConnecting(false);
-      setConnectionError(null);
+      dispatch(setConnected(true));
+      dispatch(setConnecting(false));
+      dispatch(setConnectionError(null));
     });
 
     orderSocketService.onDisconnected(() => {
       console.log("Order socket disconnected");
-      setIsConnected(false);
-      setIsConnecting(false);
+      dispatch(setConnected(false));
+      dispatch(setConnecting(false));
     });
 
     orderSocketService.onError((error: string) => {
       console.error("Order socket error:", error);
-      setConnectionError(error);
-      setIsConnecting(false);
+      dispatch(setConnectionError(error));
+      dispatch(setConnecting(false));
     });
 
     // Order events
     orderSocketService.onNewOrder((order: Order) => {
       console.log("New order received in hook:", order);
-      setCurrentOrder(order);
-      setOrderStatus(order.status);
+      dispatch(setCurrentOrder(order));
+      dispatch(setOrderStatus(order.status));
     });
 
     orderSocketService.onOrderStatusUpdated((data: OrderStatusUpdate) => {
       console.log("Order status updated in hook:", data);
-      setOrderStatus(data.status);
-
-      // Use functional update to avoid dependency on currentOrder
-      setCurrentOrder((prev) => {
-        if (prev && prev.id === data.orderId) {
-          return { ...prev, status: data.status };
-        }
-        return prev;
-      });
+      dispatch(updateOrderStatus({ orderId: data.orderId, status: data.status }));
     });
 
     orderSocketService.onDriverAssigned((data: any) => {
       console.log("Driver assigned in hook:", data);
       console.log("Driver assigned event full data:", JSON.stringify(data, null, 2));
       
-      setDriverInfo(data.order.driver);
+      dispatch(setDriverInfo(data.order.driver));
       
       // Set initial driver location if provided
       if (data.location) {
         console.log("Setting initial driver location from driver-assigned:", data.location);
         const initialLocation = {
-          latitude: data.location.lat,
-          longitude: data.location.lng,
+          latitude: data.location.latitude,
+          longitude: data.location.longitude,
         };
         console.log(initialLocation, "location neeee");
         
-        setDriverLocation(initialLocation);
+        dispatch(setDriverLocation(initialLocation));
         console.log("Initial driver location set to:", initialLocation);
       } else {
         console.warn("No location data in driver-assigned event");
@@ -122,14 +152,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
 
     orderSocketService.onOrderCancelled((data: any) => {
       console.log("Order cancelled in hook:", data);
-      // Use functional update to avoid dependency on currentOrder
-      setCurrentOrder((prev) => {
-        if (prev && prev.id === data.orderId) {
-          setOrderStatus("cancelled");
-          return { ...prev, status: "cancelled" };
-        }
-        return prev;
-      });
+      dispatch(updateOrderStatus({ orderId: data.orderId, status: "cancelled" }));
     });
 
     orderSocketService.onDriverLocationUpdate((data: DriverLocationUpdate) => {
@@ -140,7 +163,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
           latitude: data.location.latitude,
           longitude: data.location.longitude,
         };
-        setDriverLocation(updatedLocation);
+        dispatch(updateDriverLocation(updatedLocation));
       }
     });
 
@@ -153,7 +176,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       // and might be used by other components. The service manages its own lifecycle.
       // DO NOT reset listenersSetup.current here as it causes re-registration
     };
-  }, []); // Remove currentOrder dependency to prevent re-running
+  }, [dispatch]); // Add dispatch dependency
 
   // Connect function
   const connect = useCallback(async (): Promise<boolean> => {
@@ -161,35 +184,35 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       return isConnected;
     }
 
-    setIsConnecting(true);
-    setConnectionError(null);
+    dispatch(setConnecting(true));
+    dispatch(setConnectionError(null));
 
     try {
       const connected = await orderSocketService.connect();
       if (connected) {
-        setIsConnected(true);
-        setConnectionError(null);
+        dispatch(setConnected(true));
+        dispatch(setConnectionError(null));
       } else {
-        setConnectionError("Failed to connect to order service");
+        dispatch(setConnectionError("Failed to connect to order service"));
       }
-      setIsConnecting(false);
+      dispatch(setConnecting(false));
       return connected;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Connection failed";
-      setConnectionError(errorMessage);
-      setIsConnecting(false);
+      dispatch(setConnectionError(errorMessage));
+      dispatch(setConnecting(false));
       return false;
     }
-  }, [isConnected, isConnecting]);
+  }, [isConnected, isConnecting, dispatch]);
 
   // Disconnect function
   const disconnect = useCallback(() => {
     orderSocketService.disconnect();
-    setIsConnected(false);
-    setIsConnecting(false);
-    setConnectionError(null);
-  }, []);
+    dispatch(setConnected(false));
+    dispatch(setConnecting(false));
+    dispatch(setConnectionError(null));
+  }, [dispatch]);
 
   // Create order function
   const createOrder = useCallback(
@@ -205,20 +228,20 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
 
         const order = await orderSocketService.createOrder(orderData);
         if (order) {
-          setCurrentOrder(order);
-          setOrderStatus(order.status);
-          setDriverInfo(null); // Reset driver info for new order
+          dispatch(setCurrentOrder(order));
+          dispatch(setOrderStatus(order.status));
+          dispatch(setDriverInfo(null)); // Reset driver info for new order
         }
         return order;
       } catch (error) {
         console.error("Failed to create order in hook:", error);
         const errorMessage =
           error instanceof Error ? error.message : "Failed to create order";
-        setConnectionError(errorMessage);
+        dispatch(setConnectionError(errorMessage));
         return null;
       }
     },
-    [isConnected, connect],
+    [isConnected, connect, dispatch],
   );
 
   // Join order room function
@@ -234,17 +257,14 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
   );
 
   // Clear error function
-  const clearError = useCallback(() => {
-    setConnectionError(null);
-  }, []);
+  const clearErrorCallback = useCallback(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   // Clear current order function
-  const clearCurrentOrder = useCallback(() => {
-    setCurrentOrder(null);
-    setOrderStatus(null);
-    setDriverInfo(null);
-    setDriverLocation(null);
-  }, []);
+  const clearCurrentOrderCallback = useCallback(() => {
+    dispatch(clearCurrentOrder());
+  }, [dispatch]);
 
   // Auto-connect when user becomes authenticated
   useEffect(() => {
@@ -306,7 +326,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     disconnect,
 
     // Clear states
-    clearError,
-    clearCurrentOrder,
+    clearError: clearErrorCallback,
+    clearCurrentOrder: clearCurrentOrderCallback,
   };
 };

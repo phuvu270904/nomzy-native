@@ -14,6 +14,10 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function OrderTrackingScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  
+  // useOrderSocket now uses Redux, so driverInfo persists across navigation
+  // and component re-renders. This fixes the issue where driverInfo was getting
+  // reset to null when navigating to this screen.
   const {
     isConnected,
     isConnecting,
@@ -23,6 +27,9 @@ export default function OrderTrackingScreen() {
     driverInfo,
     driverLocation,
   } = useOrderSocket();
+
+  console.log(driverInfo, "driverINFOOO");
+  
 
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);

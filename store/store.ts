@@ -3,12 +3,14 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import cartReducer from "./slices/cartSlice";
 import checkoutReducer from "./slices/checkoutSlice";
 import onboardingReducer from "./slices/onboardingSlice";
+import orderTrackingReducer from "./slices/orderTrackingSlice";
 
 export const store = configureStore({
   reducer: {
     onboarding: onboardingReducer,
     cart: cartReducer,
     checkout: checkoutReducer,
+    orderTracking: orderTrackingReducer,
     // Add other reducers here as needed
   },
 });
