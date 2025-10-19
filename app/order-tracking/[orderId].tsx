@@ -10,67 +10,58 @@ import { FloatingDriverInfo } from "@/components/driver/FloatingDriverInfo";
 import { FloatingOrderInfo } from "@/components/orders/FloatingOrderInfo";
 import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useOrderSocket } from "@/hooks/useOrderSocket";
+import { useAppSelector } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function OrderTrackingScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   
-  // useOrderSocket now uses Redux, so driverInfo persists across navigation
-  // and component re-renders. This fixes the issue where driverInfo was getting
-  // reset to null when navigating to this screen.
+  // Get order tracking data directly from Redux store
+  // The socket connection is managed by the searching driver screen
+  // Using Redux ensures data persists across navigation without recreating connections
   const {
     isConnected,
     isConnecting,
-    connect,
-    joinOrderRoom,
+    connectionError,
     orderStatus,
     driverInfo,
     driverLocation,
-  } = useOrderSocket();
+  } = useAppSelector((state) => state.orderTracking);
+
+  // Fallback hook for direct navigation to this screen (without going through searching driver)
+  // This only provides connection methods, doesn't automatically connect
+  const { connect, joinOrderRoom } = useOrderSocket();
 
   console.log(driverInfo, "driverINFOOO");
   
 
-  const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
+  const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const mapRef = useRef<MapViewRef>(null);
 
+  // Fallback connection logic for direct navigation to this screen
   useEffect(() => {
-    // Initialize socket connection and join order room
-    const initializeOrderTracking = async () => {
-      try {
-        console.log("Initializing order tracking for order:", orderId);
-
-        if (!isConnected && !isConnecting) {
-          console.log("Connecting to socket for order tracking...");
+    const handleFallbackConnection = async () => {
+      // Only connect if no connection exists and no driver info is available
+      // This indicates the user navigated directly here without going through searching driver
+      if (!isConnected && !isConnecting && !driverInfo && orderId && !hasJoinedRoom) {
+        console.log("Direct navigation detected, establishing fallback connection for order:", orderId);
+        
+        try {
           const connected = await connect();
-          if (!connected) {
-            console.warn("Failed to connect to order tracking service");
-            return;
+          if (connected && orderId) {
+            joinOrderRoom(parseInt(orderId, 10));
+            setHasJoinedRoom(true);
           }
+        } catch (error) {
+          console.error("Fallback connection failed:", error);
         }
-
-        // Join order room if we have an orderId and haven't joined yet
-        if (orderId && isConnected && !hasJoinedRoom) {
-          console.log("Joining order room:", orderId);
-          joinOrderRoom(parseInt(orderId, 10));
-          setHasJoinedRoom(true);
-        }
-      } catch (error) {
-        console.error("Error initializing order tracking:", error);
       }
     };
 
-    initializeOrderTracking();
-  }, [
-    orderId,
-    isConnected,
-    isConnecting,
-    hasJoinedRoom,
-    connect,
-    joinOrderRoom,
-  ]);
+    handleFallbackConnection();
+  }, [isConnected, isConnecting, driverInfo, orderId, hasJoinedRoom, connect, joinOrderRoom]);
 
   // Fetch order details
   useEffect(() => {
@@ -234,7 +225,7 @@ export default function OrderTrackingScreen() {
             <ThemedText style={styles.connectionText}>
               {isConnecting
                 ? "Reconnecting..."
-                : "Connection lost - Updates may be delayed"}
+                : connectionError || "Connection lost - Updates may be delayed"}
             </ThemedText>
           </View>
         )}
