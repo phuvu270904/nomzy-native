@@ -202,22 +202,10 @@ export default function CheckoutScreen() {
               const response = await apiClient.post("/orders", orderData);
               const createdOrder = response.data;
 
-              if (createdOrder) {
-                Alert.alert("Success", "Order placed successfully!", [
-                  {
-                    text: "OK",
-                    onPress: () => {
-                      // Pass the order ID to the driver search screen
-                      router.push({
-                        pathname: "/searching-driver/",
-                        params: { orderId: createdOrder.id.toString() },
-                      } as any);
-                    },
-                  },
-                ]);
-              } else {
-                throw new Error("Failed to create order");
-              }
+              router.push({
+                pathname: "/searching-driver/",
+                params: { orderId: createdOrder.id.toString() },
+              } as any);
             } catch (error) {
               console.error("Error placing order:", error);
               const errorMessage =
