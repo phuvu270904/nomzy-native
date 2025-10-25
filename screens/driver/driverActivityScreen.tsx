@@ -1,6 +1,10 @@
+import { ordersApi, type ApiOrder } from "@/api/ordersApi";
+import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -11,64 +15,85 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DriverActivityScreen = () => {
+  const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<
     "today" | "week" | "month"
   >("today");
 
-  const [activityData, setActivityData] = useState({
-    today: {
-      earnings: 142.5,
-      deliveries: 8,
-      hours: 6.5,
-      distance: 45.2,
-      avgRating: 4.8,
-      orders: [
-        {
-          id: "ORD-001",
-          time: "10:30 AM",
-          customer: "John Doe",
-          restaurant: "Pizza Palace",
-          earnings: 18.5,
-          distance: "2.3 km",
-          rating: 5,
-        },
-        {
-          id: "ORD-002",
-          time: "11:45 AM",
-          customer: "Jane Smith",
-          restaurant: "Burger King",
-          earnings: 15.2,
-          distance: "1.8 km",
-          rating: 4,
-        },
-        {
-          id: "ORD-003",
-          time: "01:15 PM",
-          customer: "Mike Johnson",
-          restaurant: "Sushi Express",
-          earnings: 22.8,
-          distance: "3.1 km",
-          rating: 5,
-        },
-      ],
-    },
-    week: {
-      earnings: 890.25,
-      deliveries: 52,
-      hours: 38.5,
-      distance: 287.4,
-      avgRating: 4.7,
-    },
-    month: {
-      earnings: 3240.75,
-      deliveries: 185,
-      hours: 142.3,
-      distance: 1024.8,
-      avgRating: 4.8,
-    },
-  });
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const currentData = activityData[selectedPeriod];
+  // Fetch driver orders - only if user is a driver
+  useEffect(() => {
+    // Prevent API call if user is not a driver
+    if (!user || user.role !== "driver") {
+      console.log("User is not a driver, skipping driver orders fetch");
+      return;
+    }
+
+    const fetchDriverOrders = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedOrders = await ordersApi.getDriverOrders();
+        setOrders(fetchedOrders);
+      } catch (error: any) {
+        console.error("Failed to fetch driver orders:", error);
+        Alert.alert(
+          "Error",
+          "Failed to load activity data. Please try again later.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDriverOrders();
+  }, [user]);
+
+  // Filter orders based on selected period
+  const getFilteredOrders = () => {
+    const now = new Date();
+    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    return orders.filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      switch (selectedPeriod) {
+        case "today":
+          return orderDate >= startOfToday;
+        case "week":
+          return orderDate >= startOfWeek;
+        case "month":
+          return orderDate >= startOfMonth;
+        default:
+          return true;
+      }
+    });
+  };
+
+  const filteredOrders = getFilteredOrders();
+
+  // Calculate stats from filtered orders
+  const calculateStats = () => {
+    const completedOrders = filteredOrders.filter(
+      (order) => order.status.toLowerCase() === "delivered",
+    );
+
+    const totalEarnings = completedOrders.reduce(
+      (sum, order) => sum + parseFloat(order.deliveryFee || "0"),
+      0,
+    );
+
+    const deliveries = completedOrders.length;
+
+    return {
+      earnings: totalEarnings,
+      deliveries,
+    };
+  };
+
+  const currentData = calculateStats();
 
   const renderPeriodButton = (
     period: "today" | "week" | "month",
@@ -136,7 +161,7 @@ const DriverActivityScreen = () => {
             {renderStatCard(
               "cash-outline",
               "Earnings",
-              `$${currentData.earnings.toFixed(2)}`,
+              `${currentData.earnings.toFixed(2)} VND`,
               "#4CAF50",
             )}
             {renderStatCard(
@@ -144,20 +169,6 @@ const DriverActivityScreen = () => {
               "Deliveries",
               currentData.deliveries.toString(),
               "#4CAF50",
-            )}
-          </View>
-          <View style={styles.statsRow}>
-            {renderStatCard(
-              "time-outline",
-              "Hours",
-              `${currentData.hours}h`,
-              "#2196F3",
-            )}
-            {renderStatCard(
-              "speedometer-outline",
-              "Distance",
-              `${currentData.distance} km`,
-              "#9C27B0",
             )}
           </View>
         </View>
@@ -168,35 +179,11 @@ const DriverActivityScreen = () => {
           <View style={styles.performanceRow}>
             <View style={styles.performanceItem}>
               <Text style={styles.performanceValue}>
-                {currentData.avgRating}
+                {currentData.deliveries > 0
+                  ? (currentData.earnings / currentData.deliveries).toFixed(2)
+                  : "0.00"}
               </Text>
-              <Text style={styles.performanceLabel}>Avg Rating</Text>
-              <View style={styles.stars}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Ionicons
-                    key={star}
-                    name={
-                      star <= Math.floor(currentData.avgRating)
-                        ? "star"
-                        : "star-outline"
-                    }
-                    size={12}
-                    color="#FFD700"
-                  />
-                ))}
-              </View>
-            </View>
-            <View style={styles.performanceItem}>
-              <Text style={styles.performanceValue}>
-                ${(currentData.earnings / currentData.deliveries).toFixed(2)}
-              </Text>
-              <Text style={styles.performanceLabel}>Avg per Order</Text>
-            </View>
-            <View style={styles.performanceItem}>
-              <Text style={styles.performanceValue}>
-                ${(currentData.earnings / currentData.hours).toFixed(2)}
-              </Text>
-              <Text style={styles.performanceLabel}>Hourly Rate</Text>
+              <Text style={styles.performanceLabel}>Avg per Order (VND)</Text>
             </View>
           </View>
         </View>
@@ -205,25 +192,67 @@ const DriverActivityScreen = () => {
         {selectedPeriod === "today" && (
           <View style={styles.ordersCard}>
             <Text style={styles.sectionTitle}>Recent Orders</Text>
-            {activityData.today.orders.map((order) => (
-              <View key={order.id} style={styles.orderItem}>
-                <View style={styles.orderHeader}>
-                  <Text style={styles.orderTime}>{order.time}</Text>
-                  <View style={styles.orderRating}>
-                    <Ionicons name="star" size={12} color="#FFD700" />
-                    <Text style={styles.ratingText}>{order.rating}</Text>
-                  </View>
-                </View>
-                <View style={styles.orderDetails}>
-                  <Text style={styles.customerName}>{order.customer}</Text>
-                  <Text style={styles.restaurantName}>{order.restaurant}</Text>
-                  <View style={styles.orderFooter}>
-                    <Text style={styles.orderDistance}>{order.distance}</Text>
-                    <Text style={styles.orderEarnings}>+${order.earnings}</Text>
-                  </View>
-                </View>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#4CAF50" />
               </View>
-            ))}
+            ) : filteredOrders.length === 0 ? (
+              <Text style={styles.emptyText}>No orders today</Text>
+            ) : (
+              filteredOrders.map((order) => (
+                <View key={order.id} style={styles.orderItem}>
+                  <View style={styles.orderHeader}>
+                    <Text style={styles.orderTime}>
+                      {new Date(order.createdAt).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor:
+                            order.status.toLowerCase() === "delivered"
+                              ? "#4CAF5020"
+                              : "#FF980020",
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusText,
+                          {
+                            color:
+                              order.status.toLowerCase() === "delivered"
+                                ? "#4CAF50"
+                                : "#FF9800",
+                          },
+                        ]}
+                      >
+                        {order.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.orderDetails}>
+                    <Text style={styles.customerName}>
+                      {order.user?.name || "Customer"}
+                    </Text>
+                    <Text style={styles.restaurantName}>
+                      {order.restaurant.name}
+                    </Text>
+                    <View style={styles.orderFooter}>
+                      <Text style={styles.orderAddress}>
+                        {order.address.streetAddress}, {order.address.city}
+                      </Text>
+                      <Text style={styles.orderEarnings}>
+                        +{parseFloat(order.deliveryFee || "0").toFixed(2)} VND
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
         )}
 
@@ -231,22 +260,40 @@ const DriverActivityScreen = () => {
         {selectedPeriod !== "today" && (
           <View style={styles.summaryCard}>
             <Text style={styles.sectionTitle}>Summary</Text>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Best Day</Text>
-              <Text style={styles.summaryValue}>
-                {selectedPeriod === "week"
-                  ? "Tuesday - $165.40"
-                  : "March 15 - $187.20"}
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#4CAF50" />
+              </View>
+            ) : filteredOrders.length === 0 ? (
+              <Text style={styles.emptyText}>
+                No orders in this period
               </Text>
-            </View>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Peak Hours</Text>
-              <Text style={styles.summaryValue}>12:00 PM - 2:00 PM</Text>
-            </View>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Top Restaurant</Text>
-              <Text style={styles.summaryValue}>Pizza Palace</Text>
-            </View>
+            ) : (
+              <>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Total Orders</Text>
+                  <Text style={styles.summaryValue}>
+                    {filteredOrders.length}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Completed Orders</Text>
+                  <Text style={styles.summaryValue}>
+                    {
+                      filteredOrders.filter(
+                        (o) => o.status.toLowerCase() === "delivered",
+                      ).length
+                    }
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Total Earnings</Text>
+                  <Text style={styles.summaryValue}>
+                    {currentData.earnings.toFixed(2)} VND
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         )}
       </ScrollView>
@@ -393,6 +440,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
   },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
   orderRating: {
     flexDirection: "row",
     alignItems: "center",
@@ -420,6 +477,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
+  orderAddress: {
+    fontSize: 12,
+    color: "#666",
+    flex: 1,
+    marginRight: 8,
+  },
   orderDistance: {
     fontSize: 12,
     color: "#666",
@@ -428,6 +491,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#4CAF50",
+  },
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    paddingVertical: 20,
   },
   summaryCard: {
     backgroundColor: "#FFFFFF",

@@ -109,6 +109,13 @@ export interface ApiOrder {
   updatedAt: string;
   restaurant: Restaurant;
   driver?: Driver;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    phone_number: string;
+    avatar?: string;
+  };
   orderItems: OrderItem[];
   address: Address;
 }
