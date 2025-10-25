@@ -1,3 +1,4 @@
+import { convertApiOrderToDriverHistory, ordersApi } from "@/api/ordersApi";
 import {
   OrderHistory,
   OrderRequestPopup,
@@ -10,116 +11,13 @@ import { useDriverSocket } from "@/hooks/useDriverSocket";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, StatusBar, StyleSheet } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const fakeHistory: HistoryOrder[] = [
-  // Today's orders
-  {
-    id: "ORD-001",
-    status: "completed",
-    time: "14:30",
-    restaurant: "Pizza Palace",
-    customerAddress: "123 Nguyen Hue St, District 1",
-    earnings: 45000,
-    date: new Date().toISOString().split("T")[0],
-  },
-  {
-    id: "ORD-002",
-    status: "cancelled",
-    time: "13:15",
-    restaurant: "Burger King",
-    customerAddress: "456 Le Loi St, District 3",
-    earnings: 0,
-    date: new Date().toISOString().split("T")[0],
-  },
-  {
-    id: "ORD-003",
-    status: "completed",
-    time: "12:45",
-    restaurant: "Sushi Express",
-    customerAddress: "789 Dong Khoi St, District 1",
-    earnings: 65000,
-    date: new Date().toISOString().split("T")[0],
-  },
-  // Yesterday's orders
-  {
-    id: "ORD-004",
-    status: "completed",
-    time: "15:20",
-    restaurant: "Coffee Bean",
-    customerAddress: "321 Hai Ba Trung St, District 1",
-    earnings: 35000,
-    date: new Date(Date.now() - 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-  },
-  {
-    id: "ORD-005",
-    status: "completed",
-    time: "11:10",
-    restaurant: "Pho 24",
-    customerAddress: "654 Tran Hung Dao St, District 5",
-    earnings: 42000,
-    date: new Date(Date.now() - 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-  },
-  // Day before yesterday
-  {
-    id: "ORD-006",
-    status: "completed",
-    time: "16:45",
-    restaurant: "KFC",
-    customerAddress: "987 Vo Thi Sau St, District 3",
-    earnings: 55000,
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-  },
-  // July 24th orders
-  {
-    id: "ORD-007",
-    status: "completed",
-    time: "17:30",
-    restaurant: "McDonald's",
-    customerAddress: "111 Pasteur St, District 1",
-    earnings: 38000,
-    date: "2025-07-24",
-  },
-  {
-    id: "ORD-008",
-    status: "completed",
-    time: "14:15",
-    restaurant: "Lotteria",
-    customerAddress: "222 Cach Mang Thang 8 St, District 3",
-    earnings: 29000,
-    date: "2025-07-24",
-  },
-  // July 23rd orders
-  {
-    id: "ORD-009",
-    status: "completed",
-    time: "18:45",
-    restaurant: "Texas Chicken",
-    customerAddress: "333 Ben Thanh St, District 1",
-    earnings: 51000,
-    date: "2025-07-23",
-  },
-  {
-    id: "ORD-010",
-    status: "completed",
-    time: "13:30",
-    restaurant: "Subway",
-    customerAddress: "444 Nguyen Trai St, District 5",
-    earnings: 33000,
-    date: "2025-07-23",
-  },
-];
 
 const DriverHomeScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
-  const [orderHistory] = useState(fakeHistory);
+  const [orderHistory, setOrderHistory] = useState<HistoryOrder[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   // Driver WebSocket hook
@@ -213,6 +111,28 @@ const DriverHomeScreen = () => {
       ]);
     }
   }, [connectionError, clearError]);
+
+  // Fetch driver's order history
+  useEffect(() => {
+    const fetchDriverOrders = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const orders = await ordersApi.getDriverOrders();
+        const historyOrders = orders.map(convertApiOrderToDriverHistory);
+        setOrderHistory(historyOrders);
+      } catch (error: any) {
+        console.error("Failed to fetch driver orders:", error);
+        Alert.alert(
+          "Error",
+          "Failed to load order history. Please try again later.",
+        );
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    fetchDriverOrders();
+  }, []);
 
   // Request location permissions and start tracking when driver goes online
   useEffect(() => {
@@ -381,11 +301,19 @@ const DriverHomeScreen = () => {
 
       {/* Order History - Offline Mode */}
       {!isOnline && (
-        <OrderHistory
-          groupedOrders={groupedOrders}
-          availableDates={availableDates}
-          scrollViewRef={scrollViewRef}
-        />
+        <>
+          {isLoadingHistory ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FF6B00" />
+            </View>
+          ) : (
+            <OrderHistory
+              groupedOrders={groupedOrders}
+              availableDates={availableDates}
+              scrollViewRef={scrollViewRef}
+            />
+          )}
+        </>
       )}
 
       {/* Order Request Popup */}
@@ -407,6 +335,12 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
   },
 });
 

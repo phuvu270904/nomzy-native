@@ -139,6 +139,12 @@ export const ordersApi = {
     );
     return response.data;
   },
+
+  // Get driver's orders
+  getDriverOrders: async (): Promise<ApiOrder[]> => {
+    const response = await apiClient.get<ApiOrder[]>("/orders/my/driver-orders");
+    return response.data;
+  },
 };
 
 // Helper function to convert API order to UI order format
@@ -193,5 +199,58 @@ export const convertApiOrderToUIOrder = (apiOrder: ApiOrder): Order => {
     orderDate: formatDate(apiOrder.createdAt),
     estimatedTime: apiOrder.estimatedDeliveryTime || "TBD",
     orderNumber: `ORD${apiOrder.id.toString().padStart(3, "0")}`,
+  };
+};
+
+// Helper function to convert API order to driver history order format
+export const convertApiOrderToDriverHistory = (apiOrder: ApiOrder) => {
+  // Map API status to driver history status
+  const mapStatus = (apiStatus: string): string => {
+    switch (apiStatus.toLowerCase()) {
+      case "delivered":
+        return "completed";
+      case "cancelled":
+        return "cancelled";
+      case "pending":
+      case "confirmed":
+      case "preparing":
+      case "on_the_way":
+        return "active";
+      default:
+        return apiStatus.toLowerCase();
+    }
+  };
+
+  // Extract time from createdAt
+  const extractTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // Extract date in YYYY-MM-DD format
+  const extractDate = (dateString: string): string => {
+    return dateString.split("T")[0];
+  };
+
+  // Calculate earnings (delivery fee for completed orders)
+  const calculateEarnings = (order: ApiOrder): number => {
+    if (mapStatus(order.status) === "completed") {
+      return parseFloat(order.deliveryFee || "0");
+    }
+    return 0;
+  };
+
+  return {
+    id: apiOrder.id.toString(),
+    status: mapStatus(apiOrder.status),
+    time: extractTime(apiOrder.createdAt),
+    restaurant: apiOrder.restaurant.name,
+    customerAddress: `${apiOrder.address.streetAddress}, ${apiOrder.address.city}`,
+    earnings: calculateEarnings(apiOrder),
+    date: extractDate(apiOrder.createdAt),
   };
 };
