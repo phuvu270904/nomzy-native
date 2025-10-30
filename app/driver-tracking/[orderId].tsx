@@ -15,6 +15,8 @@ import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { ThemedText } from "@/components/ThemedText";
 import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useDriverSocket } from "@/hooks/useDriverSocket";
+import { selectCurrentOrderStatus } from "@/store/slices/driverTrackingSlice";
+import { useAppSelector } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
 
 type OrderStatus =
@@ -34,6 +36,10 @@ export default function DriverTrackingScreen() {
     isConnecting,
     connect,
   } = useDriverSocket();
+  
+  // Get order status from Redux
+  const orderStatusFromSocket = useAppSelector(selectCurrentOrderStatus);
+  
   const mapRef = useRef<MapViewRef>(null);
 
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);
@@ -68,6 +74,33 @@ export default function DriverTrackingScreen() {
 
     ensureConnection();
   }, [isConnected, isConnecting, connect]);
+
+  // Listen for order status updates from Redux
+  useEffect(() => {
+    if (orderStatusFromSocket && orderId) {
+      console.log("Order status from Redux:", orderStatusFromSocket);
+      
+      // Map API status to our status
+      const statusMap: Record<string, OrderStatus> = {
+        pending: "pending",
+        confirmed: "preparing",
+        preparing: "preparing",
+        ready_for_pickup: "ready",
+        picked_up: "picked_up",
+        out_for_delivery: "out_for_delivery",
+        delivered: "delivered",
+      };
+      
+      const newStatus = statusMap[orderStatusFromSocket] || orderStatusFromSocket as OrderStatus;
+      console.log("Updating current status to:", newStatus);
+      setCurrentStatus(newStatus);
+      
+      // Update map
+      if (mapRef.current) {
+        mapRef.current.updateOrderStatus(newStatus);
+      }
+    }
+  }, [orderStatusFromSocket, orderId]);
 
   // Fetch order data
   useEffect(() => {

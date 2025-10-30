@@ -2,6 +2,7 @@ import { Action, configureStore, ThunkAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import cartReducer from "./slices/cartSlice";
 import checkoutReducer from "./slices/checkoutSlice";
+import driverTrackingReducer from "./slices/driverTrackingSlice";
 import onboardingReducer from "./slices/onboardingSlice";
 import orderTrackingReducer from "./slices/orderTrackingSlice";
 
@@ -11,6 +12,7 @@ export const store = configureStore({
     cart: cartReducer,
     checkout: checkoutReducer,
     orderTracking: orderTrackingReducer,
+    driverTracking: driverTrackingReducer,
     // Add other reducers here as needed
   },
 });

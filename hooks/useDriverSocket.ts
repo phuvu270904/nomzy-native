@@ -1,4 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
+import {
+  updateOrderStatus as updateDriverOrderStatus
+} from "@/store/slices/driverTrackingSlice";
+import { useAppDispatch } from "@/store/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -77,6 +81,7 @@ const getSocketUrl = () => {
 
 export const useDriverSocket = (): UseDriverSocketReturn => {
   const { isAuthenticated } = useAuth();
+  const dispatch = useAppDispatch();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -400,6 +405,34 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
     },
     [socket, isConnected],
   );
+
+  // Set up order-status-updated listener when socket is available
+  useEffect(() => {
+    if (socket && isConnected) {
+      console.log("Setting up order-status-updated listener on connected socket");
+      
+      // Remove any existing listener first
+      socket.off("order-status-updated");
+      
+      // Add the listener and dispatch to Redux
+      socket.on("order-status-updated", (data: any) => {
+        console.log("Order status updated (driver):", data);
+        console.log(
+          "Order status update data structure:",
+          JSON.stringify(data, null, 2),
+        );
+        
+        // Dispatch to Redux store
+        console.log("Dispatching order status update to Redux");
+        dispatch(updateDriverOrderStatus({
+          orderId: data.orderId,
+          status: data.status,
+        }));
+      });
+      
+      console.log("order-status-updated listener registered");
+    }
+  }, [socket, isConnected, dispatch]);
 
   // Auto-disconnect when user logs out
   useEffect(() => {
