@@ -1,4 +1,5 @@
 import { useFetch } from "@/hooks/useFetch";
+import { router } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
@@ -43,10 +44,22 @@ export default function CategoryList() {
     return <View></View>;
   }
 
+  const handleCategoryPress = (categoryId: string) => {
+    router.push(`/categories/${categoryId}` as any);
+  };
+
+  const handleMorePress = () => {
+    router.push("/categories" as any);
+  };
+
   return (
     <View style={styles.container}>
       {categories.slice(0, 7).map((cat, index) => (
-        <TouchableOpacity key={cat.id || index} style={styles.item}>
+        <TouchableOpacity
+          key={cat.id || index}
+          style={styles.item}
+          onPress={() => handleCategoryPress(cat.id)}
+        >
           <View style={styles.iconContainer}>
             <Image
               source={{ uri: cat.icon }}
@@ -61,7 +74,7 @@ export default function CategoryList() {
         </TouchableOpacity>
       ))}
       {categories.length > 7 && (
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item} onPress={handleMorePress}>
           <View style={styles.iconContainer}>
             <Text style={styles.moreIcon}>...</Text>
           </View>
