@@ -1,12 +1,13 @@
 import { convertApiOrderToDriverHistory, ordersApi } from "@/api/ordersApi";
 import {
   OrderHistory,
+  OrderRequest,
   OrderRequestPopup,
   SearchingState,
   StatusToggle,
-  type HistoryOrder,
-  type OrderRequest,
+  type HistoryOrder
 } from "@/components/driver";
+import { useAuth } from "@/hooks";
 import { useDriverSocket } from "@/hooks/useDriverSocket";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -19,6 +20,7 @@ const DriverHomeScreen = () => {
   const [orderHistory, setOrderHistory] = useState<HistoryOrder[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const { fetchUserProfile } = useAuth();
 
   // Driver WebSocket hook
   const {
@@ -115,6 +117,12 @@ const DriverHomeScreen = () => {
   // Fetch driver's order history
   useEffect(() => {
     const fetchDriverOrders = async () => {
+      const user = await fetchUserProfile();
+      if (!user || user.user.role !== "driver") {
+        console.log("User is not a Driver");
+        return;
+      }
+      
       setIsLoadingHistory(true);
       try {
         const orders = await ordersApi.getDriverOrders();
@@ -232,30 +240,6 @@ const DriverHomeScreen = () => {
 
   const handleStatusChange = async (newStatus: boolean) => {
     await setOnline(newStatus);
-  };
-
-  const handleAcceptOrder = (orderId: string) => {
-    // Try to accept via WebSocket first
-    const orderIdNum = parseInt(orderId.replace(/\D/g, ""));
-    if (currentOrderRequest && !isNaN(orderIdNum)) {
-      acceptOrder(orderIdNum);
-    } else {
-      // Fallback for fake orders
-      console.log("Accept order:", orderId);
-      Alert.alert("Order Accepted", `You have accepted order ${orderId}`);
-    }
-  };
-
-  const handleDeclineOrder = (orderId: string) => {
-    // Try to decline via WebSocket first
-    const orderIdNum = parseInt(orderId.replace(/\D/g, ""));
-    if (currentOrderRequest && !isNaN(orderIdNum)) {
-      declineOrder(orderIdNum);
-    } else {
-      // Fallback for fake orders
-      console.log("Decline order:", orderId);
-      Alert.alert("Order Declined", `You have declined order ${orderId}`);
-    }
   };
 
   const handleOrderRequestAccept = (orderId: number) => {

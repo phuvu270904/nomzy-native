@@ -176,7 +176,7 @@ export const useAuth = () => {
     }
   };
 
-  const fetchUserProfile = async (): Promise<User | null> => {
+  const fetchUserProfile = async (): Promise<any | null> => {
     try {
       const { apiClient } = await import("@/utils/apiClient");
       const response = await apiClient.get("/auth/profile");

@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DriverActivityScreen = () => {
-  const { user } = useAuth();
+  const { fetchUserProfile } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<
     "today" | "week" | "month"
   >("today");
@@ -25,13 +25,12 @@ const DriverActivityScreen = () => {
 
   // Fetch driver orders - only if user is a driver
   useEffect(() => {
-    // Prevent API call if user is not a driver
-    if (!user || user.role !== "driver") {
-      console.log("User is not a driver, skipping driver orders fetch");
-      return;
-    }
-
     const fetchDriverOrders = async () => {
+      const user = await fetchUserProfile();
+      if (!user || user.user.role !== "driver") {
+        console.log("User is not a Driver");
+        return;
+      }
       setIsLoading(true);
       try {
         const fetchedOrders = await ordersApi.getDriverOrders();
@@ -48,7 +47,7 @@ const DriverActivityScreen = () => {
     };
 
     fetchDriverOrders();
-  }, [user]);
+  }, []);
 
   // Filter orders based on selected period
   const getFilteredOrders = () => {
