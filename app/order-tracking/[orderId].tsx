@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 type OrderStatus =
   | "pending"
   | "preparing"
-  | "ready"
+  | "ready_for_pickup"
   | "picked_up"
   | "out_for_delivery"
   | "delivered";
@@ -197,8 +197,8 @@ export default function OrderTrackingScreen() {
   const getStatusSteps = () => {
     const steps: { status: OrderStatus; label: string; icon: string }[] = [
       { status: "preparing", label: "Preparing", icon: "restaurant" },
-      { status: "ready", label: "Ready", icon: "checkmark-circle" },
-      { status: "picked_up", label: "Pickup Up", icon: "bag-handle" },
+      { status: "ready_for_pickup", label: "Ready", icon: "checkmark-circle" },
+      { status: "picked_up", label: "Picked Up", icon: "bag-handle" },
       {
         status: "out_for_delivery",
         label: "Delivering",

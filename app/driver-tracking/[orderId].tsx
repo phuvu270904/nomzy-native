@@ -22,7 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 type OrderStatus =
   | "pending"
   | "preparing"
-  | "ready"
+  | "ready_for_pickup"
   | "picked_up"
   | "out_for_delivery"
   | "delivered";
@@ -85,7 +85,7 @@ export default function DriverTrackingScreen() {
         pending: "pending",
         confirmed: "preparing",
         preparing: "preparing",
-        ready_for_pickup: "ready",
+        ready_for_pickup: "ready_for_pickup",
         picked_up: "picked_up",
         out_for_delivery: "out_for_delivery",
         delivered: "delivered",
@@ -117,7 +117,7 @@ export default function DriverTrackingScreen() {
           pending: "pending",
           confirmed: "preparing",
           preparing: "preparing",
-          ready_for_pickup: "ready",
+          ready_for_pickup: "ready_for_pickup",
           picked_up: "picked_up",
           out_for_delivery: "out_for_delivery",
           delivered: "delivered",
@@ -376,7 +376,7 @@ export default function DriverTrackingScreen() {
   const getStatusSteps = () => {
     const steps: { status: OrderStatus; label: string; icon: string }[] = [
       { status: "preparing", label: "Preparing", icon: "restaurant" },
-      { status: "ready", label: "Ready", icon: "checkmark-circle" },
+      { status: "ready_for_pickup", label: "Ready", icon: "checkmark-circle" },
       { status: "picked_up", label: "Picked Up", icon: "bag-handle" },
       {
         status: "out_for_delivery",
@@ -403,7 +403,7 @@ export default function DriverTrackingScreen() {
     ) {
       return { label: "Delivered", action: handleCompleteDelivery };
     }
-    if (currentStatus === "ready") {
+    if (currentStatus === "ready_for_pickup") {
       return { label: "Picked Up", action: handleCompletePickup };
     }
     return null;

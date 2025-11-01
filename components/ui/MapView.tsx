@@ -16,7 +16,7 @@ interface MapViewProps {
   orderStatus?:
     | "pending"
     | "preparing"
-    | "ready"
+    | "ready_for_pickup"
     | "picked_up"
     | "out_for_delivery"
     | "delivered";
@@ -223,7 +223,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(
                     routeColor = '#FF6B35';
                     routeLabel = 'Route to Customer';
                     console.log('Drawing route to customer:', endPoint);
-                } else if (restaurantMarker && (orderStatus === 'pending' || orderStatus === 'preparing' || orderStatus === 'ready' || orderStatus === 'picked_up')) {
+                } else if (restaurantMarker && (orderStatus === 'pending' || orderStatus === 'preparing' || orderStatus === 'ready_for_pickup' || orderStatus === 'picked_up')) {
                     endPoint = restaurantMarker.getLatLng();
                     routeColor = '#FF9500';
                     routeLabel = 'Route to Restaurant';
