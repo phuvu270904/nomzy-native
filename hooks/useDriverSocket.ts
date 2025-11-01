@@ -401,7 +401,7 @@ export const useDriverSocket = (): UseDriverSocketReturn => {
       }
 
       console.log("Driver updating order status:", orderId, status);
-      socket.emit("driver-update-order-status", { orderId, status });
+      socket.emit("update-order-status", { orderId, status });
     },
     [socket, isConnected],
   );
