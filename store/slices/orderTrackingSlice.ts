@@ -26,6 +26,7 @@ interface OrderTrackingState {
   isConnecting: boolean;
   connectionError: string | null;
   hasJoinedRoom: Record<number, boolean>; // Track which rooms we've joined
+  viewingOrderId: number | null; // Track which order is currently being viewed
 }
 
 const initialState: OrderTrackingState = {
@@ -37,6 +38,7 @@ const initialState: OrderTrackingState = {
   isConnecting: false,
   connectionError: null,
   hasJoinedRoom: {},
+  viewingOrderId: null,
 };
 
 const orderTrackingSlice = createSlice({
@@ -79,10 +81,24 @@ const orderTrackingSlice = createSlice({
       action: PayloadAction<{ orderId: number; status: string }>
     ) => {
       const { orderId, status } = action.payload;
-      if (state.currentOrder && state.currentOrder.id === orderId) {
-        state.currentOrder.status = status;
+
+      console.log("this is status of user", status);
+      
+      
+      // Update status if this is the order being viewed/tracked
+      if (state.viewingOrderId === orderId || state.currentOrder?.id === orderId) {
         state.orderStatus = status;
+        
+        // Also update currentOrder if it exists and matches
+        if (state.currentOrder && state.currentOrder.id === orderId) {
+          state.currentOrder.status = status;
+        }
       }
+    },
+
+    // Set which order is being viewed
+    setViewingOrderId: (state, action: PayloadAction<number | null>) => {
+      state.viewingOrderId = action.payload;
     },
 
     // Driver state
@@ -131,6 +147,7 @@ export const {
   setCurrentOrder,
   setOrderStatus,
   updateOrderStatus,
+  setViewingOrderId,
   setDriverInfo,
   setDriverLocation,
   updateDriverLocation,

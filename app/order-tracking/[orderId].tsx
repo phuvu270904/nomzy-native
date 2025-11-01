@@ -10,7 +10,8 @@ import { DriverInfoModal } from "@/components/driver/DriverInfoModal";
 import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal";
 import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useOrderSocket } from "@/hooks/useOrderSocket";
-import { useAppSelector } from "@/store/store";
+import { setViewingOrderId } from "@/store/slices/orderTrackingSlice";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
 
 type OrderStatus =
@@ -23,6 +24,7 @@ type OrderStatus =
 
 export default function OrderTrackingScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  const dispatch = useAppDispatch();
   
   // Get order tracking data directly from Redux store
   // The socket connection is managed by the searching driver screen
@@ -47,18 +49,47 @@ export default function OrderTrackingScreen() {
   const [isOrderDetailsModalVisible, setIsOrderDetailsModalVisible] = useState(false);
   const mapRef = useRef<MapViewRef>(null);
 
+  // Set viewing order ID when component mounts
+  useEffect(() => {
+    if (orderId) {
+      console.log("Setting viewing order ID:", orderId);
+      dispatch(setViewingOrderId(parseInt(orderId, 10)));
+    }
+    
+    // Clear viewing order ID when component unmounts
+    return () => {
+      console.log("Clearing viewing order ID");
+      dispatch(setViewingOrderId(null));
+    };
+  }, [orderId, dispatch]);
+
   // Fallback connection logic for direct navigation to this screen
   useEffect(() => {
     const handleFallbackConnection = async () => {
+      if (!orderId) return;
+
+      const orderIdNum = parseInt(orderId, 10);
+
+      // If already connected, just join the room with a small delay to ensure socket ref is set
+      if (isConnected && !hasJoinedRoom) {
+        console.log("Socket already connected, joining order room:", orderIdNum);
+        // Small delay to ensure socketRef is synced
+        setTimeout(() => {
+          joinOrderRoom(orderIdNum);
+          setHasJoinedRoom(true);
+        }, 100);
+        return;
+      }
+
       // Only connect if no connection exists and no driver info is available
       // This indicates the user navigated directly here without going through searching driver
-      if (!isConnected && !isConnecting && !driverInfo && orderId && !hasJoinedRoom) {
-        console.log("Direct navigation detected, establishing fallback connection for order:", orderId);
+      if (!isConnected && !isConnecting && !driverInfo && !hasJoinedRoom) {
+        console.log("Direct navigation detected, establishing fallback connection for order:", orderIdNum);
         
         try {
           const connected = await connect();
-          if (connected && orderId) {
-            joinOrderRoom(parseInt(orderId, 10));
+          if (connected) {
+            joinOrderRoom(orderIdNum);
             setHasJoinedRoom(true);
           }
         } catch (error) {
@@ -88,6 +119,16 @@ export default function OrderTrackingScreen() {
 
     fetchOrderData();
   }, [orderId]);
+
+  // Update local orderData when status changes from socket
+  useEffect(() => {
+    if (orderStatus && orderData) {
+      console.log("Updating orderData status from socket:", orderStatus);
+      setOrderData((prevData) => 
+        prevData ? { ...prevData, status: orderStatus } : null
+      );
+    }
+  }, [orderStatus]);
 
   // Get restaurant location from addresses
   const getRestaurantLocation = () => {
@@ -170,7 +211,9 @@ export default function OrderTrackingScreen() {
 
   const getCurrentStepIndex = () => {
     const steps = getStatusSteps();
-    const currentStatus = orderData?.status as OrderStatus;
+    // Use orderStatus from Redux (socket updates) instead of orderData.status (API fetch)
+    // This ensures the UI updates in real-time when status changes via socket
+    const currentStatus = (orderStatus || orderData?.status) as OrderStatus;
     return steps.findIndex((step) => step.status === currentStatus);
   };
 
