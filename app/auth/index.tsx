@@ -47,6 +47,7 @@ export default function LoginScreen() {
           (async () => {
             try {
               await fetchUserProfile();
+              setIsCheckingAuth(false);
             } catch (e) {
               console.log("failed to fetch profile during auth check", e);
               setIsCheckingAuth(false);
@@ -64,7 +65,7 @@ export default function LoginScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ThemedText style={styles.loadingText}>Loading...</ThemedText>
+          <ThemedText style={styles.loadingText}>Hi...</ThemedText>
         </View>
       </SafeAreaView>
     );
