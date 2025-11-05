@@ -163,14 +163,17 @@ export default function OrderTrackingScreen() {
   const restaurantLocation = getRestaurantLocation();
   const customerLocation = getCustomerLocation();
 
-  // Handle order completion
+  // Handle order completion - navigate to driver review screen
   useEffect(() => {
     if (orderStatus === "delivered") {
       setTimeout(() => {
-        router.replace("/(tabs)");
+        router.replace({
+          pathname: "/review-driver/[orderId]",
+          params: { orderId: orderId || "" },
+        });
       }, 3000);
     }
-  }, [orderStatus]);
+  }, [orderStatus, orderId]);
 
   // Update map when order status changes
   useEffect(() => {
