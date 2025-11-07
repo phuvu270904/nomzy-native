@@ -388,12 +388,12 @@ export default function OrderTrackingScreen() {
               </View>
               
               <View style={styles.driverActions}>
-                <TouchableOpacity style={styles.actionBtn}>
+                <TouchableOpacity style={styles.actionBtn} onPress={handleMessageDriver}>
                   <Ionicons name="chatbubble" size={18} color="#4CAF50" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn}>
+                {/* <TouchableOpacity style={styles.actionBtn}>
                   <Ionicons name="call" size={18} color="#4CAF50" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             </View>
           </Pressable>
@@ -426,17 +426,6 @@ export default function OrderTrackingScreen() {
           otherUserPhoto={driverInfo.photo}
           otherUserRole="Driver"
         />
-      )}
-
-      {/* Floating Message Button - Only show when driver is assigned */}
-      {driverInfo && (
-        <TouchableOpacity
-          style={styles.floatingMessageButton}
-          onPress={handleMessageDriver}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="chatbubble" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
       )}
     </SafeAreaView>
   );
@@ -700,21 +689,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#E3F2FD",
-  },
-  floatingMessageButton: {
-    position: "absolute",
-    right: 20,
-    bottom: 420,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4CAF50",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
 });

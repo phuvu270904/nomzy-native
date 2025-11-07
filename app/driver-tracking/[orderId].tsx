@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   StyleSheet,
   TouchableOpacity,
@@ -551,6 +552,48 @@ export default function DriverTrackingScreen() {
           </View>
         </View>
 
+        {/* Customer Info Section */}
+        {orderData?.user && (
+          <View style={styles.customerInfoSection}>
+            <View style={styles.customerInfoHeader}>
+              <ThemedText style={styles.customerInfoTitle}>Customer</ThemedText>
+            </View>
+            
+            <View style={styles.customerInfoContent}>
+              <View style={styles.customerAvatar}>
+                {orderData.user.avatar ? (
+                  <Image
+                    source={{ uri: orderData.user.avatar }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Ionicons name="person" size={24} color="#4CAF50" />
+                  </View>
+                )}
+              </View>
+              
+              <View style={styles.customerDetails}>
+                <ThemedText style={styles.customerName}>
+                  {orderData.user.name || "Customer"}
+                </ThemedText>
+                <ThemedText style={styles.customerPhone}>
+                  {orderData.user.phone_number || "No phone"}
+                </ThemedText>
+              </View>
+              
+              <View style={styles.customerActions}>
+                <TouchableOpacity style={styles.actionBtn} onPress={handleMessageCustomer}>
+                  <Ionicons name="chatbubble" size={18} color="#4CAF50" />
+                </TouchableOpacity>
+                {/* <TouchableOpacity style={styles.actionBtn}>
+                  <Ionicons name="call" size={18} color="#4CAF50" />
+                </TouchableOpacity> */}
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Action Button */}
         {nextAction && (
           <Pressable style={styles.actionButton} onPress={nextAction.action}>
@@ -573,15 +616,6 @@ export default function DriverTrackingScreen() {
           otherUserRole="Customer"
         />
       )}
-
-      {/* Floating Message Button */}
-      <TouchableOpacity
-        style={styles.floatingMessageButton}
-        onPress={handleMessageCustomer}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="chatbubble" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -768,20 +802,68 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginRight: 8,
   },
-  floatingMessageButton: {
-    position: "absolute",
-    right: 20,
-    bottom: 300,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4CAF50",
-    justifyContent: "center",
+  customerInfoSection: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  customerInfoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    marginBottom: 12,
+  },
+  customerInfoTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E2E2E",
+  },
+  customerInfoContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  customerAvatar: {
+    marginRight: 12,
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  avatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#E8F5E8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  customerDetails: {
+    flex: 1,
+  },
+  customerName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 4,
+  },
+  customerPhone: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  customerActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E3F2FD",
   },
 });
