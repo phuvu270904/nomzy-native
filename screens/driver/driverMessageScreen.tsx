@@ -34,7 +34,7 @@ const formatTime = (dateString: string | null): string => {
   }
 };
 
-export default function MessageScreen() {
+export default function DriverMessageScreen() {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
   const {
@@ -82,7 +82,7 @@ export default function MessageScreen() {
     if (otherUser?.role === "restaurant") {
       type = "restaurant";
     } else if (otherUser?.role === "user") {
-      type = "delivery";
+      type = "delivery"; // Customer
     }
 
     const isOnline = otherUser ? onlineUsers.includes(otherUser.id) : false;

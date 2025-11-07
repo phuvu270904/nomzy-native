@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { ThemedText } from "@/components/ThemedText";
+import { ChatModal } from "@/components/messages/ChatModal";
 import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useDriverSocket } from "@/hooks/useDriverSocket";
 import { selectCurrentOrderStatus } from "@/store/slices/driverTrackingSlice";
@@ -44,6 +45,7 @@ export default function DriverTrackingScreen() {
 
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>("pending");
+  const [isChatModalVisible, setIsChatModalVisible] = useState(false);
   const [driverLocation, setDriverLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -337,6 +339,14 @@ export default function DriverTrackingScreen() {
     );
   };
 
+  const handleMessageCustomer = () => {
+    if (!orderData?.userId || !orderData?.user) {
+      Alert.alert("Error", "Customer information not available");
+      return;
+    }
+    setIsChatModalVisible(true);
+  };
+
   // Get restaurant location from addresses
   const getRestaurantLocation = () => {
     if (!orderData?.restaurant?.addresses) return null;
@@ -551,6 +561,27 @@ export default function DriverTrackingScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* Chat Modal */}
+      {orderData?.user && (
+        <ChatModal
+          visible={isChatModalVisible}
+          onClose={() => setIsChatModalVisible(false)}
+          otherUserId={orderData.userId}
+          otherUserName={orderData.user.name || "Customer"}
+          otherUserPhoto={orderData.user.avatar}
+          otherUserRole="Customer"
+        />
+      )}
+
+      {/* Floating Message Button */}
+      <TouchableOpacity
+        style={styles.floatingMessageButton}
+        onPress={handleMessageCustomer}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="chatbubble" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -736,5 +767,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
     marginRight: 8,
+  },
+  floatingMessageButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 300,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#4CAF50",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { ThemedText } from "@/components/ThemedText";
 import { DriverInfoModal } from "@/components/driver/DriverInfoModal";
+import { ChatModal } from "@/components/messages/ChatModal";
 import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal";
 import { MapView, MapViewRef } from "@/components/ui/MapView";
 import { useOrderSocket } from "@/hooks/useOrderSocket";
@@ -46,6 +47,7 @@ export default function OrderTrackingScreen() {
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [isDriverModalVisible, setIsDriverModalVisible] = useState(false);
   const [isOrderDetailsModalVisible, setIsOrderDetailsModalVisible] = useState(false);
+  const [isChatModalVisible, setIsChatModalVisible] = useState(false);
   const mapRef = useRef<MapViewRef>(null);
 
   // Set viewing order ID when component mounts
@@ -205,6 +207,14 @@ export default function OrderTrackingScreen() {
 
   const handleOrderDetailsPress = () => {
     setIsOrderDetailsModalVisible(true);
+  };
+
+  const handleMessageDriver = () => {
+    if (!driverInfo?.id) {
+      Alert.alert("Error", "Driver information not available yet");
+      return;
+    }
+    setIsChatModalVisible(true);
   };
 
   if (isLoadingOrder) {
@@ -405,6 +415,29 @@ export default function OrderTrackingScreen() {
         onClose={() => setIsOrderDetailsModalVisible(false)}
         orderData={orderData}
       />
+
+      {/* Chat Modal */}
+      {driverInfo && (
+        <ChatModal
+          visible={isChatModalVisible}
+          onClose={() => setIsChatModalVisible(false)}
+          otherUserId={driverInfo.id}
+          otherUserName={driverInfo.name || "Driver"}
+          otherUserPhoto={driverInfo.photo}
+          otherUserRole="Driver"
+        />
+      )}
+
+      {/* Floating Message Button - Only show when driver is assigned */}
+      {driverInfo && (
+        <TouchableOpacity
+          style={styles.floatingMessageButton}
+          onPress={handleMessageDriver}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="chatbubble" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -667,5 +700,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#E3F2FD",
+  },
+  floatingMessageButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 420,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#4CAF50",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
