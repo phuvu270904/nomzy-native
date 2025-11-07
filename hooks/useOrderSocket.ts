@@ -360,7 +360,6 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
         // Set timeout for connection attempt
         setTimeout(() => {
           if (!newSocket.connected) {
-            console.error("Connection timeout");
             dispatch(setConnecting(false));
             dispatch(setConnectionError("Connection timeout"));
             resolve(false);
