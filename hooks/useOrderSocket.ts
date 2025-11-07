@@ -38,8 +38,11 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+
+// Shared socket instance at module level - this ensures all hook instances use the same socket
+let sharedSocket: Socket | null = null;
 
 // Keep types for compatibility
 export interface CreateOrderRequest {
@@ -118,11 +121,8 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
   const { isAuthenticated, user } = useAuth();
   const dispatch = useAppDispatch();
   
-  // Local socket state
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const socketRef = useRef<Socket | null>(null);
-  const [localIsConnected, setLocalIsConnected] = useState(false);
-  const [localIsConnecting, setLocalIsConnecting] = useState(false);
+  // Use shared socket at module level instead of local state
+  const socketRef = useRef<Socket | null>(sharedSocket);
   
   // Get state from Redux
   const {
@@ -139,10 +139,10 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
   const userId = useRef<number | null>(null);
   const hasTriedAutoConnect = useRef(false);
 
-  // Keep socketRef in sync with socket state
+  // Sync socketRef with sharedSocket whenever it changes
   useEffect(() => {
-    socketRef.current = socket;
-  }, [socket]);
+    socketRef.current = sharedSocket;
+  }, [sharedSocket]);
 
   // Initialize user data
   const initUserData = useCallback(async () => {
@@ -168,28 +168,28 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
 
   // Setup socket event listeners (except order-status-updated)
   useEffect(() => {
-    if (!socket || !isConnected) {
+    if (!sharedSocket || !isConnected) {
       return;
     }
 
     console.log("Setting up order socket event listeners");
 
     // Remove any existing listeners to avoid duplicates
-    socket.off("order-created");
-    socket.off("driver-assigned");
-    socket.off("driver-location-update");
-    socket.off("order-cancelled");
-    socket.off("joined-order-room");
+    sharedSocket.off("order-created");
+    sharedSocket.off("driver-assigned");
+    sharedSocket.off("driver-location-update");
+    sharedSocket.off("order-cancelled");
+    sharedSocket.off("joined-order-room");
 
     // Order created
-    socket.on("order-created", (order: Order) => {
+    sharedSocket.on("order-created", (order: Order) => {
       console.log("New order received:", order);
       dispatch(setCurrentOrder(order));
       dispatch(setOrderStatus(order.status));
     });
 
     // Driver assigned
-    socket.on("driver-assigned", (data: any) => {
+    sharedSocket.on("driver-assigned", (data: any) => {
       console.log("Driver assigned:", data);
       
       if (data.order?.driver) {
@@ -208,7 +208,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     });
 
     // Driver location update
-    socket.on("driver-location-update", (data: { location: { latitude: number; longitude: number } }) => {
+    sharedSocket.on("driver-location-update", (data: { location: { latitude: number; longitude: number } }) => {
       console.log("Driver location update:", data);
       if (data.location) {
         const updatedLocation = {
@@ -220,38 +220,40 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     });
 
     // Order cancelled
-    socket.on("order-cancelled", (data: { orderId: number }) => {
+    sharedSocket.on("order-cancelled", (data: { orderId: number }) => {
       console.log("Order cancelled:", data);
       dispatch(updateOrderStatus({ orderId: data.orderId, status: "cancelled" }));
     });
 
     // Joined order room confirmation
-    socket.on("joined-order-room", (data: { orderId: number }) => {
+    sharedSocket.on("joined-order-room", (data: { orderId: number }) => {
       console.log("Successfully joined order room:", data.orderId);
       dispatch(setRoomJoined(data.orderId));
     });
 
     // Cleanup function
     return () => {
-      console.log("Cleaning up order socket listeners");
-      socket.off("order-created");
-      socket.off("driver-assigned");
-      socket.off("driver-location-update");
-      socket.off("order-cancelled");
-      socket.off("joined-order-room");
+      if (sharedSocket) {
+        console.log("Cleaning up order socket listeners");
+        sharedSocket.off("order-created");
+        sharedSocket.off("driver-assigned");
+        sharedSocket.off("driver-location-update");
+        sharedSocket.off("order-cancelled");
+        sharedSocket.off("joined-order-room");
+      }
     };
-  }, [socket, isConnected, dispatch]);
+  }, [isConnected, dispatch]);
 
   // Setup order-status-updated listener separately (like driver hook)
   useEffect(() => {
-    if (socket && isConnected) {
+    if (sharedSocket && isConnected) {
       console.log("Setting up order-status-updated listener on connected socket");
       
       // Remove any existing listener first
-      socket.off("order-status-updated");
+      sharedSocket.off("order-status-updated");
       
       // Add the listener and dispatch to Redux
-      socket.on("order-status-updated", (data: { orderId: number; status: string }) => {
+      sharedSocket.on("order-status-updated", (data: { orderId: number; status: string }) => {
         console.log("Order status updated (user):", data);
         console.log(
           "Order status update data structure:",
@@ -267,15 +269,24 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       
       // Cleanup
       return () => {
-        socket.off("order-status-updated");
+        if (sharedSocket) {
+          sharedSocket.off("order-status-updated");
+        }
       };
     }
-  }, [socket, isConnected, dispatch]);
+  }, [isConnected, dispatch]);
 
   // Connect function
   const connect = useCallback(async (): Promise<boolean> => {
-    if (isConnected || isConnecting) {
-      return isConnected;
+    // If already connected and socket exists, return true
+    if (isConnected && sharedSocket?.connected) {
+      console.log("Already connected to order socket");
+      return true;
+    }
+    
+    if (isConnecting) {
+      console.log("Connection already in progress");
+      return false;
     }
 
     try {
@@ -304,15 +315,17 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5,
       });
-
+      
       // Return a promise that resolves when connection is established
       return new Promise((resolve) => {
         // Setup connection event handlers
         newSocket.on("connect", () => {
-          console.log("Order socket connected successfully");
-          setSocket(newSocket);
-          setLocalIsConnected(true);
-          setLocalIsConnecting(false);
+          console.log("Order socket connected successfully with ID:", newSocket.id);
+          
+          // Set shared socket IMMEDIATELY upon connection
+          sharedSocket = newSocket;
+          socketRef.current = newSocket;
+          
           dispatch(setConnected(true));
           dispatch(setConnecting(false));
           dispatch(setConnectionError(null));
@@ -321,40 +334,56 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
 
         newSocket.on("disconnect", (reason: string) => {
           console.log("Order socket disconnected:", reason);
-          setLocalIsConnected(false);
-          setLocalIsConnecting(false);
-          setSocket(null);
           dispatch(setConnected(false));
           dispatch(setConnecting(false));
         });
 
+        newSocket.on("reconnect", (attemptNumber: number) => {
+          console.log("Order socket reconnected after", attemptNumber, "attempts");
+          
+          // Update shared socket on reconnect
+          sharedSocket = newSocket;
+          socketRef.current = newSocket;
+          
+          dispatch(setConnected(true));
+          dispatch(setConnecting(false));
+          dispatch(setConnectionError(null));
+        });
+
         newSocket.on("connect_error", (error: Error) => {
           console.error("Order socket connection error:", error.message);
-          setLocalIsConnecting(false);
           dispatch(setConnecting(false));
           dispatch(setConnectionError(error.message));
           resolve(false);
         });
+        
+        // Set timeout for connection attempt
+        setTimeout(() => {
+          if (!newSocket.connected) {
+            console.error("Connection timeout");
+            dispatch(setConnecting(false));
+            dispatch(setConnectionError("Connection timeout"));
+            resolve(false);
+          }
+        }, 10000); // 10 second timeout
       });
     } catch (error) {
       console.error("Failed to connect to order socket:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       dispatch(setConnectionError(errorMessage));
       dispatch(setConnecting(false));
-      setLocalIsConnecting(false);
       return false;
     }
   }, [isConnected, isConnecting, dispatch, initUserData]);
 
   // Disconnect function
   const disconnect = useCallback(() => {
-    if (socketRef.current) {
+    if (sharedSocket) {
       console.log("Disconnecting order socket");
-      socketRef.current.disconnect();
-      setSocket(null);
+      sharedSocket.disconnect();
+      sharedSocket = null;
+      socketRef.current = null;
     }
-    setLocalIsConnected(false);
-    setLocalIsConnecting(false);
     dispatch(setConnected(false));
     dispatch(setConnecting(false));
     dispatch(setConnectionError(null));
@@ -365,11 +394,14 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     async (orderData: CreateOrderRequest): Promise<Order | null> => {
       try {
         // Ensure we're connected before creating order
-        if (!isConnected) {
+        if (!isConnected || !socketRef.current) {
+          console.log("Socket not connected, attempting to connect...");
           const connected = await connect();
-          if (!connected) {
+          if (!connected || !socketRef.current) {
             throw new Error("Could not connect to order service");
           }
+          // Wait a bit for socket to be fully ready
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         // Get auth token
@@ -406,9 +438,12 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
         dispatch(setDriverInfo(null)); // Reset driver info for new order
 
         // Join the order room after creating the order
-        if (socketRef.current && isConnected) {
-          console.log("Joining order room:", order.id);
+        // Double check socket is available and connected
+        if (socketRef.current && socketRef.current.connected) {
+          console.log("Joining order room:", order.id, "with socket ID:", socketRef.current.id);
           socketRef.current.emit("join-order-room", { orderId: order.id });
+        } else {
+          console.error("Cannot join order room after creating order - socket not available or not connected");
         }
 
         return order;
@@ -426,21 +461,28 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
   // Join order room function
   const joinOrderRoom = useCallback(
     (orderId: number) => {
-      // Check both the socket reference AND connection state
-      if (!socketRef.current) {
-        console.warn("Cannot join order room: socket reference not available");
+      // Use sharedSocket directly
+      if (!sharedSocket) {
+        console.warn("Cannot join order room: socket not available", {
+          sharedSocketExists: !!sharedSocket,
+          isConnectedRedux: isConnected,
+        });
         return;
       }
       
-      if (!socketRef.current.connected) {
-        console.warn("Cannot join order room: socket not connected");
+      if (!sharedSocket.connected) {
+        console.warn("Cannot join order room: socket not connected", {
+          socketConnected: sharedSocket.connected,
+          isConnectedRedux: isConnected,
+          socketId: sharedSocket.id,
+        });
         return;
       }
       
-      console.log("Joining order room:", orderId);
-      socketRef.current.emit("join-order-room", { orderId });
+      console.log("Joining order room:", orderId, "with socket ID:", sharedSocket.id);
+      sharedSocket.emit("join-order-room", { orderId });
     },
-    [], // Remove isConnected dependency as we check socket.connected directly
+    [isConnected],
   );
 
   // Clear error function
