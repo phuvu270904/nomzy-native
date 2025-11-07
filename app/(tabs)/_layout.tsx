@@ -1,12 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
 import TabBarBackground from "@/components/ui/TabBarBackground";
+import { useOrderSocket } from "@/hooks/useOrderSocket";
 
 export default function TabLayout() {
+  // Initialize order socket connection when user enters tabs (logged in)
+  const { isConnected, isConnecting, connect } = useOrderSocket();
+
+  useEffect(() => {
+    connect();
+    console.log("TabLayout mounted - Order socket connection status:", {
+      isConnected,
+      isConnecting,
+    });
+  }, [isConnected, isConnecting]);
+
   return (
     <Tabs
       screenOptions={{

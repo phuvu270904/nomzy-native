@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -19,52 +19,53 @@ export default function SearchingDriverScreen() {
   const {
     isConnected,
     isConnecting,
-    connect,
     joinOrderRoom,
     orderStatus,
     driverInfo,
+    hasJoinedRoom,
   } = useOrderSocket();
 
   const [searchProgress, setSearchProgress] = useState(0);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(1));
-  const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+  const joinAttempts = useRef(0);
+  const maxJoinAttempts = 5;
+
+  // Check if current order room is joined
+  const isRoomJoined = orderId ? hasJoinedRoom[parseInt(orderId, 10)] : false;
 
   useEffect(() => {
-    // Initialize socket connection and join order room
-    const initializeOrderTracking = async () => {
-      try {
-        console.log("Initializing order tracking for order:", orderId);
-
-        if (!isConnected && !isConnecting) {
-          console.log("Connecting to socket for order tracking...");
-          const connected = await connect();
-          if (!connected) {
-            console.warn("Failed to connect to order tracking service");
-            return;
-          }
-        }
-
-        // Join order room if we have an orderId and haven't joined yet
-        if (orderId && isConnected && !hasJoinedRoom) {
-          console.log("Joining order room:", orderId);
-          joinOrderRoom(parseInt(orderId, 10));
-          setHasJoinedRoom(true);
-        }
-      } catch (error) {
-        console.error("Error initializing order tracking:", error);
+    // Join order room once socket is connected
+    // No need to manually connect - socket auto-connects on login via TabLayout
+    const joinRoom = () => {
+      if (!orderId) {
+        console.warn("No orderId provided");
+        return;
       }
+
+      if (!isConnected) {
+        console.log("Socket not connected yet, waiting...");
+        return;
+      }
+
+      if (isRoomJoined) {
+        console.log("Already joined room:", orderId);
+        return;
+      }
+
+      if (joinAttempts.current >= maxJoinAttempts) {
+        console.warn("Max join attempts reached");
+        return;
+      }
+
+      // Attempt to join the room
+      console.log(`Joining order room: ${orderId} (attempt ${joinAttempts.current + 1}/${maxJoinAttempts})`);
+      joinOrderRoom(parseInt(orderId, 10));
+      joinAttempts.current += 1;
     };
 
-    initializeOrderTracking();
-  }, [
-    orderId,
-    isConnected,
-    isConnecting,
-    hasJoinedRoom,
-    connect,
-    joinOrderRoom,
-  ]);
+    joinRoom();
+  }, [orderId, isConnected, isRoomJoined, joinOrderRoom]);
 
   // Handle order status updates
   useEffect(() => {

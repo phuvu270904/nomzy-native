@@ -27,8 +27,8 @@ export default function OrderTrackingScreen() {
   const dispatch = useAppDispatch();
   
   // Get order tracking data directly from Redux store
-  // The socket connection is managed by the searching driver screen
-  // Using Redux ensures data persists across navigation without recreating connections
+  // The socket connection is now managed globally in TabLayout
+  // Using Redux ensures data persists across navigation
   const {
     isConnected,
     isConnecting,
@@ -38,9 +38,8 @@ export default function OrderTrackingScreen() {
     driverLocation,
   } = useAppSelector((state) => state.orderTracking);
 
-  // Fallback hook for direct navigation to this screen (without going through searching driver)
-  // This only provides connection methods, doesn't automatically connect
-  const { connect, joinOrderRoom } = useOrderSocket();
+  // Get join room method from hook
+  const { joinOrderRoom } = useOrderSocket();
 
   const [orderData, setOrderData] = useState<ApiOrder | null>(null);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
@@ -63,43 +62,23 @@ export default function OrderTrackingScreen() {
     };
   }, [orderId, dispatch]);
 
-  // Fallback connection logic for direct navigation to this screen
+  // Join order room when component mounts
+  // Socket is already connected via TabLayout, just need to join the room
   useEffect(() => {
-    const handleFallbackConnection = async () => {
-      if (!orderId) return;
+    if (!orderId) return;
 
-      const orderIdNum = parseInt(orderId, 10);
+    const orderIdNum = parseInt(orderId, 10);
 
-      // If already connected, just join the room with a small delay to ensure socket ref is set
-      if (isConnected && !hasJoinedRoom) {
-        console.log("Socket already connected, joining order room:", orderIdNum);
-        // Small delay to ensure socketRef is synced
-        setTimeout(() => {
-          joinOrderRoom(orderIdNum);
-          setHasJoinedRoom(true);
-        }, 100);
-        return;
-      }
-
-      // Only connect if no connection exists and no driver info is available
-      // This indicates the user navigated directly here without going through searching driver
-      if (!isConnected && !isConnecting && !driverInfo && !hasJoinedRoom) {
-        console.log("Direct navigation detected, establishing fallback connection for order:", orderIdNum);
-        
-        try {
-          const connected = await connect();
-          if (connected) {
-            joinOrderRoom(orderIdNum);
-            setHasJoinedRoom(true);
-          }
-        } catch (error) {
-          console.error("Fallback connection failed:", error);
-        }
-      }
-    };
-
-    handleFallbackConnection();
-  }, [isConnected, isConnecting, driverInfo, orderId, hasJoinedRoom, connect, joinOrderRoom]);
+    // Join room when socket is connected
+    if (isConnected && !hasJoinedRoom) {
+      console.log("Socket connected, joining order room:", orderIdNum);
+      // Small delay to ensure socketRef is synced
+      setTimeout(() => {
+        joinOrderRoom(orderIdNum);
+        setHasJoinedRoom(true);
+      }, 100);
+    }
+  }, [isConnected, orderId, hasJoinedRoom, joinOrderRoom]);
 
   // Fetch order details
   useEffect(() => {

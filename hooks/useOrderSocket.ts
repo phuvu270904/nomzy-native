@@ -31,6 +31,7 @@ import {
   setDriverInfo,
   setDriverLocation,
   setOrderStatus,
+  setRoomJoined,
   updateDriverLocation,
   updateOrderStatus,
 } from "@/store/slices/orderTrackingSlice";
@@ -102,6 +103,7 @@ export interface UseOrderSocketReturn {
   orderStatus: string | null;
   driverInfo: any | null;
   driverLocation: { latitude: number; longitude: number } | null;
+  hasJoinedRoom: Record<number, boolean>; // Track which rooms we've joined
 
   // Manual connection control
   connect: () => Promise<boolean>;
@@ -131,6 +133,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     orderStatus,
     driverInfo,
     driverLocation,
+    hasJoinedRoom,
   } = useAppSelector((state) => state.orderTracking);
 
   const userId = useRef<number | null>(null);
@@ -176,6 +179,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     socket.off("driver-assigned");
     socket.off("driver-location-update");
     socket.off("order-cancelled");
+    socket.off("joined-order-room");
 
     // Order created
     socket.on("order-created", (order: Order) => {
@@ -221,6 +225,12 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       dispatch(updateOrderStatus({ orderId: data.orderId, status: "cancelled" }));
     });
 
+    // Joined order room confirmation
+    socket.on("joined-order-room", (data: { orderId: number }) => {
+      console.log("Successfully joined order room:", data.orderId);
+      dispatch(setRoomJoined(data.orderId));
+    });
+
     // Cleanup function
     return () => {
       console.log("Cleaning up order socket listeners");
@@ -228,6 +238,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
       socket.off("driver-assigned");
       socket.off("driver-location-update");
       socket.off("order-cancelled");
+      socket.off("joined-order-room");
     };
   }, [socket, isConnected, dispatch]);
 
@@ -415,14 +426,21 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
   // Join order room function
   const joinOrderRoom = useCallback(
     (orderId: number) => {
-      if (!socketRef.current || !isConnected) {
+      // Check both the socket reference AND connection state
+      if (!socketRef.current) {
+        console.warn("Cannot join order room: socket reference not available");
+        return;
+      }
+      
+      if (!socketRef.current.connected) {
         console.warn("Cannot join order room: socket not connected");
         return;
       }
+      
       console.log("Joining order room:", orderId);
       socketRef.current.emit("join-order-room", { orderId });
     },
-    [isConnected],
+    [], // Remove isConnected dependency as we check socket.connected directly
   );
 
   // Clear error function
@@ -489,6 +507,7 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
     orderStatus,
     driverInfo,
     driverLocation,
+    hasJoinedRoom,
 
     // Manual connection control
     connect,
