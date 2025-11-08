@@ -367,7 +367,6 @@ export const useOrderSocket = (): UseOrderSocketReturn => {
         }, 10000); // 10 second timeout
       });
     } catch (error) {
-      console.error("Failed to connect to order socket:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       dispatch(setConnectionError(errorMessage));
       dispatch(setConnecting(false));

@@ -8,12 +8,13 @@ import {
     Modal,
     Platform,
     Pressable,
+    StatusBar,
     StyleSheet,
     TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +51,7 @@ export function ChatModal({
 }: ChatModalProps) {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
   const {
     messages,
     isLoadingMessages,
@@ -271,8 +273,13 @@ export function ChatModal({
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <View style={[styles.container, { 
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom 
+      }]}>
+        <StatusBar barStyle="dark-content" />
         <KeyboardAvoidingView
           style={styles.keyboardView}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -399,7 +406,7 @@ export function ChatModal({
           </Pressable>
         </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

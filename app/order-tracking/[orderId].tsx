@@ -406,6 +406,12 @@ export default function OrderTrackingScreen() {
           visible={isDriverModalVisible}
           onClose={() => setIsDriverModalVisible(false)}
           driverInfo={driverInfo}
+          onChatModal={() => {
+            setIsDriverModalVisible(false);
+            setTimeout(() => {
+              setIsChatModalVisible(true);
+            }, 300);
+          }}
         />
       )}
 

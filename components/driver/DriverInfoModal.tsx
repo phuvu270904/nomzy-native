@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-    Alert,
-    Image,
-    Linking,
-    Modal,
-    Pressable,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Linking,
+  Modal,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -26,12 +26,14 @@ interface DriverInfoModalProps {
     plateNumber?: string;
     estimatedArrival?: string;
   };
+  onChatModal: () => void;
 }
 
 export function DriverInfoModal({
   visible,
   onClose,
   driverInfo,
+  onChatModal,
 }: DriverInfoModalProps) {
   const handleCall = () => {
     if (driverInfo?.phone) {
@@ -42,11 +44,7 @@ export function DriverInfoModal({
   };
 
   const handleMessage = () => {
-    if (driverInfo?.phone) {
-      Linking.openURL(`sms:${driverInfo.phone}`);
-    } else {
-      Alert.alert("Message unavailable", "Driver contact not available");
-    }
+    onChatModal()
   };
 
   return (
