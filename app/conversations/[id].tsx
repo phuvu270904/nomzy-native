@@ -3,16 +3,16 @@ import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,6 +20,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import type { ConversationMessage } from "@/store/slices/conversationsSlice";
+import { setActiveConversation } from "@/store/slices/conversationsSlice";
+import { useAppDispatch } from "@/store/store";
 
 // Format time for messages
 const formatMessageTime = (dateString: string): string => {
@@ -35,6 +37,7 @@ export default function ChatScreen() {
   const conversationId = parseInt(id || "0", 10);
 
   const { user } = useAuth();
+  const dispatch = useAppDispatch();
   const {
     messages,
     isLoadingMessages,
@@ -45,10 +48,11 @@ export default function ChatScreen() {
     markAsRead,
     sendTyping,
     typingUsers,
-    onlineUsers,
+    isConnected,
   } = useConversations();
 
   const [messageText, setMessageText] = useState("");
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,29 +64,41 @@ export default function ChatScreen() {
       ? conversation?.user2
       : conversation?.user1;
 
-  const isOtherUserOnline = otherUser
-    ? onlineUsers.includes(otherUser.id)
-    : false;
-
-  // Join conversation and load messages on mount
+  // Initialize conversation - set active and load messages
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && isConnected) {
+      console.log("Initializing conversation:", conversationId);
+      dispatch(setActiveConversation(conversationId));
       joinConversation(conversationId);
       loadMessages(conversationId);
       markAsRead(conversationId);
     }
-  }, [conversationId]);
+
+    // Cleanup: clear active conversation when unmounting
+    return () => {
+      console.log("Clearing active conversation on unmount");
+      dispatch(setActiveConversation(null));
+    };
+  }, [conversationId, isConnected, dispatch, joinConversation, loadMessages, markAsRead]);
+
+  // Mark messages as loaded once we have them
+  useEffect(() => {
+    if (conversationId && messages.length >= 0 && !hasLoadedOnce) {
+      setHasLoadedOnce(true);
+    }
+  }, [conversationId, messages.length, hasLoadedOnce]);
 
   // Mark as read when messages change
   useEffect(() => {
     if (conversationId && messages.length > 0) {
       markAsRead(conversationId);
     }
-  }, [messages.length, conversationId]);
+  }, [messages.length, conversationId, markAsRead]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
+      console.log("Messages updated, count:", messages.length);
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -91,8 +107,12 @@ export default function ChatScreen() {
 
   const handleSend = () => {
     const trimmedMessage = messageText.trim();
-    if (!trimmedMessage || !conversationId) return;
+    if (!trimmedMessage || !conversationId) {
+      console.log("Cannot send message - missing data:", { trimmedMessage: !!trimmedMessage, conversationId });
+      return;
+    }
 
+    console.log("Sending message to conversation:", conversationId, "Text:", trimmedMessage);
     sendMessage(conversationId, trimmedMessage);
     setMessageText("");
 
@@ -101,6 +121,11 @@ export default function ChatScreen() {
       clearTimeout(typingTimeoutRef.current);
     }
     sendTyping(conversationId, false);
+
+    // Scroll to bottom after sending
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   const handleTextChange = (text: string) => {
@@ -164,7 +189,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
 
       {/* Header */}
@@ -186,15 +211,16 @@ export default function ChatScreen() {
                 <Ionicons name="person" size={20} color="#666" />
               </View>
             )}
-            {isOtherUserOnline && <View style={styles.onlineIndicator} />}
           </View>
           <View style={styles.headerInfo}>
             <ThemedText style={styles.headerName}>
               {otherUser?.name || "Unknown User"}
             </ThemedText>
-            <ThemedText style={styles.headerStatus}>
-              {isOtherUserOnline ? "Online" : "Offline"}
-            </ThemedText>
+            {otherUser?.role && (
+              <ThemedText style={styles.headerStatus}>
+                {otherUser.role.charAt(0).toUpperCase() + otherUser.role.slice(1)}
+              </ThemedText>
+            )}
           </View>
         </View>
 
@@ -204,10 +230,17 @@ export default function ChatScreen() {
       </View>
 
       {/* Messages List */}
-      {isLoadingMessages ? (
+      {!hasLoadedOnce && isLoadingMessages ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
           <ThemedText style={styles.loadingText}>Loading messages...</ThemedText>
+        </View>
+      ) : !isConnected ? (
+        <View style={styles.loadingContainer}>
+          <Ionicons name="cloud-offline" size={48} color="#999" />
+          <ThemedText style={styles.errorText}>
+            Not connected to chat service
+          </ThemedText>
         </View>
       ) : (
         <FlatList
@@ -217,9 +250,21 @@ export default function ChatScreen() {
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.messagesList}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => {
             flatListRef.current?.scrollToEnd({ animated: false });
           }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={64} color="#CCC" />
+              <ThemedText style={styles.emptyText}>
+                No messages yet
+              </ThemedText>
+              <ThemedText style={styles.emptySubtext}>
+                Start the conversation!
+              </ThemedText>
+            </View>
+          }
         />
       )}
 
@@ -246,16 +291,25 @@ export default function ChatScreen() {
             onChangeText={handleTextChange}
             multiline
             maxLength={1000}
+            editable={!!conversationId && isConnected}
           />
           <Pressable
-            style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              (!messageText.trim() || !conversationId || !isConnected) &&
+                styles.sendButtonDisabled,
+            ]}
             onPress={handleSend}
-            disabled={!messageText.trim()}
+            disabled={!messageText.trim() || !conversationId || !isConnected}
           >
             <Ionicons
               name="send"
               size={20}
-              color={messageText.trim() ? "#FFFFFF" : "#CCC"}
+              color={
+                messageText.trim() && conversationId && isConnected
+                  ? "#FFFFFF"
+                  : "#CCC"
+              }
             />
           </Pressable>
         </View>
@@ -305,17 +359,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  onlineIndicator: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#4CAF50",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
   headerInfo: {
     flex: 1,
   },
@@ -342,9 +385,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666666",
   },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#FF6B35",
+    textAlign: "center",
+  },
   messagesList: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#BBB",
+    marginTop: 8,
   },
   messageContainer: {
     flexDirection: "row",
