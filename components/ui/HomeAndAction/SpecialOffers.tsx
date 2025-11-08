@@ -15,11 +15,22 @@ export default function SpecialOffers() {
     try {
       setLoading(true);
       const coupons = await getAllRestaurantCoupons();
-      
-      // Get the first active coupon
-      const activeCoupon = coupons.find(c => c.coupon.isActive);
-      if (activeCoupon) {
-        setFeaturedOffer(activeCoupon);
+
+      if (!coupons || coupons.length === 0) return;
+
+      // Filter only active coupons
+      const activeCoupons = coupons.filter(c => c.coupon.isActive);
+
+      // Sort by createdAt descending (latest first)
+      const sortedCoupons = activeCoupons.sort(
+        (a, b) => new Date(b.coupon.createdAt).getTime() - new Date(a.coupon.createdAt).getTime()
+      );
+
+      // Get the latest active coupon
+      const latestCoupon = sortedCoupons[0];
+
+      if (latestCoupon) {
+        setFeaturedOffer(latestCoupon);
       }
     } catch (error) {
       console.error("Error fetching featured offer:", error);
