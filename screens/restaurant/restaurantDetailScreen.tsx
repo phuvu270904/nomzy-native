@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import { claimCoupon, getRestaurantCoupons, RestaurantCoupon } from "@/api/couponsApi";
 import { apiClient } from "@/utils/apiClient";
 
 interface Product {
@@ -85,12 +87,21 @@ export default function RestaurantDetailScreen() {
   const [activeTab, setActiveTab] = useState<"About" | "Offers" | "Reviews">(
     "About",
   );
+  const [coupons, setCoupons] = useState<RestaurantCoupon[]>([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [claimingCouponId, setClaimingCouponId] = useState<number | null>(null);
 
   useEffect(() => {
     if (id) {
       fetchRestaurantDetails();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (id && activeTab === "Offers") {
+      fetchRestaurantCoupons();
+    }
+  }, [id, activeTab]);
 
   const fetchRestaurantDetails = async () => {
     try {
@@ -104,6 +115,48 @@ export default function RestaurantDetailScreen() {
       setError(err.message || "Failed to fetch restaurant details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRestaurantCoupons = async () => {
+    if (!id) return;
+    
+    try {
+      setLoadingCoupons(true);
+      const data = await getRestaurantCoupons(Number(id));
+      // Filter only active coupons
+      const activeCoupons = data.filter(c => c.coupon.isActive);
+      setCoupons(activeCoupons);
+    } catch (err: any) {
+      console.error("Error fetching restaurant coupons:", err);
+      // Don't set error state, just log it
+    } finally {
+      setLoadingCoupons(false);
+    }
+  };
+
+  const handleClaimCoupon = async (couponId: number) => {
+    try {
+      setClaimingCouponId(couponId);
+      const result = await claimCoupon(couponId);
+      
+      // Show success message
+      Alert.alert(
+        "Success!",
+        result.message || "Coupon claimed successfully! Check your profile to view your coupons.",
+        [{ text: "OK" }]
+      );
+    } catch (err: any) {
+      console.error("Error claiming coupon:", err);
+      
+      // Show error message
+      Alert.alert(
+        "Error",
+        err.message || "Failed to claim coupon. Please try again.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setClaimingCouponId(null);
     }
   };
 
@@ -264,12 +317,81 @@ export default function RestaurantDetailScreen() {
         {activeTab === "Offers" && (
           <View style={styles.tabContent}>
             <Text style={styles.sectionTitle}>Special Offers</Text>
-            <View style={styles.offerCard}>
-              <Text style={styles.offerTitle}>Free Delivery</Text>
-              <Text style={styles.offerDescription}>
-                Free delivery on orders above $25
-              </Text>
-            </View>
+            {loadingCoupons ? (
+              <View style={styles.loadingCouponsContainer}>
+                <ActivityIndicator size="small" color="#4CAF50" />
+                <Text style={styles.loadingCouponsText}>Loading offers...</Text>
+              </View>
+            ) : coupons.length > 0 ? (
+              coupons.map((restaurantCoupon) => {
+                const coupon = restaurantCoupon.coupon;
+                const discountValue = coupon.type === "percentage"
+                  ? Math.round(parseFloat(coupon.value))
+                  : Math.round(parseFloat(coupon.value));
+                const discountText = coupon.type === "percentage"
+                  ? `${discountValue}%`
+                  : `$${discountValue}`;
+                const isClaiming = claimingCouponId === coupon.id;
+                
+                return (
+                  <View key={restaurantCoupon.id} style={styles.couponCard}>
+                    <View style={styles.couponHeader}>
+                      <View style={styles.couponBadge}>
+                        <Text style={styles.couponBadgeText}>{discountText} OFF</Text>
+                      </View>
+                      <Text style={styles.couponCode}>{coupon.code}</Text>
+                    </View>
+                    
+                    <Text style={styles.couponName}>{coupon.name}</Text>
+                    <Text style={styles.couponDescription}>{coupon.description}</Text>
+                    
+                    <View style={styles.couponDetails}>
+                      <View style={styles.couponDetailRow}>
+                        <Ionicons name="receipt-outline" size={16} color="#666" />
+                        <Text style={styles.couponDetailText}>
+                          Min. order: ${coupon.minOrderAmount}
+                        </Text>
+                      </View>
+                      {coupon.maxDiscountAmount && (
+                        <View style={styles.couponDetailRow}>
+                          <Ionicons name="pricetag-outline" size={16} color="#666" />
+                          <Text style={styles.couponDetailText}>
+                            Max. discount: ${coupon.maxDiscountAmount}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={styles.couponDetailRow}>
+                        <Ionicons name="time-outline" size={16} color="#666" />
+                        <Text style={styles.couponDetailText}>
+                          Valid until: {new Date(coupon.validUntil).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.claimButton,
+                        isClaiming && styles.claimButtonDisabled
+                      ]}
+                      onPress={() => handleClaimCoupon(coupon.id)}
+                      disabled={isClaiming}
+                      activeOpacity={0.7}
+                    >
+                      {isClaiming ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.claimButtonText}>Claim Coupon</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
+            ) : (
+              <View style={styles.noOffersContainer}>
+                <Ionicons name="pricetag-outline" size={48} color="#CCC" />
+                <Text style={styles.noOffersText}>No offers available</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -684,5 +806,106 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     padding: 20,
+  },
+  loadingCouponsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    gap: 8,
+  },
+  loadingCouponsText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  couponCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  couponHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  couponBadge: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  couponBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  couponCode: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#666",
+    letterSpacing: 1,
+  },
+  couponName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 4,
+  },
+  couponDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  couponDetails: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  couponDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  couponDetailText: {
+    fontSize: 13,
+    color: "#666",
+  },
+  claimButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  claimButtonDisabled: {
+    backgroundColor: "#9E9E9E",
+  },
+  claimButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  noOffersContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  noOffersText: {
+    fontSize: 16,
+    color: "#999",
+    marginTop: 12,
   },
 });

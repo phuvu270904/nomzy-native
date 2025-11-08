@@ -1,11 +1,71 @@
+import { getAllRestaurantCoupons, RestaurantCoupon } from "@/api/couponsApi";
 import { router } from "expo-router";
-import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function SpecialOffers() {
+  const [featuredOffer, setFeaturedOffer] = useState<RestaurantCoupon | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedOffer();
+  }, []);
+
+  const fetchFeaturedOffer = async () => {
+    try {
+      setLoading(true);
+      const coupons = await getAllRestaurantCoupons();
+      
+      // Get the first active coupon
+      const activeCoupon = coupons.find(c => c.coupon.isActive);
+      if (activeCoupon) {
+        setFeaturedOffer(activeCoupon);
+      }
+    } catch (error) {
+      console.error("Error fetching featured offer:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNavigateToOffers = () => {
     router.navigate("/offers");
   };
+
+  const handleNavigateToRestaurant = () => {
+    if (featuredOffer) {
+      router.push(`/restaurant/${featuredOffer.restaurantId}`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Special Offers</Text>
+          <TouchableOpacity onPress={handleNavigateToOffers}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.card, styles.loadingCard]}>
+          <ActivityIndicator size="large" color="#FFFFFF" />
+        </View>
+      </View>
+    );
+  }
+
+  if (!featuredOffer) {
+    return null; // Don't show section if no offers available
+  }
+
+  const discountValue = featuredOffer.coupon.type === "percentage"
+    ? Math.round(parseFloat(featuredOffer.coupon.value))
+    : Math.round(parseFloat(featuredOffer.coupon.value));
+
+  const discountText = featuredOffer.coupon.type === "percentage"
+    ? `${discountValue}%`
+    : `$${discountValue}`;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -14,19 +74,23 @@ export default function SpecialOffers() {
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.card}>
+      <TouchableOpacity 
+        style={styles.card} 
+        onPress={handleNavigateToRestaurant}
+        activeOpacity={0.8}
+      >
         <View style={{ flex: 1 }}>
-          <Text style={styles.discount}>30%</Text>
-          <Text style={styles.text}>DISCOUNT ONLY</Text>
-          <Text style={styles.text}>VALID FOR TODAY!</Text>
+          <Text style={styles.discount}>{discountText}</Text>
+          <Text style={styles.text} numberOfLines={1}>{featuredOffer.coupon.name.toUpperCase()}</Text>
+          <Text style={styles.text} numberOfLines={1}>{featuredOffer.restaurant.name.toUpperCase()}</Text>
         </View>
         <Image
           source={{
-            uri: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=120&h=120&fit=crop&crop=center",
+            uri: featuredOffer.restaurant.avatar,
           }}
           style={styles.image}
         />
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -58,6 +122,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  loadingCard: {
+    minHeight: 120,
+    justifyContent: "center",
   },
   discount: {
     fontSize: 36,

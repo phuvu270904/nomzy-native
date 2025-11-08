@@ -1,3 +1,4 @@
+import { RestaurantCoupon } from "@/api/couponsApi";
 import { ThemedText } from "@/components/ThemedText";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -14,31 +15,65 @@ export interface OfferData {
 }
 
 interface OfferCardProps {
-  offer: OfferData;
-  onPress?: (offer: OfferData) => void;
+  offer?: OfferData;
+  restaurantCoupon?: RestaurantCoupon;
+  onPress?: (offer: OfferData | RestaurantCoupon) => void;
 }
 
-export function OfferCard({ offer, onPress }: OfferCardProps) {
+export function OfferCard({ offer, restaurantCoupon, onPress }: OfferCardProps) {
   const handlePress = () => {
-    onPress?.(offer);
+    if (restaurantCoupon) {
+      onPress?.(restaurantCoupon);
+    } else if (offer) {
+      onPress?.(offer);
+    }
   };
+
+  // Get data from either offer or restaurantCoupon
+  const discountValue = restaurantCoupon 
+    ? restaurantCoupon.coupon.type === "percentage" 
+      ? Math.round(parseFloat(restaurantCoupon.coupon.value))
+      : Math.round(parseFloat(restaurantCoupon.coupon.value))
+    : offer?.discount || 0;
+  
+  const discountText = restaurantCoupon
+    ? restaurantCoupon.coupon.type === "percentage" 
+      ? `${discountValue}%`
+      : `$${discountValue}`
+    : `${discountValue}%`;
+  
+  const title = restaurantCoupon 
+    ? restaurantCoupon.coupon.name 
+    : offer?.title || "";
+  
+  const subtitle = restaurantCoupon 
+    ? restaurantCoupon.coupon.description 
+    : offer?.subtitle || "";
+  
+  const image = restaurantCoupon 
+    ? restaurantCoupon.restaurant.avatar 
+    : offer?.image || "";
+  
+  const backgroundColor = restaurantCoupon
+    ? generateColorFromId(restaurantCoupon.id)
+    : offer?.backgroundColor || "#4CAF50";
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: offer.backgroundColor }]}
+      style={[styles.container, { backgroundColor }]}
       onPress={handlePress}
       activeOpacity={0.8}
     >
       <View style={styles.content}>
         <View style={styles.textSection}>
-          <ThemedText style={styles.discountText}>{offer.discount}%</ThemedText>
-          <ThemedText style={styles.titleText}>{offer.title}</ThemedText>
-          <ThemedText style={styles.subtitleText}>{offer.subtitle}</ThemedText>
+          <ThemedText style={styles.discountText}>{discountText}</ThemedText>
+          <ThemedText style={styles.titleText} numberOfLines={1}>{title}</ThemedText>
+          <ThemedText style={styles.subtitleText} numberOfLines={2}>{subtitle}</ThemedText>
         </View>
 
         <View style={styles.imageSection}>
           <Image
-            source={{ uri: offer.image }}
+            source={{ uri: image }}
             style={styles.foodImage}
             resizeMode="cover"
           />
@@ -46,6 +81,23 @@ export function OfferCard({ offer, onPress }: OfferCardProps) {
       </View>
     </TouchableOpacity>
   );
+}
+
+// Helper function to generate consistent colors based on ID
+function generateColorFromId(id: number): string {
+  const colors = [
+    "#4CAF50", // Green
+    "#FF9800", // Orange
+    "#E91E63", // Pink
+    "#3F51B5", // Indigo
+    "#00BCD4", // Cyan
+    "#FFC107", // Amber
+    "#9C27B0", // Purple
+    "#FF5722", // Deep Orange
+    "#009688", // Teal
+    "#673AB7", // Deep Purple
+  ];
+  return colors[id % colors.length];
 }
 
 const styles = StyleSheet.create({
@@ -95,7 +147,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
     opacity: 0.9,
-    textTransform: "uppercase",
     letterSpacing: 0.3,
   },
   imageSection: {
