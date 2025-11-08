@@ -1,4 +1,5 @@
 import { ordersApi, type ApiOrder } from "@/api/ordersApi";
+import { reviewsApi, type DriverReviewResponse } from "@/api/reviewsApi";
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -21,11 +22,12 @@ const DriverActivityScreen = () => {
   >("today");
 
   const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [reviews, setReviews] = useState<DriverReviewResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch driver orders - only if user is a driver
+  // Fetch driver orders and reviews - only if user is a driver
   useEffect(() => {
-    const fetchDriverOrders = async () => {
+    const fetchDriverData = async () => {
       const user = await fetchUserProfile();
       if (!user || user.user.role !== "driver") {
         console.log("User is not a Driver");
@@ -33,10 +35,14 @@ const DriverActivityScreen = () => {
       }
       setIsLoading(true);
       try {
-        const fetchedOrders = await ordersApi.getDriverOrders();
+        const [fetchedOrders, fetchedReviews] = await Promise.all([
+          ordersApi.getDriverOrders(),
+          reviewsApi.getDriverReviews(),
+        ]);
         setOrders(fetchedOrders);
+        setReviews(fetchedReviews);
       } catch (error: any) {
-        console.error("Failed to fetch driver orders:", error);
+        console.error("Failed to fetch driver data:", error);
         Alert.alert(
           "Error",
           "Failed to load activity data. Please try again later.",
@@ -46,7 +52,7 @@ const DriverActivityScreen = () => {
       }
     };
 
-    fetchDriverOrders();
+    fetchDriverData();
   }, []);
 
   // Filter orders based on selected period
@@ -86,9 +92,16 @@ const DriverActivityScreen = () => {
 
     const deliveries = completedOrders.length;
 
+    // Calculate average rating from all reviews
+    const averageRating = reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
     return {
       earnings: totalEarnings,
       deliveries,
+      averageRating,
+      totalReviews: reviews.length,
     };
   };
 
@@ -183,6 +196,28 @@ const DriverActivityScreen = () => {
                   : "0.00"}
               </Text>
               <Text style={styles.performanceLabel}>Avg per Order (VND)</Text>
+            </View>
+            <View style={styles.performanceItem}>
+              <Text style={styles.performanceValue}>
+                {currentData.averageRating.toFixed(1)}
+              </Text>
+              <View style={styles.stars}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Ionicons
+                    key={star}
+                    name={
+                      star <= Math.round(currentData.averageRating)
+                        ? "star"
+                        : "star-outline"
+                    }
+                    size={16}
+                    color="#FFD700"
+                  />
+                ))}
+              </View>
+              <Text style={styles.performanceLabel}>
+                Rating ({currentData.totalReviews} reviews)
+              </Text>
             </View>
           </View>
         </View>
@@ -397,7 +432,7 @@ const styles = StyleSheet.create({
   },
   performanceRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
   },
   performanceItem: {
     alignItems: "center",

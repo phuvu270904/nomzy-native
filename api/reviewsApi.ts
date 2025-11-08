@@ -68,6 +68,14 @@ export const reviewsApi = {
     return response.data;
   },
 
+  // Get driver reviews (for driver to see their own reviews)
+  getDriverReviews: async (): Promise<DriverReviewResponse[]> => {
+    const response = await apiClient.get<DriverReviewResponse[]>(
+      `/driver-reviews/user`
+    );
+    return response.data;
+  },
+
   // Submit restaurant feedback
   submitRestaurantFeedback: async (
     restaurantId: number,
