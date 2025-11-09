@@ -12,6 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { favoritesApi } from "@/api/favoritesApi";
+import { ordersApi } from "@/api/ordersApi";
+import { reviewsApi } from "@/api/reviewsApi";
 import {
   ProfileHeader,
   ProfileMenuItemData,
@@ -24,17 +27,10 @@ import { useAuth } from "@/hooks";
 import { apiClient } from "@/utils/apiClient";
 import { resetOnboardingStatus } from "@/utils/onboarding";
 
-const mockStats: ProfileStatsData = {
-  totalOrders: 47,
-  favoriteRestaurants: 12,
-  reviews: 23,
-  points: 1250,
-};
-
 export default function ProfileScreen() {
   const { logout } = useAuth();
   const [user, setUser] = useState<UserProfile | null>();
-  const [stats, setStats] = useState<ProfileStatsData | null>(mockStats);
+  const [stats, setStats] = useState<ProfileStatsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +59,8 @@ export default function ProfileScreen() {
     try {
       setLoading(true);
       setError(null);
+
+      // Fetch profile data
       const response = await apiClient.get("/auth/profile");
       const data = response.data;
 
@@ -85,16 +83,22 @@ export default function ProfileScreen() {
 
       setUser(mappedUser);
 
-      // Basic stats derivation: orders, favorites, reviews, points are not provided in response
-      setStats(
-        (prev) =>
-          prev || {
-            totalOrders: 0,
-            favoriteRestaurants: 0,
-            reviews: 0,
-            points: 0,
-          },
-      );
+      // Fetch stats from APIs in parallel
+      const [ordersResponse, favoritesResponse, restaurantFeedbacksResponse, driverReviewsResponse] = await Promise.all([
+        ordersApi.getMyOrders().catch(() => []),
+        favoritesApi.getFavorites().catch(() => []),
+        reviewsApi.getUserFeedbacks().catch(() => []),
+        reviewsApi.getUserDriverReviews().catch(() => []),
+      ]);
+
+      // Calculate total reviews (restaurant feedbacks + driver reviews)
+      const totalReviews = restaurantFeedbacksResponse.length + driverReviewsResponse.length;
+
+      setStats({
+        totalOrders: ordersResponse.length,
+        favoriteRestaurants: favoritesResponse.length,
+        reviews: totalReviews,
+      });
     } catch (err: any) {
       setError(err.message || "Failed to load profile");
     } finally {

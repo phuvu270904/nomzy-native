@@ -7,10 +7,9 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -158,71 +157,6 @@ const DriverProfileScreen = () => {
               <Text style={styles.statNumber}>95%</Text>
               <Text style={styles.statLabel}>On-time Rate</Text>
             </View>
-          </View>
-        </View>
-
-        {/* Notification Settings */}
-        <View style={styles.notificationCard}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationInfo}>
-              <Text style={styles.notificationTitle}>Order Alerts</Text>
-              <Text style={styles.notificationDescription}>
-                Get notified about new orders
-              </Text>
-            </View>
-            <Switch
-              value={notifications.orderAlerts}
-              onValueChange={() => toggleNotification("orderAlerts")}
-              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationInfo}>
-              <Text style={styles.notificationTitle}>Promotions</Text>
-              <Text style={styles.notificationDescription}>
-                Special offers and bonuses
-              </Text>
-            </View>
-            <Switch
-              value={notifications.promotions}
-              onValueChange={() => toggleNotification("promotions")}
-              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationInfo}>
-              <Text style={styles.notificationTitle}>Earnings Updates</Text>
-              <Text style={styles.notificationDescription}>
-                Daily and weekly earning reports
-              </Text>
-            </View>
-            <Switch
-              value={notifications.earnings}
-              onValueChange={() => toggleNotification("earnings")}
-              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationInfo}>
-              <Text style={styles.notificationTitle}>New Features</Text>
-              <Text style={styles.notificationDescription}>
-                App updates and new features
-              </Text>
-            </View>
-            <Switch
-              value={notifications.newFeatures}
-              onValueChange={() => toggleNotification("newFeatures")}
-              trackColor={{ false: "#E0E0E0", true: "#4CAF50" }}
-              thumbColor="#FFFFFF"
-            />
           </View>
         </View>
 

@@ -5,7 +5,6 @@ export interface ProfileStatsData {
   totalOrders: number;
   favoriteRestaurants: number;
   reviews: number;
-  points?: number;
 }
 
 interface ProfileStatsProps {
@@ -29,15 +28,6 @@ const ProfileStats: React.FC<ProfileStatsProps> = ({ stats }) => {
       value: stats.reviews.toString(),
       color: "#4ECDC4",
     },
-    ...(stats.points
-      ? [
-          {
-            label: "Points",
-            value: stats.points.toString(),
-            color: "#FFE66D",
-          },
-        ]
-      : []),
   ];
 
   return (
