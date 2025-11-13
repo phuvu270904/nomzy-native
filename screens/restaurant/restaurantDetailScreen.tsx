@@ -436,7 +436,12 @@ export default function RestaurantDetailScreen() {
           <Text style={styles.sectionTitle}>Menu</Text>
           {restaurant.products && restaurant.products.length > 0 ? (
             restaurant.products.map((product) => (
-              <View key={product.id} style={styles.menuItem}>
+              <TouchableOpacity
+                key={product.id}
+                style={styles.menuItem}
+                onPress={() => router.push(`/product/${product.id}`)}
+                activeOpacity={0.7}
+              >
                 <View style={styles.menuItemContent}>
                   <View style={styles.menuItemInfo}>
                     <Text style={styles.menuItemName}>{product.name}</Text>
@@ -458,12 +463,18 @@ export default function RestaurantDetailScreen() {
                         <Ionicons name="restaurant" size={24} color="#999" />
                       </View>
                     )}
-                    <TouchableOpacity style={styles.addButton}>
+                    <TouchableOpacity 
+                      style={styles.addButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        router.push(`/product/${product.id}`);
+                      }}
+                    >
                       <Ionicons name="add" size={20} color="#FFF" />
                     </TouchableOpacity>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           ) : (
             <Text style={styles.noMenuText}>No menu items available</Text>
