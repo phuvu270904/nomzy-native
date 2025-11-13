@@ -120,14 +120,14 @@ export default function ProfileScreen() {
       iconColor: "#1BAC4B",
       onPress: handleEditProfile,
     },
-    {
-      id: "payment-methods",
-      title: "Payment Methods",
-      subtitle: "Manage your payment options",
-      icon: "card-outline",
-      iconColor: "#4ECDC4",
-      onPress: () => Alert.alert("Payment Methods", "Payment methods screen"),
-    },
+    // {
+    //   id: "payment-methods",
+    //   title: "Payment Methods",
+    //   subtitle: "Manage your payment options",
+    //   icon: "card-outline",
+    //   iconColor: "#4ECDC4",
+    //   onPress: () => Alert.alert("Payment Methods", "Payment methods screen"),
+    // },
     {
       id: "addresses",
       title: "My Addresses",
@@ -147,15 +147,15 @@ export default function ProfileScreen() {
       iconColor: "#FF6B6B",
       onPress: () => Alert.alert("Favorites", "Favorite restaurants screen"),
     },
-    {
-      id: "notifications",
-      title: "Notifications",
-      subtitle: "Manage notification preferences",
-      icon: "notifications-outline",
-      iconColor: "#FFE66D",
-      onPress: () =>
-        Alert.alert("Notifications", "Notification settings screen"),
-    },
+    // {
+    //   id: "notifications",
+    //   title: "Notifications",
+    //   subtitle: "Manage notification preferences",
+    //   icon: "notifications-outline",
+    //   iconColor: "#FFE66D",
+    //   onPress: () =>
+    //     Alert.alert("Notifications", "Notification settings screen"),
+    // },
   ];
 
   const supportSection: ProfileMenuItemData[] = [
