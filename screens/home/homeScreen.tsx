@@ -197,7 +197,6 @@ const HomeScreen = () => {
         />
         <ProductList
           products={apiProducts}
-          onToggleLike={handleToggleProductLike}
           onProductPress={handleProductPress}
           hasMore={hasMore}
           onLoadMore={handleLoadMoreProducts}

@@ -21,7 +21,6 @@ interface PromoItem {
   price: number;
   originalPrice: number;
   image: string;
-  liked: boolean;
 }
 
 export default function PromoList() {
@@ -30,7 +29,6 @@ export default function PromoList() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchDiscountedProducts();
@@ -61,17 +59,6 @@ export default function PromoList() {
     router.push(`/product/${productId}`);
   };
 
-  const toggleLikeLocal = (productId: number) => {
-    setLikedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(productId)) {
-        newSet.delete(productId);
-      } else {
-        newSet.add(productId);
-      }
-      return newSet;
-    });
-  };
 
   // Transform API products to PromoItem format
   const promoItems: PromoItem[] = discountedProducts.map((product) => {
@@ -94,7 +81,6 @@ export default function PromoList() {
       price: discountPrice,
       originalPrice: originalPrice,
       image: imageUrl,
-      liked: likedItems.has(product.id),
     };
   });
 
@@ -159,14 +145,6 @@ export default function PromoList() {
                 <Text style={styles.originalPrice}>
                   ${item.originalPrice.toFixed(2)}
                 </Text>
-                <TouchableOpacity
-                  style={styles.heartButton}
-                  onPress={() => toggleLikeLocal(item.id)}
-                >
-                  <Text style={styles.heartIcon}>
-                    {item.liked ? "❤️" : "🤍"}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </TouchableOpacity>

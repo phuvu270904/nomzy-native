@@ -20,7 +20,6 @@ interface Product {
 
 interface ProductListProps {
   products: Product[];
-  onToggleLike: (id: number) => void;
   onProductPress?: (product: Product) => void;
   hasMore: boolean;
   onLoadMore?: () => void;
@@ -31,7 +30,6 @@ interface ProductListProps {
 
 export default function ProductList({
   products,
-  onToggleLike,
   onProductPress,
   hasMore,
   onLoadMore,
@@ -54,12 +52,6 @@ export default function ProductList({
         </View>
         <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.heartButton}
-        onPress={() => onToggleLike(item.id)}
-      >
-        <Text style={styles.heartIcon}>{item.liked ? "❤️" : "🤍"}</Text>
-      </TouchableOpacity>
     </TouchableOpacity>
   );
 
