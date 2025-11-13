@@ -27,7 +27,6 @@ import {
 } from "@/components/profile";
 import { useAuth } from "@/hooks";
 import { apiClient } from "@/utils/apiClient";
-import { resetOnboardingStatus } from "@/utils/onboarding";
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
@@ -160,30 +159,30 @@ export default function ProfileScreen() {
   ];
 
   const supportSection: ProfileMenuItemData[] = [
-    {
-      id: "help",
-      title: "Help & Support",
-      subtitle: "Get help and contact support",
-      icon: "help-circle-outline",
-      iconColor: "#3498DB",
-      onPress: () => Alert.alert("Help", "Help and support screen"),
-    },
-    {
-      id: "about",
-      title: "About",
-      subtitle: "App version and information",
-      icon: "information-circle-outline",
-      iconColor: "#95A5A6",
-      onPress: () => Alert.alert("About", "About app screen"),
-    },
-    {
-      id: "terms",
-      title: "Terms of Service",
-      subtitle: "Read our terms and conditions",
-      icon: "document-text-outline",
-      iconColor: "#8E44AD",
-      onPress: () => resetOnboardingStatus(),
-    },
+    // {
+    //   id: "help",
+    //   title: "Help & Support",
+    //   subtitle: "Get help and contact support",
+    //   icon: "help-circle-outline",
+    //   iconColor: "#3498DB",
+    //   onPress: () => Alert.alert("Help", "Help and support screen"),
+    // },
+    // {
+    //   id: "about",
+    //   title: "About",
+    //   subtitle: "App version and information",
+    //   icon: "information-circle-outline",
+    //   iconColor: "#95A5A6",
+    //   onPress: () => Alert.alert("About", "About app screen"),
+    // },
+    // {
+    //   id: "terms",
+    //   title: "Terms of Service",
+    //   subtitle: "Read our terms and conditions",
+    //   icon: "document-text-outline",
+    //   iconColor: "#8E44AD",
+    //   onPress: () => resetOnboardingStatus(),
+    // },
     {
       id: "logout",
       title: "Logout",
