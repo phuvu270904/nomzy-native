@@ -146,7 +146,7 @@ export default function ProfileScreen() {
       subtitle: `${stats?.favoriteRestaurants ?? 0} restaurants`,
       icon: "heart-outline",
       iconColor: "#FF6B6B",
-      onPress: () => Alert.alert("Favorites", "Favorite restaurants screen"),
+      onPress: () => router.push("/favorites"),
     },
     // {
     //   id: "notifications",
