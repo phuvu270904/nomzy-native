@@ -1,8 +1,8 @@
-import DriverActivityScreen from "@/screens/driver/driverActivityScreen";
+import DriverEarningsReportScreen from "@/screens/driver/driverEarningsReportScreen";
 import React from "react";
 
 const DriverActivityTab = () => {
-  return <DriverActivityScreen />;
+  return <DriverEarningsReportScreen />;
 };
 
 export default DriverActivityTab;

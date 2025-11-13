@@ -1,6 +1,5 @@
 import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -103,11 +102,7 @@ const DriverOrderHistoryScreen = () => {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Order History</Text>
-          <View style={styles.placeholder} />
+          <Text style={styles.headerTitle}>Orders</Text>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
@@ -122,11 +117,7 @@ const DriverOrderHistoryScreen = () => {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Order History</Text>
-          <View style={styles.placeholder} />
+          <Text style={styles.headerTitle}>Orders</Text>
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#FF5722" />
@@ -145,11 +136,7 @@ const DriverOrderHistoryScreen = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order History</Text>
-        <View style={styles.placeholder} />
+        <Text style={styles.headerTitle}>Orders</Text>
       </View>
 
       <ScrollView
@@ -303,22 +290,16 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
-  backButton: {
-    padding: 8,
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
-  },
-  placeholder: {
-    width: 40,
   },
   loadingContainer: {
     flex: 1,
