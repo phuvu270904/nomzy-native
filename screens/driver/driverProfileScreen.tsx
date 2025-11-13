@@ -84,25 +84,25 @@ const DriverProfileScreen = () => {
       id: 1,
       title: "Vehicle Information",
       icon: "car-outline",
-      onPress: () => console.log("Vehicle info"),
+      onPress: () => router.push("/driver-vehicle-info"),
     },
-    {
-      id: 2,
-      title: "Payment Methods",
-      icon: "card-outline",
-      onPress: () => console.log("Payment methods"),
-    },
+    // {
+    //   id: 2,
+    //   title: "Payment Methods",
+    //   icon: "card-outline",
+    //   onPress: () => console.log("Payment methods"),
+    // },
     {
       id: 3,
       title: "Order History",
       icon: "time-outline",
-      onPress: () => console.log("Order history"),
+      onPress: () => router.push("/driver-order-history"),
     },
     {
       id: 4,
       title: "Earnings Report",
       icon: "analytics-outline",
-      onPress: () => console.log("Earnings report"),
+      onPress: () => router.push("/driver-earnings-report"),
     },
     {
       id: 5,
@@ -110,12 +110,12 @@ const DriverProfileScreen = () => {
       icon: "help-circle-outline",
       onPress: () => console.log("Help & Support"),
     },
-    {
-      id: 6,
-      title: "Terms & Conditions",
-      icon: "document-text-outline",
-      onPress: () => console.log("Terms & Conditions"),
-    },
+    // {
+    //   id: 6,
+    //   title: "Terms & Conditions",
+    //   icon: "document-text-outline",
+    //   onPress: () => console.log("Terms & Conditions"),
+    // },
   ];
 
   if (loading) {
