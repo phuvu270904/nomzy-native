@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -12,27 +13,26 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { addressApi } from "@/api/addressApi";
+import { addressApi, AddressResponse } from "@/api/addressApi";
 import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppSelector } from "@/store/store";
 import { apiClient } from "@/utils/apiClient";
 import { Ionicons } from "@expo/vector-icons";
 
-interface Address {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  isDefault: boolean;
+enum PaymentMethod {
+  CASH_ON_DELIVERY = 'cash_on_delivery',
+  CREDIT_CARD = 'credit_card',
+  DEBIT_CARD = 'debit_card',
+  DIGITAL_WALLET = 'digital_wallet',
 }
 
-interface PaymentMethod {
+interface PaymentMethodOption {
   id: string;
-  type: "credit_card" | "cash_on_delivery" | "digital_wallet";
+  type: PaymentMethod;
   name: string;
   details: string;
-  isDefault: boolean;
+  icon: string;
 }
 
 interface CreateOrderRequest {
@@ -59,8 +59,49 @@ export default function CheckoutScreen() {
   const { cart } = useAppSelector((state) => state.cart);
   const { user, isAuthenticated } = useAuth();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<AddressResponse | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [addresses, setAddresses] = useState<AddressResponse[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodOption>({
+    id: "1",
+    type: PaymentMethod.CASH_ON_DELIVERY,
+    name: "Cash on Delivery",
+    details: "Pay when you receive",
+    icon: "cash",
+  });
+
+  const paymentOptions: PaymentMethodOption[] = [
+    {
+      id: "1",
+      type: PaymentMethod.CASH_ON_DELIVERY,
+      name: "Cash on Delivery",
+      details: "Pay when you receive",
+      icon: "cash",
+    },
+    {
+      id: "2",
+      type: PaymentMethod.CREDIT_CARD,
+      name: "Credit Card",
+      details: "**** **** **** 1234",
+      icon: "card",
+    },
+    {
+      id: "3",
+      type: PaymentMethod.DEBIT_CARD,
+      name: "Debit Card",
+      details: "**** **** **** 5678",
+      icon: "card-outline",
+    },
+    {
+      id: "4",
+      type: PaymentMethod.DIGITAL_WALLET,
+      name: "Digital Wallet",
+      details: "Apple Pay, Google Pay",
+      icon: "wallet",
+    },
+  ];
 
   // Fetch default address on component mount
   useEffect(() => {
@@ -73,17 +114,7 @@ export default function CheckoutScreen() {
       try {
         setIsLoadingAddress(true);
         const defaultAddress = await addressApi.getDefaultAddress();
-        
-        // Convert API response to local Address format
-        const formattedAddress: Address = {
-          id: defaultAddress.id.toString(),
-          name: defaultAddress.label,
-          address: `${defaultAddress.streetAddress}, ${defaultAddress.city}, ${defaultAddress.state} ${defaultAddress.postalCode}`,
-          phone: user?.user?.phone_number || "",
-          isDefault: defaultAddress.isDefault,
-        };
-        
-        setSelectedAddress(formattedAddress);
+        setSelectedAddress(defaultAddress);
       } catch (error) {
         console.error("Error fetching default address:", error);
         Alert.alert(
@@ -98,12 +129,33 @@ export default function CheckoutScreen() {
     fetchDefaultAddress();
   }, [isAuthenticated, user]);
 
-  const selectedPayment: PaymentMethod = {
-    id: "1",
-    type: "credit_card",
-    name: "Credit Card",
-    details: "**** **** **** 1234",
-    isDefault: true,
+  const fetchAllAddresses = async () => {
+    try {
+      const allAddresses = await addressApi.getAllAddresses();
+      setAddresses(allAddresses);
+    } catch (error) {
+      console.error("Error fetching addresses:", error);
+      Alert.alert("Error", "Failed to load addresses");
+    }
+  };
+
+  const handleChangeAddress = async () => {
+    await fetchAllAddresses();
+    setShowAddressModal(true);
+  };
+
+  const handleSelectAddress = (address: AddressResponse) => {
+    setSelectedAddress(address);
+    setShowAddressModal(false);
+  };
+
+  const handleChangePayment = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handleSelectPayment = (payment: PaymentMethodOption) => {
+    setSelectedPayment(payment);
+    setShowPaymentModal(false);
   };
 
   // Calculate totals (reused from cart screen logic)
@@ -187,7 +239,7 @@ export default function CheckoutScreen() {
               const orderData: CreateOrderRequest = {
                 userId: parseInt(user.user.id),
                 restaurantId,
-                addressId: parseInt(selectedAddress.id),
+                addressId: selectedAddress.id,
                 orderItems,
                 subtotal: parseFloat(subtotal.toFixed(2)),
                 deliveryFee: parseFloat(deliveryFee.toFixed(2)),
@@ -267,7 +319,7 @@ export default function CheckoutScreen() {
             <ThemedText style={styles.sectionTitle}>
               Delivery Address
             </ThemedText>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleChangeAddress}>
               <ThemedText style={styles.changeButton}>Change</ThemedText>
             </TouchableOpacity>
           </View>
@@ -282,13 +334,13 @@ export default function CheckoutScreen() {
             <View style={styles.addressCard}>
               <View style={styles.addressInfo}>
                 <ThemedText style={styles.addressName}>
-                  {selectedAddress.name}
+                  {selectedAddress.label}
                 </ThemedText>
                 <ThemedText style={styles.addressText}>
-                  {selectedAddress.address}
+                  {selectedAddress.streetAddress}, {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
                 </ThemedText>
                 <ThemedText style={styles.addressPhone}>
-                  {selectedAddress.phone}
+                  {user?.user?.phone_number || "No phone"}
                 </ThemedText>
               </View>
               <Ionicons name="location" size={24} color="#4CAF50" />
@@ -327,20 +379,14 @@ export default function CheckoutScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <ThemedText style={styles.sectionTitle}>Payment Method</ThemedText>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleChangePayment}>
               <ThemedText style={styles.changeButton}>Change</ThemedText>
             </TouchableOpacity>
           </View>
           <View style={styles.paymentCard}>
             <View style={styles.paymentInfo}>
               <Ionicons
-                name={
-                  selectedPayment.type === "credit_card"
-                    ? "card"
-                    : selectedPayment.type === "cash_on_delivery"
-                      ? "cash"
-                      : "wallet"
-                }
+                name={selectedPayment.icon as any}
                 size={24}
                 color="#4CAF50"
               />
@@ -416,6 +462,112 @@ export default function CheckoutScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Address Selection Modal */}
+      <Modal
+        visible={showAddressModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddressModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Select Address</ThemedText>
+              <TouchableOpacity onPress={() => setShowAddressModal(false)}>
+                <Ionicons name="close" size={24} color="#2E2E2E" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {addresses.map((address) => (
+                <TouchableOpacity
+                  key={address.id}
+                  style={[
+                    styles.modalAddressCard,
+                    selectedAddress?.id === address.id && styles.selectedCard,
+                  ]}
+                  onPress={() => handleSelectAddress(address)}
+                >
+                  <View style={styles.modalAddressInfo}>
+                    <View style={styles.addressLabelRow}>
+                      <ThemedText style={styles.modalAddressLabel}>
+                        {address.label}
+                      </ThemedText>
+                      {address.isDefault && (
+                        <View style={styles.defaultBadge}>
+                          <ThemedText style={styles.defaultBadgeText}>Default</ThemedText>
+                        </View>
+                      )}
+                    </View>
+                    <ThemedText style={styles.modalAddressText}>
+                      {address.streetAddress}
+                    </ThemedText>
+                    <ThemedText style={styles.modalAddressText}>
+                      {address.city}, {address.state} {address.postalCode}
+                    </ThemedText>
+                    <ThemedText style={styles.modalAddressText}>
+                      {address.country}
+                    </ThemedText>
+                  </View>
+                  {selectedAddress?.id === address.id && (
+                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Payment Method Selection Modal */}
+      <Modal
+        visible={showPaymentModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowPaymentModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Select Payment Method</ThemedText>
+              <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
+                <Ionicons name="close" size={24} color="#2E2E2E" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {paymentOptions.map((payment) => (
+                <TouchableOpacity
+                  key={payment.id}
+                  style={[
+                    styles.modalPaymentCard,
+                    selectedPayment.id === payment.id && styles.selectedCard,
+                  ]}
+                  onPress={() => handleSelectPayment(payment)}
+                >
+                  <View style={styles.modalPaymentInfo}>
+                    <Ionicons
+                      name={payment.icon as any}
+                      size={24}
+                      color="#4CAF50"
+                    />
+                    <View style={styles.modalPaymentDetails}>
+                      <ThemedText style={styles.modalPaymentName}>
+                        {payment.name}
+                      </ThemedText>
+                      <ThemedText style={styles.modalPaymentDetailsText}>
+                        {payment.details}
+                      </ThemedText>
+                    </View>
+                  </View>
+                  {selectedPayment.id === payment.id && (
+                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -654,6 +806,111 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 12,
+    color: "#666666",
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "80%",
+    paddingBottom: 32,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#2E2E2E",
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  modalAddressCard: {
+    backgroundColor: "#F8F8F8",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  selectedCard: {
+    borderColor: "#4CAF50",
+    backgroundColor: "#F0F9F0",
+  },
+  modalAddressInfo: {
+    flex: 1,
+  },
+  addressLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  modalAddressLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginRight: 8,
+  },
+  defaultBadge: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  defaultBadgeText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  modalAddressText: {
+    fontSize: 14,
+    color: "#666666",
+    marginBottom: 2,
+  },
+  modalPaymentCard: {
+    backgroundColor: "#F8F8F8",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  modalPaymentInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  modalPaymentDetails: {
+    marginLeft: 12,
+  },
+  modalPaymentName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 2,
+  },
+  modalPaymentDetailsText: {
+    fontSize: 14,
     color: "#666666",
   },
 });
