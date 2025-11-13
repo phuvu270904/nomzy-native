@@ -16,6 +16,8 @@ import { favoritesApi } from "@/api/favoritesApi";
 import { ordersApi } from "@/api/ordersApi";
 import { reviewsApi } from "@/api/reviewsApi";
 import {
+  EditProfileModal,
+  ManageAddressesModal,
   ProfileHeader,
   ProfileMenuItemData,
   ProfileSection,
@@ -29,10 +31,12 @@ import { resetOnboardingStatus } from "@/utils/onboarding";
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
-  const [user, setUser] = useState<UserProfile | null>();
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStatsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
+  const [manageAddressesModalVisible, setManageAddressesModalVisible] = useState(false);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -49,10 +53,7 @@ export default function ProfileScreen() {
   };
 
   const handleEditProfile = () => {
-    Alert.alert(
-      "Edit Profile",
-      "Edit profile functionality would be implemented here",
-    );
+    setEditProfileModalVisible(true);
   };
 
   const fetchProfile = async () => {
@@ -134,7 +135,7 @@ export default function ProfileScreen() {
       subtitle: "Delivery addresses",
       icon: "location-outline",
       iconColor: "#FF6B6B",
-      onPress: () => Alert.alert("Addresses", "Address management screen"),
+      onPress: () => setManageAddressesModalVisible(true),
     },
   ];
 
@@ -236,6 +237,18 @@ export default function ProfileScreen() {
           <ProfileSection title="Support" items={supportSection} />
         </ScrollView>
       )}
+
+      <EditProfileModal
+        visible={editProfileModalVisible}
+        user={user}
+        onClose={() => setEditProfileModalVisible(false)}
+        onSuccess={fetchProfile}
+      />
+
+      <ManageAddressesModal
+        visible={manageAddressesModalVisible}
+        onClose={() => setManageAddressesModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
