@@ -92,18 +92,18 @@ const DriverProfileScreen = () => {
     //   icon: "card-outline",
     //   onPress: () => console.log("Payment methods"),
     // },
-    {
-      id: 3,
-      title: "Order History",
-      icon: "time-outline",
-      onPress: () => router.push("/driver-order-history"),
-    },
-    {
-      id: 4,
-      title: "Earnings Report",
-      icon: "analytics-outline",
-      onPress: () => router.push("/driver-earnings-report"),
-    },
+    // {
+    //   id: 3,
+    //   title: "Order History",
+    //   icon: "time-outline",
+    //   onPress: () => router.push("/driver-order-history"),
+    // },
+    // {
+    //   id: 4,
+    //   title: "Earnings Report",
+    //   icon: "analytics-outline",
+    //   onPress: () => router.push("/driver-earnings-report"),
+    // },
     {
       id: 5,
       title: "Help & Support",
