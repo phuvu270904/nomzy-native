@@ -190,13 +190,13 @@ export default function ProductDetailScreen() {
             <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={24} color="#000" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerButton} onPress={handleLike}>
+            {/* <TouchableOpacity style={styles.headerButton} onPress={handleLike}>
               <Ionicons
                 name={isLiked ? "heart" : "heart-outline"}
                 size={24}
                 color={isLiked ? "#FF4757" : "#000"}
               />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
 
