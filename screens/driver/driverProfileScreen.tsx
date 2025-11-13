@@ -1,9 +1,15 @@
+import { authApi, UserProfileResponse } from "@/api/authApi";
+import { calculateAverageRating, DriverReview, driverReviewsApi } from "@/api/driverReviewsApi";
+import { ApiOrder, ordersApi } from "@/api/ordersApi";
+import { UserVehicle, userVehiclesApi } from "@/api/userVehiclesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,32 +22,57 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const DriverProfileScreen = () => {
   const { logout } = useAuth();
 
-  const [driverInfo, setDriverInfo] = useState({
-    name: "John Smith",
-    email: "john.smith@email.com",
-    phone: "+1 (555) 123-4567",
-    vehicleType: "Motorcycle",
-    licensePlate: "ABC-123",
-    rating: 4.8,
-    totalDeliveries: 1247,
-    joinDate: "March 2023",
-    profileImage:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=center",
-  });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [reviews, setReviews] = useState<DriverReview[]>([]);
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [vehicles, setVehicles] = useState<UserVehicle[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const [notifications, setNotifications] = useState({
-    orderAlerts: true,
-    promotions: false,
-    earnings: true,
-    newFeatures: true,
-  });
+  const fetchDriverData = async () => {
+    try {
+      setError(null);
+      
+      // Fetch all data in parallel
+      const [profileRes, reviewsRes, ordersRes, vehiclesRes] = await Promise.all([
+        authApi.getProfile(),
+        driverReviewsApi.getDriverReviews(),
+        ordersApi.getDriverOrders(),
+        userVehiclesApi.getUserVehicles(),
+      ]);
 
-  const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+      setProfile(profileRes.user);
+      setReviews(reviewsRes);
+      setOrders(ordersRes);
+      setVehicles(vehiclesRes);
+    } catch (err: any) {
+      console.error("Error fetching driver data:", err);
+      setError(err.response?.data?.message || "Failed to load profile data");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
+
+  useEffect(() => {
+    fetchDriverData();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchDriverData();
+  };
+
+  // Calculate stats from real data
+  const averageRating = calculateAverageRating(reviews);
+  const totalDeliveries = orders.filter(order => order.status === "delivered").length;
+  const joinDate = profile?.createdAt 
+    ? new Date(profile.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long" })
+    : "N/A";
+  
+  // Get primary vehicle
+  const primaryVehicle = vehicles.length > 0 ? vehicles[0] : null;
 
   const handleLogout = () => {
     logout();
@@ -87,6 +118,39 @@ const DriverProfileScreen = () => {
     },
   ];
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error && !profile) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#FF5722" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchDriverData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -102,22 +166,33 @@ const DriverProfileScreen = () => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4CAF50"]} />
+        }
       >
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <Image
-              source={{ uri: driverInfo.profileImage }}
-              style={styles.profileImage}
-            />
+            {profile?.avatar ? (
+              <Image
+                source={{ uri: profile.avatar }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={[styles.profileImage, styles.profileImagePlaceholder]}>
+                <Ionicons name="person" size={40} color="#999" />
+              </View>
+            )}
             <View style={styles.profileInfo}>
-              <Text style={styles.driverName}>{driverInfo.name}</Text>
-              <Text style={styles.driverEmail}>{driverInfo.email}</Text>
+              <Text style={styles.driverName}>{profile?.name || "Driver"}</Text>
+              <Text style={styles.driverEmail}>{profile?.email || "N/A"}</Text>
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={16} color="#FFD700" />
-                <Text style={styles.rating}>{driverInfo.rating}</Text>
+                <Text style={styles.rating}>
+                  {averageRating > 0 ? averageRating.toFixed(1) : "N/A"}
+                </Text>
                 <Text style={styles.deliveries}>
-                  • {driverInfo.totalDeliveries} deliveries
+                  • {totalDeliveries} deliveries
                 </Text>
               </View>
             </View>
@@ -126,23 +201,39 @@ const DriverProfileScreen = () => {
           <View style={styles.vehicleInfo}>
             <View style={styles.vehicleRow}>
               <Ionicons name="bicycle-outline" size={20} color="#666" />
-              <Text style={styles.vehicleText}>{driverInfo.vehicleType}</Text>
+              <Text style={styles.vehicleText}>
+                {primaryVehicle?.type || "No vehicle"}
+              </Text>
             </View>
-            <View style={styles.vehicleRow}>
-              <Ionicons name="car-outline" size={20} color="#666" />
-              <Text style={styles.vehicleText}>{driverInfo.licensePlate}</Text>
-            </View>
+            {primaryVehicle && (
+              <>
+                <View style={styles.vehicleRow}>
+                  <Ionicons name="car-outline" size={20} color="#666" />
+                  <Text style={styles.vehicleText}>
+                    {primaryVehicle.vehName} - {primaryVehicle.regNumber}
+                  </Text>
+                </View>
+              </>
+            )}
             <View style={styles.vehicleRow}>
               <Ionicons name="calendar-outline" size={20} color="#666" />
               <Text style={styles.vehicleText}>
-                Joined {driverInfo.joinDate}
+                Joined {joinDate}
               </Text>
             </View>
+            {profile?.phone_number && (
+              <View style={styles.vehicleRow}>
+                <Ionicons name="call-outline" size={20} color="#666" />
+                <Text style={styles.vehicleText}>
+                  {profile.phone_number}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         {/* Quick Stats */}
-        <View style={styles.statsCard}>
+        {/* <View style={styles.statsCard}>
           <Text style={styles.sectionTitle}>Quick Stats</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -158,7 +249,7 @@ const DriverProfileScreen = () => {
               <Text style={styles.statLabel}>On-time Rate</Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         {/* Menu Items */}
         <View style={styles.menuCard}>
@@ -194,6 +285,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#FF5722",
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   header: {
     flexDirection: "row",
@@ -231,6 +357,11 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     marginRight: 16,
+  },
+  profileImagePlaceholder: {
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   profileInfo: {
     flex: 1,
