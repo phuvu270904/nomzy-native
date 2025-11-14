@@ -1,6 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 interface MessageHeaderProps {
   title?: string;
@@ -16,7 +15,7 @@ const MessageHeader: React.FC<MessageHeaderProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.actions}>
+      {/* <View style={styles.actions}>
         {onSearchPress && (
           <TouchableOpacity style={styles.actionButton} onPress={onSearchPress}>
             <Ionicons name="search-outline" size={24} color="#212121" />
@@ -27,7 +26,7 @@ const MessageHeader: React.FC<MessageHeaderProps> = ({
             <Ionicons name="ellipsis-vertical" size={24} color="#212121" />
           </TouchableOpacity>
         )}
-      </View>
+      </View> */}
     </View>
   );
 };

@@ -133,24 +133,6 @@ const DriverProfileScreen = () => {
     );
   }
 
-  if (error && !profile) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <StatusBar barStyle="dark-content" />
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
-        </View>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color="#FF5722" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchDriverData}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
