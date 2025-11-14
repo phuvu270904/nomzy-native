@@ -1,5 +1,6 @@
 import { Action, configureStore, ThunkAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import aiChatReducer from "./slices/aiChatSlice";
 import cartReducer from "./slices/cartSlice";
 import checkoutReducer from "./slices/checkoutSlice";
 import conversationsReducer from "./slices/conversationsSlice";
@@ -15,6 +16,7 @@ export const store = configureStore({
     orderTracking: orderTrackingReducer,
     driverTracking: driverTrackingReducer,
     conversations: conversationsReducer,
+    aiChat: aiChatReducer,
     // Add other reducers here as needed
   },
 });

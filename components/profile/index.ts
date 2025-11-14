@@ -8,4 +8,6 @@ export type { ProfileMenuItemData } from "./ProfileMenuItem";
 export { default as ProfileSection } from "./ProfileSection";
 export { default as ProfileStats } from "./ProfileStats";
 export type { ProfileStatsData } from "./ProfileStats";
+export { default as ProfileToggleItem } from "./ProfileToggleItem";
+export type { ProfileToggleItemData } from "./ProfileToggleItem";
 

@@ -23,13 +23,19 @@ import {
   ProfileSection,
   ProfileStats,
   ProfileStatsData,
+  ProfileToggleItem,
+  ProfileToggleItemData,
   UserProfile,
 } from "@/components/profile";
 import { useAuth } from "@/hooks";
+import { toggleAIChat } from "@/store/slices/aiChatSlice";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { apiClient } from "@/utils/apiClient";
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const aiChatEnabled = useAppSelector((state) => state.aiChat.isEnabled);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStatsData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -158,6 +164,18 @@ export default function ProfileScreen() {
     // },
   ];
 
+  const aiAssistantToggle: ProfileToggleItemData[] = [
+    {
+      id: "ai-assistant",
+      title: "AI Food Assistant",
+      subtitle: "Get personalized food recommendations",
+      icon: "sparkles-outline",
+      iconColor: "#4CAF50",
+      value: aiChatEnabled,
+      onToggle: (value) => dispatch(toggleAIChat(value)),
+    },
+  ];
+
   const supportSection: ProfileMenuItemData[] = [
     // {
     //   id: "help",
@@ -232,6 +250,25 @@ export default function ProfileScreen() {
           <ProfileSection title="Account" items={accountSection} />
 
           <ProfileSection title="Preferences" items={preferencesSection} />
+
+          {/* AI Assistant Toggle */}
+          <View style={{ marginTop: 16, backgroundColor: "#FFF" }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "600",
+                color: "#757575",
+                paddingHorizontal: 16,
+                paddingTop: 16,
+                paddingBottom: 8,
+              }}
+            >
+              AI ASSISTANT
+            </Text>
+            {aiAssistantToggle.map((item) => (
+              <ProfileToggleItem key={item.id} item={item} />
+            ))}
+          </View>
 
           <ProfileSection title="Support" items={supportSection} />
         </ScrollView>
