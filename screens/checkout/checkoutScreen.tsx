@@ -16,7 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { addressApi, AddressResponse } from "@/api/addressApi";
 import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
-import { useAppSelector } from "@/store/store";
+import { clearCart } from "@/store/slices/cartSlice";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { apiClient } from "@/utils/apiClient";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -56,6 +57,7 @@ interface CreateOrderRequest {
 }
 
 export default function CheckoutScreen() {
+  const dispatch = useAppDispatch();
   const { cart } = useAppSelector((state) => state.cart);
   const { user, isAuthenticated } = useAuth();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -253,6 +255,9 @@ export default function CheckoutScreen() {
               // Create order via REST API
               const response = await apiClient.post("/orders", orderData);
               const createdOrder = response.data;
+
+              // Clear cart after successful order placement
+              dispatch(clearCart());
 
               router.push({
                 pathname: "/searching-driver/",
