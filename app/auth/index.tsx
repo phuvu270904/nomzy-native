@@ -43,7 +43,10 @@ export default function LoginScreen() {
     if (!isLoading) {
       if (isAuthenticated) {
         if (user?.jwt?.role) {
-          if (user.jwt.role === "driver") {
+          // Check if profile is fully registered
+          if (user.isFullyRegistered === false) {
+            router.replace("/fill-profile");
+          } else if (user.jwt.role === "driver") {
             router.replace("/(driver-tabs)");
           } else {
             router.replace("/(tabs)");
@@ -51,7 +54,14 @@ export default function LoginScreen() {
         } else {
           (async () => {
             try {
-              await fetchUserProfile();
+              const userProfile = await fetchUserProfile();
+              if (userProfile && !userProfile.isFullyRegistered) {
+                router.replace("/fill-profile");
+              } else if (userProfile?.jwt?.role === "driver") {
+                router.replace("/(driver-tabs)");
+              } else {
+                router.replace("/(tabs)");
+              }
               setIsCheckingAuth(false);
             } catch (e) {
               console.log("failed to fetch profile during auth check", e);
@@ -63,7 +73,7 @@ export default function LoginScreen() {
         setIsCheckingAuth(false);
       }
     }
-  }, [isAuthenticated, isLoading, user?.jwt?.role]);
+  }, [isAuthenticated, isLoading, user?.jwt?.role, user?.isFullyRegistered]);
 
   // Animate tab change
   useEffect(() => {
@@ -129,12 +139,18 @@ export default function LoginScreen() {
         const { jwt, refresh } = response.data;
 
         await login(jwt, refresh);
-        router.replace("/(tabs)");
 
         // Fetch user profile data after successful login
-        await fetchUserProfile();
+        const userProfile = await fetchUserProfile();
+        console.log("User Profile:", userProfile);
+        
 
-        // Navigate to the main app
+        // Check if user needs to complete profile
+        if (userProfile && !userProfile.isFullyRegistered) {
+          router.replace("/fill-profile");
+        } else {
+          router.replace("/(tabs)");
+        }
       } else {
         const response = await apiClient.post("/auth/login/driver", {
           email: email.trim(),
@@ -144,10 +160,16 @@ export default function LoginScreen() {
         const { jwt, refresh } = response.data;
 
         await login(jwt, refresh);
-        router.replace("/(driver-tabs)");
 
         // Fetch user profile data after successful login
-        await fetchUserProfile();
+        const userProfile = await fetchUserProfile();
+
+        // Check if driver needs to complete profile
+        if (userProfile && !userProfile.isFullyRegistered) {
+          router.replace("/fill-profile");
+        } else {
+          router.replace("/(driver-tabs)");
+        }
       }
     } catch (error: any) {
       console.log(error);
