@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   quickOptionsContainer: {
-    maxHeight: 180,
+    maxHeight: "12%",
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
   },
