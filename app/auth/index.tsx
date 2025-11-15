@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -32,6 +33,10 @@ export default function LoginScreen() {
   const { login, fetchUserProfile, isAuthenticated, user, isLoading } =
     useAuth();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  
+  // Animation refs
+  const slideAnimation = useRef(new Animated.Value(0)).current;
+  const scaleAnimation = useRef(new Animated.Value(1)).current;
 
   // Check if user is already authenticated and redirect to home
   useEffect(() => {
@@ -59,6 +64,30 @@ export default function LoginScreen() {
       }
     }
   }, [isAuthenticated, isLoading, user?.jwt?.role]);
+
+  // Animate tab change
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(slideAnimation, {
+        toValue: activeTab === "Driver" ? 1 : 0,
+        useNativeDriver: false,
+        tension: 100,
+        friction: 8,
+      }),
+      Animated.sequence([
+        Animated.timing(scaleAnimation, {
+          toValue: 0.95,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnimation, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, [activeTab, slideAnimation, scaleAnimation]);
 
   // Show loading while checking authentication status
   if (isCheckingAuth || isLoading) {
@@ -167,54 +196,72 @@ export default function LoginScreen() {
             <ThemedText style={styles.title}>Let&apos;s you in</ThemedText>
 
             {/* Tab Selector */}
-            <View style={styles.tabContainer}>
-              <TouchableOpacity
+            <View style={styles.tabContainerWrapper}>
+              <Animated.View
                 style={[
-                  styles.tabButton,
-                  activeTab === "User" && styles.activeTabButton,
+                  styles.tabContainer,
+                  { transform: [{ scale: scaleAnimation }] },
                 ]}
-                onPress={() => handleTabPress("User")}
-                activeOpacity={0.8}
               >
-                <Ionicons
-                  name="person-outline"
-                  size={20}
-                  color={activeTab === "User" ? "#FFFFFF" : "#9E9E9E"}
-                  style={styles.tabIcon}
-                />
-                <ThemedText
-                  style={[
-                    styles.tabText,
-                    activeTab === "User" && styles.activeTabText,
-                  ]}
+                <TouchableOpacity
+                  style={[styles.tabButton, styles.leftButton]}
+                  onPress={() => handleTabPress("User")}
+                  activeOpacity={0.8}
                 >
-                  User
-                </ThemedText>
-              </TouchableOpacity>
+                  <Ionicons
+                    name="person-outline"
+                    size={20}
+                    color={activeTab === "User" ? "#FFFFFF" : "#9E9E9E"}
+                    style={styles.tabIcon}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.tabText,
+                      activeTab === "User" && styles.activeTabText,
+                    ]}
+                  >
+                    User
+                  </ThemedText>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  activeTab === "Driver" && styles.activeTabButton,
-                ]}
-                onPress={() => handleTabPress("Driver")}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name="car-outline"
-                  size={20}
-                  color={activeTab === "Driver" ? "#FFFFFF" : "#9E9E9E"}
-                  style={styles.tabIcon}
-                />
-                <ThemedText
-                  style={[
-                    styles.tabText,
-                    activeTab === "Driver" && styles.activeTabText,
-                  ]}
+                <TouchableOpacity
+                  style={[styles.tabButton, styles.rightButton]}
+                  onPress={() => handleTabPress("Driver")}
+                  activeOpacity={0.8}
                 >
-                  Driver
-                </ThemedText>
-              </TouchableOpacity>
+                  <Ionicons
+                    name="car-outline"
+                    size={20}
+                    color={activeTab === "Driver" ? "#FFFFFF" : "#9E9E9E"}
+                    style={styles.tabIcon}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.tabText,
+                      activeTab === "Driver" && styles.activeTabText,
+                    ]}
+                  >
+                    Driver
+                  </ThemedText>
+                </TouchableOpacity>
+
+                {/* Animated Indicator */}
+                <Animated.View
+                  style={[
+                    styles.tabIndicator,
+                    {
+                      left: slideAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ["4%", "54%"],
+                      }),
+                      backgroundColor: slideAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ["#4CAF50", "#FF6B00"],
+                      }),
+                    },
+                  ]}
+                />
+              </Animated.View>
             </View>
 
             {/* Form */}
@@ -389,22 +436,48 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 36,
   },
-  tabContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
+  tabContainerWrapper: {
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 20,
   },
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 30,
+    padding: 4,
+    width: "80%",
+    position: "relative",
+  },
+  tabIndicator: {
+    position: "absolute",
+    top: 4,
+    width: "46%",
+    height: "100%",
+    borderRadius: 26,
+    zIndex: -1,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   tabButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    backgroundColor: "#F8F8F8",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 26,
+    zIndex: 1,
   },
-  activeTabButton: {
-    backgroundColor: "#4CAF50",
+  leftButton: {
+    marginRight: 2,
+  },
+  rightButton: {
+    marginLeft: 2,
   },
   tabIcon: {
     marginRight: 8,
@@ -412,7 +485,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#9E9E9E",
+    color: "#666",
   },
   activeTabText: {
     color: "#FFFFFF",
