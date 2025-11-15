@@ -150,11 +150,11 @@ export default function SignUpRoleScreen() {
                   <View
                     style={[
                       styles.radioOuter,
-                      selectedRole === "Driver" && styles.radioOuterSelected,
+                      selectedRole === "Driver" && styles.radioOutterSelectedDriver,
                     ]}
                   >
                     {selectedRole === "Driver" && (
-                      <View style={styles.radioInner} />
+                      <View style={styles.radioInnerDriver} />
                     )}
                   </View>
                   <Ionicons
@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
+    lineHeight: 32,
     textAlign: "center",
     marginBottom: 12,
     color: "#2E2E2E",
@@ -294,6 +295,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  radioOutterSelectedDriver: {
+    borderColor: "#FF6B00",
+  },
   radioOuterSelected: {
     borderColor: "#4CAF50",
   },
@@ -302,6 +306,12 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: "#4CAF50",
+  },
+  radioInnerDriver: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#FF6B00",
   },
   roleIcon: {
     marginBottom: 12,
