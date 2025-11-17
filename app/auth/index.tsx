@@ -44,7 +44,7 @@ export default function LoginScreen() {
       if (isAuthenticated) {
         if (user?.jwt?.role) {
           // Check if profile is fully registered
-          if (user.isFullyRegistered === false) {
+          if (user.user.isFullyRegistered === false) {
             router.replace("/fill-profile");
           } else if (user.jwt.role === "driver") {
             router.replace("/(driver-tabs)");
@@ -55,7 +55,7 @@ export default function LoginScreen() {
           (async () => {
             try {
               const userProfile = await fetchUserProfile();
-              if (userProfile && !userProfile.isFullyRegistered) {
+              if (userProfile && !userProfile.user.isFullyRegistered) {
                 router.replace("/fill-profile");
               } else if (userProfile?.jwt?.role === "driver") {
                 router.replace("/(driver-tabs)");
@@ -146,7 +146,7 @@ export default function LoginScreen() {
         
 
         // Check if user needs to complete profile
-        if (userProfile && !userProfile.isFullyRegistered) {
+        if (userProfile && !userProfile.user.isFullyRegistered) {
           router.replace("/fill-profile");
         } else {
           router.replace("/(tabs)");
