@@ -11,11 +11,24 @@ export interface UserVehicle {
   updatedAt: string;
 }
 
+export interface CreateUserVehicleData {
+  type: "Motorcycle" | "Car";
+  vehName: string;
+  regNumber: string;
+  license: string;
+}
+
 // User Vehicles API functions
 export const userVehiclesApi = {
   // Get user's vehicles
   getUserVehicles: async (): Promise<UserVehicle[]> => {
     const response = await apiClient.get<UserVehicle[]>("/user-vehicles");
+    return response.data;
+  },
+
+  // Create a new vehicle
+  createUserVehicle: async (data: CreateUserVehicleData): Promise<UserVehicle> => {
+    const response = await apiClient.post<UserVehicle>("/user-vehicles", data);
     return response.data;
   },
 };
