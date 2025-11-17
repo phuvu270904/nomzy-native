@@ -344,6 +344,8 @@ export default function LoginScreen() {
                 style={[
                   styles.signInButton,
                   isSigningIn && styles.signInButtonDisabled,
+                  {backgroundColor: activeTab === "User" ? "#4CAF50" : "#FF6B00"},
+                  {shadowColor: activeTab === "User" ? "#4CAF50" : "#FF6B00"},
                 ]}
                 onPress={handleSignIn}
                 activeOpacity={0.8}
@@ -400,7 +402,7 @@ export default function LoginScreen() {
                   Don&apos;t have an account?{" "}
                 </ThemedText>
                 <TouchableOpacity onPress={handleSignUp}>
-                  <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
+                  <ThemedText style={[styles.signUpLink, {color: activeTab === "User" ? "#4CAF50" : "#FF6B00"}]}>Sign up</ThemedText>
                 </TouchableOpacity>
               </View>
             </View>
@@ -545,13 +547,11 @@ const styles = StyleSheet.create({
     color: "#2E2E2E",
   },
   signInButton: {
-    backgroundColor: "#4CAF50",
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 30,
-    shadowColor: "#4CAF50",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -654,7 +654,6 @@ const styles = StyleSheet.create({
   },
   signUpLink: {
     fontSize: 14,
-    color: "#4CAF50",
     fontWeight: "600",
   },
   socialIconsContainer: {
