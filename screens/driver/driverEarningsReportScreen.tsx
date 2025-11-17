@@ -2,14 +2,14 @@ import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -152,7 +152,7 @@ const DriverEarningsReportScreen = () => {
           <Text style={styles.headerTitle}>Activity</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color="#FF6B00" />
           <Text style={styles.loadingText}>Loading earnings...</Text>
         </View>
       </SafeAreaView>
@@ -190,13 +190,13 @@ const DriverEarningsReportScreen = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4CAF50"]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#FF6B00"]} />
         }
       >
         {/* Total Earnings Card */}
         <View style={styles.totalEarningsCard}>
           <View style={styles.earningsIcon}>
-            <Ionicons name="wallet" size={32} color="#4CAF50" />
+            <Ionicons name="wallet" size={32} color="#FF6B00" />
           </View>
           <Text style={styles.earningsLabel}>Total Earnings</Text>
           <Text style={styles.totalEarningsAmount}>
@@ -211,7 +211,7 @@ const DriverEarningsReportScreen = () => {
         <View style={styles.monthlyOverview}>
           <View style={styles.monthlyCard}>
             <View style={styles.monthlyHeader}>
-              <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
+              <Ionicons name="calendar-outline" size={20} color="#FF6B00" />
               <Text style={styles.monthlyTitle}>This Month</Text>
             </View>
             <Text style={styles.monthlyAmount}>${earnings.thisMonth.toFixed(2)}</Text>
@@ -219,11 +219,11 @@ const DriverEarningsReportScreen = () => {
               <Ionicons 
                 name={parseFloat(monthChange) >= 0 ? "trending-up" : "trending-down"} 
                 size={16} 
-                color={parseFloat(monthChange) >= 0 ? "#4CAF50" : "#FF5722"} 
+                color={parseFloat(monthChange) >= 0 ? "#FF6B00" : "#FF5722"} 
               />
               <Text style={[
                 styles.changeText,
-                { color: parseFloat(monthChange) >= 0 ? "#4CAF50" : "#FF5722" }
+                { color: parseFloat(monthChange) >= 0 ? "#FF6B00" : "#FF5722" }
               ]}>
                 {monthChange}% vs last month
               </Text>
@@ -243,7 +243,7 @@ const DriverEarningsReportScreen = () => {
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Ionicons name="trending-up-outline" size={24} color="#4CAF50" />
+            <Ionicons name="trending-up-outline" size={24} color="#FF6B00" />
             <Text style={styles.statValue}>${earnings.averagePerDelivery.toFixed(2)}</Text>
             <Text style={styles.statLabel}>Avg per Delivery</Text>
           </View>
@@ -304,7 +304,7 @@ const DriverEarningsReportScreen = () => {
               <View style={styles.earningHeader}>
                 <View style={styles.earningLeft}>
                   <View style={styles.earningIconContainer}>
-                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                    <Ionicons name="checkmark-circle" size={24} color="#FF6B00" />
                   </View>
                   <View>
                     <Text style={styles.earningRestaurant}>{order.restaurant.name}</Text>
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 20,
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   totalEarningsCard: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
     borderRadius: 16,
     padding: 24,
     alignItems: "center",
@@ -503,8 +503,8 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
   },
   filterButtonActive: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
+    borderColor: "#FF6B00",
   },
   filterText: {
     fontSize: 14,
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#4CAF50",
+    color: "#FF6B00",
   },
   emptyContainer: {
     flex: 1,
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
   earningAmount: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#4CAF50",
+    color: "#FF6B00",
   },
   earningDetails: {
     flexDirection: "row",

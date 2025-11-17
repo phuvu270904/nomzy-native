@@ -10,7 +10,7 @@ export default function DriverTabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#4CAF50", // Green color for driver app
+        tabBarActiveTintColor: "#FF6B00", // Orange color for driver app
         tabBarInactiveTintColor: "#9E9E9E", // Gray color for inactive tabs
         headerShown: false,
         tabBarButton: HapticTab,

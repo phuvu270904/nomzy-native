@@ -3,15 +3,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -65,7 +65,7 @@ const DriverVehicleInfoScreen = () => {
           <View style={styles.placeholder} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color="#FF6B00" />
           <Text style={styles.loadingText}>Loading vehicles...</Text>
         </View>
       </SafeAreaView>
@@ -111,7 +111,7 @@ const DriverVehicleInfoScreen = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4CAF50"]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#FF6B00"]} />
         }
       >
         {vehicles.length === 0 ? (
@@ -129,7 +129,7 @@ const DriverVehicleInfoScreen = () => {
                 <Ionicons 
                   name={vehicle.type.toLowerCase() === "motorcycle" ? "bicycle" : "car"} 
                   size={32} 
-                  color="#4CAF50" 
+                  color="#FF6B00" 
                 />
               </View>
 
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 20,
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   primaryBadge: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,

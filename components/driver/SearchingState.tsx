@@ -12,7 +12,7 @@ export const SearchingState = () => {
         <Ionicons
           name="earth-outline"
           size={120}
-          color="#4CAF50"
+          color="#FF6B00"
           style={styles.searchingIcon}
         />
       </View>

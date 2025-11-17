@@ -2,14 +2,14 @@ import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 20,
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -378,8 +378,8 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
   },
   filterButtonActive: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
+    backgroundColor: "#FF6B00",
+    borderColor: "#FF6B00",
   },
   filterText: {
     fontSize: 14,
