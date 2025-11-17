@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { addressApi, AddressResponse } from "@/api/addressApi";
+import { UserCoupon, userCouponsApi } from "@/api/userCouponsApi";
 import { ThemedText } from "@/components/ThemedText";
 import { useAuth } from "@/hooks/useAuth";
 import { clearCart } from "@/store/slices/cartSlice";
@@ -65,7 +66,11 @@ export default function CheckoutScreen() {
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
+  const [userCoupons, setUserCoupons] = useState<UserCoupon[]>([]);
+  const [selectedCoupon, setSelectedCoupon] = useState<UserCoupon | null>(null);
+  const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodOption>({
     id: "1",
     type: PaymentMethod.CASH_ON_DELIVERY,
@@ -160,10 +165,61 @@ export default function CheckoutScreen() {
     setShowPaymentModal(false);
   };
 
+  const fetchUserCoupons = async () => {
+    setIsLoadingCoupons(true);
+    try {
+      const coupons = await userCouponsApi.getUserCoupons();
+      // Filter only claimed coupons that are still valid
+      const availableCoupons = coupons.filter(
+        (uc) =>
+          uc.status === "claimed" &&
+          uc.coupon.isActive &&
+          new Date(uc.coupon.validUntil) > new Date()
+      );
+      setUserCoupons(availableCoupons);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      Alert.alert("Error", "Failed to load coupons");
+    } finally {
+      setIsLoadingCoupons(false);
+    }
+  };
+
+  const handleChangeCoupon = async () => {
+    await fetchUserCoupons();
+    setShowCouponModal(true);
+  };
+
+  const handleSelectCoupon = (coupon: UserCoupon | null) => {
+    setSelectedCoupon(coupon);
+    setShowCouponModal(false);
+  };
+
+  const calculateCouponDiscount = (subtotal: number): number => {
+    if (!selectedCoupon) return 0;
+
+    const coupon = selectedCoupon.coupon;
+    const minOrderAmount = parseFloat(coupon.minOrderAmount);
+
+    // Check if subtotal meets minimum requirement
+    if (subtotal < minOrderAmount) return 0;
+
+    let discount = 0;
+    if (coupon.type === "percentage") {
+      discount = (subtotal * parseFloat(coupon.value)) / 100;
+      const maxDiscount = parseFloat(coupon.maxDiscountAmount);
+      discount = Math.min(discount, maxDiscount);
+    } else {
+      discount = parseFloat(coupon.value);
+    }
+
+    return discount;
+  };
+
   // Calculate totals (reused from cart screen logic)
-  const { subtotal, deliveryFee, tax, total, itemCount } = useMemo(() => {
+  const { subtotal, deliveryFee, tax, couponDiscount, total, itemCount } = useMemo(() => {
     if (!cart?.cartItems) {
-      return { subtotal: 0, deliveryFee: 0, tax: 0, total: 0, itemCount: 0 };
+      return { subtotal: 0, deliveryFee: 0, tax: 0, couponDiscount: 0, total: 0, itemCount: 0 };
     }
 
     const subtotal = cart.cartItems.reduce((sum, item) => {
@@ -176,14 +232,15 @@ export default function CheckoutScreen() {
 
     const deliveryFee = subtotal > 50 ? 0 : 3.99;
     const tax = subtotal * 0.08;
-    const total = subtotal + deliveryFee + tax;
+    const couponDiscount = calculateCouponDiscount(subtotal);
+    const total = subtotal + deliveryFee + tax - couponDiscount;
     const itemCount = cart.cartItems.reduce(
       (sum, item) => sum + item.quantity,
       0,
     );
 
-    return { subtotal, deliveryFee, tax, total, itemCount };
-  }, [cart?.cartItems]);
+    return { subtotal, deliveryFee, tax, couponDiscount, total, itemCount };
+  }, [cart?.cartItems, selectedCoupon]);
 
   const handleBack = () => {
     router.back();
@@ -245,7 +302,9 @@ export default function CheckoutScreen() {
                 orderItems,
                 subtotal: parseFloat(subtotal.toFixed(2)),
                 deliveryFee: parseFloat(deliveryFee.toFixed(2)),
+                discount: couponDiscount > 0 ? parseFloat(couponDiscount.toFixed(2)) : undefined,
                 total: parseFloat(total.toFixed(2)),
+                couponId: selectedCoupon?.couponId,
                 paymentMethod: selectedPayment.type,
                 notes: "Order placed via mobile app",
               };
@@ -255,6 +314,19 @@ export default function CheckoutScreen() {
               // Create order via REST API
               const response = await apiClient.post("/orders", orderData);
               const createdOrder = response.data;
+
+              // Update coupon status to "used" if a coupon was applied
+              if (selectedCoupon) {
+                try {
+                  await userCouponsApi.updateUserCouponStatus(
+                    selectedCoupon.id,
+                    "used"
+                  );
+                } catch (error) {
+                  console.error("Failed to update coupon status:", error);
+                  // Don't fail the order if coupon update fails
+                }
+              }
 
               // Clear cart after successful order placement
               dispatch(clearCart());
@@ -380,6 +452,48 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
+        {/* Coupon Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>Coupon</ThemedText>
+            <TouchableOpacity onPress={handleChangeCoupon}>
+              <ThemedText style={styles.changeButton}>
+                {selectedCoupon ? "Change" : "Apply"}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+          {selectedCoupon ? (
+            <View style={styles.couponCard}>
+              <View style={styles.couponInfo}>
+                <View style={styles.couponIcon}>
+                  <Ionicons name="pricetag" size={20} color="#4CAF50" />
+                </View>
+                <View style={styles.couponDetails}>
+                  <ThemedText style={styles.couponName}>
+                    {selectedCoupon.coupon.name}
+                  </ThemedText>
+                  <ThemedText style={styles.couponCode}>
+                    {selectedCoupon.coupon.code}
+                  </ThemedText>
+                  <ThemedText style={styles.couponDescription}>
+                    {selectedCoupon.coupon.description}
+                  </ThemedText>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => handleSelectCoupon(null)}>
+                <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.noCouponCard}>
+              <Ionicons name="ticket-outline" size={24} color="#CCCCCC" />
+              <ThemedText style={styles.noCouponText}>
+                No coupon applied
+              </ThemedText>
+            </View>
+          )}
+        </View>
+
         {/* Payment Method Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -432,6 +546,16 @@ export default function CheckoutScreen() {
                 ${tax.toFixed(2)}
               </ThemedText>
             </View>
+            {couponDiscount > 0 && (
+              <View style={styles.priceRow}>
+                <ThemedText style={styles.discountLabel}>
+                  Coupon Discount
+                </ThemedText>
+                <ThemedText style={styles.discountValue}>
+                  -${couponDiscount.toFixed(2)}
+                </ThemedText>
+              </View>
+            )}
             <View style={[styles.priceRow, styles.totalRow]}>
               <ThemedText style={styles.totalLabel}>Total</ThemedText>
               <ThemedText style={styles.totalValue}>
@@ -519,6 +643,117 @@ export default function CheckoutScreen() {
                   )}
                 </TouchableOpacity>
               ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Coupon Selection Modal */}
+      <Modal
+        visible={showCouponModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCouponModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Select Coupon</ThemedText>
+              <TouchableOpacity onPress={() => setShowCouponModal(false)}>
+                <Ionicons name="close" size={24} color="#2E2E2E" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {isLoadingCoupons ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#4CAF50" />
+                  <ThemedText style={styles.loadingText}>Loading coupons...</ThemedText>
+                </View>
+              ) : userCoupons.length === 0 ? (
+                <View style={styles.emptyCouponsContainer}>
+                  <Ionicons name="ticket-outline" size={64} color="#CCCCCC" />
+                  <ThemedText style={styles.emptyCouponsText}>
+                    No available coupons
+                  </ThemedText>
+                  <ThemedText style={styles.emptyCouponsSubtext}>
+                    Check back later for exclusive offers!
+                  </ThemedText>
+                </View>
+              ) : (
+                <>
+                  {/* Option to remove coupon */}
+                  {selectedCoupon && (
+                    <TouchableOpacity
+                      style={[styles.modalCouponCard, styles.removeCouponCard]}
+                      onPress={() => handleSelectCoupon(null)}
+                    >
+                      <View style={styles.modalCouponInfo}>
+                        <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                        <View style={styles.modalCouponDetails}>
+                          <ThemedText style={styles.modalCouponName}>
+                            Don't use coupon
+                          </ThemedText>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {userCoupons.map((userCoupon) => {
+                    const coupon = userCoupon.coupon;
+                    const meetsMinimum = subtotal >= parseFloat(coupon.minOrderAmount);
+                    const discount = meetsMinimum ? calculateCouponDiscount(subtotal) : 0;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={userCoupon.id}
+                        style={[
+                          styles.modalCouponCard,
+                          selectedCoupon?.id === userCoupon.id && styles.selectedCard,
+                          !meetsMinimum && styles.disabledCouponCard,
+                        ]}
+                        onPress={() => meetsMinimum && handleSelectCoupon(userCoupon)}
+                        disabled={!meetsMinimum}
+                      >
+                        <View style={styles.modalCouponInfo}>
+                          <View style={styles.couponIconLarge}>
+                            <Ionicons name="pricetag" size={24} color="#4CAF50" />
+                          </View>
+                          <View style={styles.modalCouponDetails}>
+                            <ThemedText style={styles.modalCouponName}>
+                              {coupon.name}
+                            </ThemedText>
+                            <ThemedText style={styles.modalCouponCode}>
+                              {coupon.code}
+                            </ThemedText>
+                            <ThemedText style={styles.modalCouponDescription}>
+                              {coupon.description}
+                            </ThemedText>
+                            <View style={styles.couponValueRow}>
+                              <ThemedText style={styles.modalCouponValue}>
+                                {coupon.type === "percentage"
+                                  ? `${coupon.value}% OFF (Max $${coupon.maxDiscountAmount})`
+                                  : `$${coupon.value} OFF`}
+                              </ThemedText>
+                            </View>
+                            {meetsMinimum ? (
+                              <ThemedText style={styles.couponSavings}>
+                                You save: ${discount.toFixed(2)}
+                              </ThemedText>
+                            ) : (
+                              <ThemedText style={styles.couponMinimum}>
+                                Min. order: ${coupon.minOrderAmount}
+                              </ThemedText>
+                            )}
+                          </View>
+                        </View>
+                        {selectedCoupon?.id === userCoupon.id && (
+                          <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -763,6 +998,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#2E2E2E",
   },
+  discountLabel: {
+    fontSize: 14,
+    color: "#4CAF50",
+    fontWeight: "500",
+  },
+  discountValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4CAF50",
+  },
   bottomSection: {
     backgroundColor: "#FFFFFF",
     padding: 16,
@@ -794,11 +1039,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 32,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: "#666666",
-    marginTop: 8,
   },
   emptyCard: {
     opacity: 0.7,
@@ -917,5 +1157,166 @@ const styles = StyleSheet.create({
   modalPaymentDetailsText: {
     fontSize: 14,
     color: "#666666",
+  },
+  // Coupon styles
+  couponCard: {
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#4CAF50",
+  },
+  couponInfo: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    flex: 1,
+  },
+  couponIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F0F9F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  couponDetails: {
+    flex: 1,
+  },
+  couponName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 2,
+  },
+  couponCode: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#4CAF50",
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  couponDescription: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  noCouponCard: {
+    backgroundColor: "#F8F8F8",
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noCouponText: {
+    fontSize: 14,
+    color: "#999999",
+    marginLeft: 8,
+  },
+  modalCouponCard: {
+    backgroundColor: "#F8F8F8",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  modalCouponInfo: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    flex: 1,
+  },
+  couponIconLarge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#F0F9F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  modalCouponDetails: {
+    flex: 1,
+  },
+  modalCouponName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E2E2E",
+    marginBottom: 4,
+  },
+  modalCouponCode: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#4CAF50",
+    marginBottom: 6,
+    letterSpacing: 1.5,
+  },
+  modalCouponDescription: {
+    fontSize: 13,
+    color: "#666666",
+    marginBottom: 8,
+  },
+  couponValueRow: {
+    marginBottom: 4,
+  },
+  modalCouponValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FF6B00",
+  },
+  couponSavings: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#4CAF50",
+  },
+  couponMinimum: {
+    fontSize: 12,
+    color: "#FF6B6B",
+    fontStyle: "italic",
+  },
+  disabledCouponCard: {
+    opacity: 0.5,
+  },
+  removeCouponCard: {
+    backgroundColor: "#FFF5F5",
+    borderColor: "#FFE5E5",
+  },
+  emptyCouponsContainer: {
+    paddingVertical: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyCouponsText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#999999",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyCouponsSubtext: {
+    fontSize: 14,
+    color: "#CCCCCC",
+    textAlign: "center",
+  },
+  loadingContainer: {
+    paddingVertical: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666666",
+    marginTop: 12,
   },
 });
