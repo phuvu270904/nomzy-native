@@ -9,10 +9,11 @@ import {
 } from "@/components/driver";
 import { useAuth } from "@/hooks";
 import { useDriverSocket } from "@/hooks/useDriverSocket";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DriverHomeScreen = () => {
@@ -290,6 +291,18 @@ const DriverHomeScreen = () => {
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#FF6B00" />
             </View>
+          ) : orderHistory.length === 0 ? (
+            <View style={styles.emptyStateContainer}>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="car-sport-outline" size={80} color="#FFE5D3" />
+              </View>
+              <Text style={styles.emptyStateTitle}>
+                Ready to Hit the Road?
+              </Text>
+              <Text style={styles.emptyStateText}>
+                No orders yet. Accept your first trip and start earning!
+              </Text>
+            </View>
           ) : (
             <OrderHistory
               groupedOrders={groupedOrders}
@@ -325,6 +338,45 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 40,
+  },
+  emptyIconContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "#FFF5EE",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+    shadowColor: "#FF6B00",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  emptyStateTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    textAlign: "center",
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  emptyStateText: {
+    fontSize: 15,
+    color: "#757575",
+    textAlign: "center",
+    lineHeight: 22,
+    maxWidth: 280,
   },
 });
 
