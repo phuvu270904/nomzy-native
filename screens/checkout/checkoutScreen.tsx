@@ -217,9 +217,9 @@ export default function CheckoutScreen() {
   };
 
   // Calculate totals (reused from cart screen logic)
-  const { subtotal, deliveryFee, tax, couponDiscount, total, itemCount } = useMemo(() => {
+  const { subtotal, deliveryFee, couponDiscount, total, itemCount, originalTotal } = useMemo(() => {
     if (!cart?.cartItems) {
-      return { subtotal: 0, deliveryFee: 0, tax: 0, couponDiscount: 0, total: 0, itemCount: 0 };
+      return { subtotal: 0, deliveryFee: 0, couponDiscount: 0, total: 0, itemCount: 0, originalTotal: 0 };
     }
 
     const subtotal = cart.cartItems.reduce((sum, item) => {
@@ -230,16 +230,18 @@ export default function CheckoutScreen() {
       return sum + price * item.quantity;
     }, 0);
 
-    const deliveryFee = subtotal > 50 ? 0 : 3.99;
-    const tax = subtotal * 0.08;
+    const deliveryFee = subtotal * 0.20; // 20% of subtotal
     const couponDiscount = calculateCouponDiscount(subtotal);
-    const total = subtotal + deliveryFee + tax - couponDiscount;
+    const total = subtotal + deliveryFee - couponDiscount;
     const itemCount = cart.cartItems.reduce(
       (sum, item) => sum + item.quantity,
       0,
     );
 
-    return { subtotal, deliveryFee, tax, couponDiscount, total, itemCount };
+    // Calculate original total (before coupon discount)
+    const originalTotal = couponDiscount > 0 ? subtotal + deliveryFee : 0;
+
+    return { subtotal, deliveryFee, couponDiscount, total, itemCount, originalTotal };
   }, [cart?.cartItems, selectedCoupon]);
 
   const handleBack = () => {
@@ -535,15 +537,9 @@ export default function CheckoutScreen() {
               </ThemedText>
             </View>
             <View style={styles.priceRow}>
-              <ThemedText style={styles.priceLabel}>Delivery Fee</ThemedText>
+              <ThemedText style={styles.priceLabel}>Delivery Fee (20%)</ThemedText>
               <ThemedText style={styles.priceValue}>
-                {deliveryFee === 0 ? "Free" : `$${deliveryFee.toFixed(2)}`}
-              </ThemedText>
-            </View>
-            <View style={styles.priceRow}>
-              <ThemedText style={styles.priceLabel}>Tax</ThemedText>
-              <ThemedText style={styles.priceValue}>
-                ${tax.toFixed(2)}
+                ${deliveryFee.toFixed(2)}
               </ThemedText>
             </View>
             {couponDiscount > 0 && (
@@ -558,9 +554,16 @@ export default function CheckoutScreen() {
             )}
             <View style={[styles.priceRow, styles.totalRow]}>
               <ThemedText style={styles.totalLabel}>Total</ThemedText>
-              <ThemedText style={styles.totalValue}>
-                ${total.toFixed(2)}
-              </ThemedText>
+              <View style={styles.priceValueContainer}>
+                {couponDiscount > 0 && (
+                  <ThemedText style={styles.originalPrice}>
+                    ${originalTotal.toFixed(2)}
+                  </ThemedText>
+                )}
+                <ThemedText style={styles.totalValue}>
+                  ${total.toFixed(2)}
+                </ThemedText>
+              </View>
             </View>
           </View>
         </View>
@@ -981,6 +984,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#2E2E2E",
+  },
+  priceValueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#999999",
+    textDecorationLine: "line-through",
+    textDecorationStyle: "solid",
   },
   totalRow: {
     borderTopWidth: 1,

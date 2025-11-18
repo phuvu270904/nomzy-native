@@ -30,9 +30,9 @@ export default function CartsScreen() {
   }, [dispatch]);
 
   // Calculate totals from API data
-  const { subtotal, deliveryFee, tax, total, itemCount } = useMemo(() => {
+  const { subtotal, deliveryFee, total, itemCount } = useMemo(() => {
     if (!cart?.cartItems) {
-      return { subtotal: 0, deliveryFee: 0, tax: 0, total: 0, itemCount: 0 };
+      return { subtotal: 0, deliveryFee: 0, total: 0, itemCount: 0 };
     }
 
     const subtotal = cart.cartItems.reduce((sum, item) => {
@@ -48,15 +48,14 @@ export default function CartsScreen() {
       return sum + price * item.quantity;
     }, 0);
 
-    const deliveryFee = subtotal > 50 ? 0 : 3.99; // Free delivery over $50
-    const tax = subtotal * 0.08; // 8% tax
-    const total = subtotal + deliveryFee + tax;
+    const deliveryFee = subtotal * 0.20; // 20% of subtotal
+    const total = subtotal + deliveryFee;
     const itemCount = cart.cartItems.reduce(
       (sum, item) => sum + item.quantity,
       0,
     );
 
-    return { subtotal, deliveryFee, tax, total, itemCount };
+    return { subtotal, deliveryFee, total, itemCount };
   }, [cart?.cartItems]);
 
   const handleBack = () => {
@@ -153,7 +152,6 @@ export default function CartsScreen() {
             <CartSummary
               subtotal={subtotal}
               deliveryFee={deliveryFee}
-              tax={tax}
               total={total}
               onCheckout={handleCheckout}
             />

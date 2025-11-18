@@ -5,7 +5,6 @@ import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 interface CartSummaryProps {
   subtotal: number;
   deliveryFee: number;
-  tax: number;
   total: number;
   onCheckout?: () => void;
 }
@@ -13,7 +12,6 @@ interface CartSummaryProps {
 export function CartSummary({
   subtotal,
   deliveryFee,
-  tax,
   total,
   onCheckout,
 }: CartSummaryProps) {
@@ -25,18 +23,6 @@ export function CartSummary({
           <ThemedText style={styles.summaryValue}>
             ${subtotal.toFixed(2)}
           </ThemedText>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <ThemedText style={styles.summaryLabel}>Delivery Fee</ThemedText>
-          <ThemedText style={styles.summaryValue}>
-            {deliveryFee === 0 ? "Free" : `$${deliveryFee.toFixed(2)}`}
-          </ThemedText>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <ThemedText style={styles.summaryLabel}>Tax</ThemedText>
-          <ThemedText style={styles.summaryValue}>${tax.toFixed(2)}</ThemedText>
         </View>
 
         <View style={[styles.summaryRow, styles.totalRow]}>
