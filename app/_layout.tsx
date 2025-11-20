@@ -75,6 +75,7 @@ function RootLayoutNav() {
         <Stack.Screen name="carts" />
         <Stack.Screen name="offers" />
         <Stack.Screen name="restaurant" />
+        <Stack.Screen name="search" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(driver-tabs)" />
         <Stack.Screen name="+not-found" />

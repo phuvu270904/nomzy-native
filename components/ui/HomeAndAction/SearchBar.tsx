@@ -1,17 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 export default function SearchBar() {
+  const handlePress = () => {
+    router.push("/search");
+  };
+
   return (
-    <View style={styles.container}>
+    <TouchableOpacity 
+      style={styles.container}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
       <Ionicons name="search" size={20} color="gray" />
-      <TextInput
-        placeholder="What are you craving?"
-        style={styles.input}
-        placeholderTextColor="gray"
-      />
-    </View>
+      <Text style={styles.placeholder}>What are you craving?</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -26,10 +31,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginVertical: 15,
   },
-  input: {
+  placeholder: {
     marginLeft: 10,
     fontSize: 16,
     flex: 1,
-    color: "#000",
+    color: "gray",
   },
 });
