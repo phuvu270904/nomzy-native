@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "669174599526",
+    "project_id": "nomzy-79e1b",
+    "storage_bucket": "nomzy-79e1b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669174599526:android:b479a60f572fd2ff8682a7",
+        "android_client_info": {
+          "package_name": "com.anonymous.nomzynative"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW8bvN0ZE1LiuNjk_nJCHC9yEGLfwZj2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
