@@ -108,7 +108,7 @@ const DriverProfileScreen = () => {
       id: 5,
       title: "Help & Support",
       icon: "help-circle-outline",
-      onPress: () => console.log("Help & Support"),
+      onPress: () => router.push("/driver-help-support"),
     },
     // {
     //   id: 6,

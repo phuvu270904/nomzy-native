@@ -177,14 +177,14 @@ export default function ProfileScreen() {
   ];
 
   const supportSection: ProfileMenuItemData[] = [
-    // {
-    //   id: "help",
-    //   title: "Help & Support",
-    //   subtitle: "Get help and contact support",
-    //   icon: "help-circle-outline",
-    //   iconColor: "#3498DB",
-    //   onPress: () => Alert.alert("Help", "Help and support screen"),
-    // },
+    {
+      id: "help",
+      title: "Help & Support",
+      subtitle: "Get help and contact support",
+      icon: "help-circle-outline",
+      iconColor: "#3498DB",
+      onPress: () => router.push("/help-support"),
+    },
     // {
     //   id: "about",
     //   title: "About",
