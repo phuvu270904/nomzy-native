@@ -4,10 +4,13 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
+    Modal,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -18,6 +21,9 @@ const DriverHelpSupportScreen = () => {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchFAQs();
@@ -28,12 +34,48 @@ const DriverHelpSupportScreen = () => {
       setLoading(true);
       setError(null);
       const data = await faqsApi.getFAQs("driver");
-      setFaqs(data.filter((faq) => faq.isActive));
+      setFaqs(data.filter((faq) => faq.isActive && faq.status === "replied"));
     } catch (err: any) {
       console.error("Error fetching FAQs:", err);
       setError(err.response?.data?.message || "Failed to load FAQs");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmitQuestion = async () => {
+    if (!question.trim()) {
+      Alert.alert("Error", "Please enter your question");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await faqsApi.submitQuestion({
+        question: question.trim(),
+        type: "driver",
+      });
+      Alert.alert(
+        "Success",
+        "Your question has been submitted. We'll get back to you soon!",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setModalVisible(false);
+              setQuestion("");
+            },
+          },
+        ]
+      );
+    } catch (err: any) {
+      console.error("Error submitting question:", err);
+      Alert.alert(
+        "Error",
+        err.response?.data?.message || "Failed to submit question. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -100,7 +142,10 @@ const DriverHelpSupportScreen = () => {
           <Text style={styles.contactDescription}>
             Can't find what you're looking for? Our driver support team is here to help.
           </Text>
-          <TouchableOpacity style={styles.contactButton}>
+          <TouchableOpacity
+            style={styles.contactButton}
+            onPress={() => setModalVisible(true)}
+          >
             <Ionicons name="mail-outline" size={20} color="#FFF" />
             <Text style={styles.contactButtonText}>Contact Support</Text>
           </TouchableOpacity>
@@ -155,6 +200,67 @@ const DriverHelpSupportScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Question Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Ask a Question</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  setQuestion("");
+                }}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalDescription}>
+              Can't find the answer you're looking for? Ask us a question and we'll get back to you soon.
+            </Text>
+
+            <TextInput
+              style={styles.questionInput}
+              placeholder="Type your question here..."
+              placeholderTextColor="#999"
+              value={question}
+              onChangeText={setQuestion}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              maxLength={500}
+            />
+
+            <Text style={styles.characterCount}>{question.length}/500</Text>
+
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                submitting && styles.submitButtonDisabled,
+              ]}
+              onPress={handleSubmitQuestion}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <Ionicons name="send" size={20} color="#FFF" />
+                  <Text style={styles.submitButtonText}>Submit Question</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -327,6 +433,75 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  questionInput: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: "#333",
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  characterCount: {
+    fontSize: 12,
+    color: "#999",
+    textAlign: "right",
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  submitButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4CAF50",
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 
