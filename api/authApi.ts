@@ -44,6 +44,11 @@ export interface RegisterDriverRequest {
   verificationCode: string;
 }
 
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
 // Auth API functions
 export const authApi = {
   // Send verification code to email
@@ -95,6 +100,17 @@ export const authApi = {
   getProfile: async (): Promise<{ user: UserProfileResponse }> => {
     const response = await apiClient.get<{ user: UserProfileResponse }>(
       "/auth/profile"
+    );
+    return response.data;
+  },
+
+  // Change password
+  changePassword: async (
+    data: ChangePasswordRequest
+  ): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>(
+      "/auth/changePassword",
+      data
     );
     return response.data;
   },

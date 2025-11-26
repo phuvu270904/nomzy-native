@@ -1,4 +1,6 @@
 export { AvailableOrders } from "./AvailableOrders";
+export { default as DriverChangePasswordModal } from "./DriverChangePasswordModal";
+export { default as DriverEditProfileModal } from "./DriverEditProfileModal";
 export { DriverInfoCard } from "./DriverInfoCard";
 export { DriverInfoModal } from "./DriverInfoModal";
 export { FloatingDriverInfo } from "./FloatingDriverInfo";

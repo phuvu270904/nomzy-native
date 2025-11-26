@@ -16,6 +16,7 @@ import { favoritesApi } from "@/api/favoritesApi";
 import { ordersApi } from "@/api/ordersApi";
 import { reviewsApi } from "@/api/reviewsApi";
 import {
+  ChangePasswordModal,
   EditProfileModal,
   ManageAddressesModal,
   ProfileHeader,
@@ -42,6 +43,7 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [manageAddressesModalVisible, setManageAddressesModalVisible] = useState(false);
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -125,6 +127,14 @@ export default function ProfileScreen() {
       icon: "person-outline",
       iconColor: "#1BAC4B",
       onPress: handleEditProfile,
+    },
+    {
+      id: "change-password",
+      title: "Change Password",
+      subtitle: "Update your account password",
+      icon: "lock-closed-outline",
+      iconColor: "#FF9800",
+      onPress: () => setChangePasswordModalVisible(true),
     },
     // {
     //   id: "payment-methods",
@@ -279,6 +289,11 @@ export default function ProfileScreen() {
         user={user}
         onClose={() => setEditProfileModalVisible(false)}
         onSuccess={fetchProfile}
+      />
+
+      <ChangePasswordModal
+        visible={changePasswordModalVisible}
+        onClose={() => setChangePasswordModalVisible(false)}
       />
 
       <ManageAddressesModal

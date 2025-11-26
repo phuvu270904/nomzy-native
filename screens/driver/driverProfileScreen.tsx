@@ -2,20 +2,22 @@ import { authApi, UserProfileResponse } from "@/api/authApi";
 import { calculateAverageRating, DriverReview, driverReviewsApi } from "@/api/driverReviewsApi";
 import { ApiOrder, ordersApi } from "@/api/ordersApi";
 import { UserVehicle, userVehiclesApi } from "@/api/userVehiclesApi";
+import { DriverChangePasswordModal, DriverEditProfileModal } from "@/components/driver";
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Image,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -29,6 +31,8 @@ const DriverProfileScreen = () => {
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [vehicles, setVehicles] = useState<UserVehicle[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
 
   const fetchDriverData = async () => {
     try {
@@ -75,43 +79,68 @@ const DriverProfileScreen = () => {
   const primaryVehicle = vehicles.length > 0 ? vehicles[0] : null;
 
   const handleLogout = () => {
-    logout();
-    router.replace("/auth");
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => {
+          logout();
+          router.replace("/auth");
+        },
+      },
+    ]);
+  };
+
+  const handleEditProfile = () => {
+    setEditProfileModalVisible(true);
   };
 
   const menuItems = [
     {
       id: 1,
+      title: "Edit Profile",
+      icon: "person-outline",
+      onPress: handleEditProfile,
+    },
+    {
+      id: 2,
+      title: "Change Password",
+      icon: "lock-closed-outline",
+      onPress: () => setChangePasswordModalVisible(true),
+    },
+    {
+      id: 3,
       title: "Vehicle Information",
       icon: "car-outline",
       onPress: () => router.push("/driver-vehicle-info"),
     },
     // {
-    //   id: 2,
+    //   id: 4,
     //   title: "Payment Methods",
     //   icon: "card-outline",
     //   onPress: () => console.log("Payment methods"),
     // },
     // {
-    //   id: 3,
+    //   id: 5,
     //   title: "Order History",
     //   icon: "time-outline",
     //   onPress: () => router.push("/driver-order-history"),
     // },
     // {
-    //   id: 4,
+    //   id: 6,
     //   title: "Earnings Report",
     //   icon: "analytics-outline",
     //   onPress: () => router.push("/driver-earnings-report"),
     // },
     {
-      id: 5,
+      id: 7,
       title: "Help & Support",
       icon: "help-circle-outline",
       onPress: () => router.push("/driver-help-support"),
     },
     // {
-    //   id: 6,
+    //   id: 8,
     //   title: "Terms & Conditions",
     //   icon: "document-text-outline",
     //   onPress: () => console.log("Terms & Conditions"),
@@ -140,7 +169,7 @@ const DriverProfileScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.editButton}>
+        <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
           <Ionicons name="create-outline" size={24} color="#4CAF50" />
         </TouchableOpacity>
       </View>
@@ -259,6 +288,18 @@ const DriverProfileScreen = () => {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <DriverEditProfileModal
+        visible={editProfileModalVisible}
+        profile={profile}
+        onClose={() => setEditProfileModalVisible(false)}
+        onSuccess={fetchDriverData}
+      />
+
+      <DriverChangePasswordModal
+        visible={changePasswordModalVisible}
+        onClose={() => setChangePasswordModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

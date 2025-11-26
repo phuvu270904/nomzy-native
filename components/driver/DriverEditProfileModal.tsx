@@ -2,51 +2,53 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
-import { authApi, UpdateProfileRequest } from "@/api/authApi";
+import { authApi, UpdateProfileRequest, UserProfileResponse } from "@/api/authApi";
 import { uploadApi } from "@/api/uploadApi";
-import { UserProfile } from "./ProfileHeader";
 
-interface EditProfileModalProps {
+interface DriverEditProfileModalProps {
   visible: boolean;
-  user: UserProfile | null;
+  profile: UserProfileResponse | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({
+const DriverEditProfileModal: React.FC<DriverEditProfileModalProps> = ({
   visible,
-  user,
+  profile,
   onClose,
   onSuccess,
 }) => {
-  const [name, setName] = useState(user?.name || "");
-  const [phoneNumber, setPhoneNumber] = useState(user?.phone || "");
-  const [gender, setGender] = useState<"male" | "female" | "other">("male");
-  const [avatar, setAvatar] = useState(user?.avatar || "");
+  const [name, setName] = useState(profile?.name || "");
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number || "");
+  const [gender, setGender] = useState<"male" | "female" | "other">(
+    (profile?.gender as "male" | "female" | "other") || "male"
+  );
+  const [avatar, setAvatar] = useState(profile?.avatar || "");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   React.useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setPhoneNumber(user.phone || "");
-      setAvatar(user.avatar);
+    if (profile) {
+      setName(profile.name);
+      setPhoneNumber(profile.phone_number || "");
+      setGender((profile.gender as "male" | "female" | "other") || "male");
+      setAvatar(profile.avatar || "");
       setSelectedImage(null);
     }
-  }, [user]);
+  }, [profile]);
 
   const pickImage = async () => {
     try {
@@ -126,9 +128,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       let avatarUrl = avatar;
       if (selectedImage) {
         const uploadedUrl = await uploadImage();
-        console.log("uploadurl", uploadedUrl);
         if (uploadedUrl) {
-          console.log("uploadurl", uploadedUrl);
           avatarUrl = uploadedUrl;
           setAvatar(uploadedUrl);
         } else {
@@ -265,7 +265,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 ))}
               </View>
             </View>
-
           </ScrollView>
 
           <View style={styles.buttonContainer}>
@@ -354,7 +353,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#1BAC4B",
+    backgroundColor: "#4CAF50",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
@@ -397,7 +396,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   genderButtonActive: {
-    borderColor: "#1BAC4B",
+    borderColor: "#4CAF50",
     backgroundColor: "#E8F5E9",
   },
   genderButtonText: {
@@ -406,7 +405,7 @@ const styles = StyleSheet.create({
     color: "#757575",
   },
   genderButtonTextActive: {
-    color: "#1BAC4B",
+    color: "#4CAF50",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -431,7 +430,7 @@ const styles = StyleSheet.create({
     color: "#757575",
   },
   saveButton: {
-    backgroundColor: "#1BAC4B",
+    backgroundColor: "#4CAF50",
   },
   saveButtonText: {
     fontSize: 16,
@@ -440,4 +439,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditProfileModal;
+export default DriverEditProfileModal;

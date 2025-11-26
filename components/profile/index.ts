@@ -1,4 +1,5 @@
 export { default as AddEditAddressModal } from "./AddEditAddressModal";
+export { default as ChangePasswordModal } from "./ChangePasswordModal";
 export { default as EditProfileModal } from "./EditProfileModal";
 export { default as ManageAddressesModal } from "./ManageAddressesModal";
 export { default as ProfileHeader } from "./ProfileHeader";
