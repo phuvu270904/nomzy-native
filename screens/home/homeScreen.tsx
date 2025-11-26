@@ -1,7 +1,7 @@
 import { apiClient } from "@/utils/apiClient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StatusBar, StyleSheet } from "react-native";
+import { RefreshControl, ScrollView, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Import components
@@ -13,11 +13,14 @@ import RecommendedList from "../../components/ui/HomeAndAction/RecommendedList";
 import SearchBar from "../../components/ui/HomeAndAction/SearchBar";
 import SpecialOffers from "../../components/ui/HomeAndAction/SpecialOffers";
 
-import { useUserLocation } from "@/hooks/useUserLocation";
+import { addressApi, AddressResponse } from "@/api/addressApi";
 import { useProducts } from "../../hooks/useProducts";
 
 const HomeScreen = () => {
-  const userLocation = useUserLocation();
+  const [defaultAddress, setDefaultAddress] = useState<AddressResponse | null>(
+    null,
+  );
+  const [refreshing, setRefreshing] = useState(false);
 
   const {
     products: apiProducts,
@@ -71,14 +74,15 @@ const HomeScreen = () => {
 
         return {
           ...restaurant,
-          distance: userLocation.hasLocation
-            ? distance(
-                userLocation.lat,
-                userLocation.lng,
-                restaurant.addresses?.[0]?.latitude,
-                restaurant.addresses?.[0]?.longitude,
-              )
-            : undefined,
+          distance:
+            defaultAddress?.latitude && defaultAddress?.longitude
+              ? distance(
+                  parseFloat(defaultAddress.latitude),
+                  parseFloat(defaultAddress.longitude),
+                  restaurant.addresses?.[0]?.latitude,
+                  restaurant.addresses?.[0]?.longitude,
+                )
+              : undefined,
           // UI-friendly fields consumed by RecommendedList
           rating,
           reviews: reviewsCount,
@@ -97,15 +101,31 @@ const HomeScreen = () => {
     }
   };
 
+  // Fetch default address on component mount
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      try {
+        const address = await addressApi.getDefaultAddress();
+        setDefaultAddress(address);
+      } catch (error) {
+        console.error("Error fetching default address:", error);
+      }
+    };
+
+    fetchDefaultAddress();
+  }, []);
+
   // Load products on component mount
   useEffect(() => {
     fetchProducts(1, 10, true);
   }, []);
 
-  // Load restaurants when user location is available
+  // Load restaurants when default address is available
   useEffect(() => {
-    getRestaurantsInfo();
-  }, [userLocation.hasLocation]);
+    if (defaultAddress) {
+      getRestaurantsInfo();
+    }
+  }, [defaultAddress]);
 
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
 
@@ -174,6 +194,25 @@ const HomeScreen = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Fetch default address
+      const address = await addressApi.getDefaultAddress();
+      setDefaultAddress(address);
+
+      // Fetch restaurants
+      await getRestaurantsInfo();
+
+      // Refresh products
+      await refresh();
+    } catch (error) {
+      console.error("Error refreshing:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -186,6 +225,9 @@ const HomeScreen = () => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       >
         <SearchBar />
         <SpecialOffers />
