@@ -30,11 +30,12 @@ export default function CartsScreen() {
   }, [dispatch]);
 
   // Calculate totals from API data
-  const { subtotal, deliveryFee, total, itemCount } = useMemo(() => {
+  const { subtotal, deliveryFee, total, originalTotal, itemCount } = useMemo(() => {
     if (!cart?.cartItems) {
-      return { subtotal: 0, deliveryFee: 0, total: 0, itemCount: 0 };
+      return { subtotal: 0, deliveryFee: 0, total: 0, originalTotal: 0, itemCount: 0 };
     }
 
+    // Calculate subtotal with discount prices
     const subtotal = cart.cartItems.reduce((sum, item) => {
       // Add null checking for product data
       if (!item.product) {
@@ -48,14 +49,24 @@ export default function CartsScreen() {
       return sum + price * item.quantity;
     }, 0);
 
+    // Calculate original subtotal with regular prices (before discount)
+    const originalSubtotal = cart.cartItems.reduce((sum, item) => {
+      if (!item.product) {
+        return sum;
+      }
+      const price = parseFloat(item.product.price);
+      return sum + price * item.quantity;
+    }, 0);
+
     const deliveryFee = subtotal * 0.20; // 20% of subtotal
     const total = subtotal + deliveryFee;
+    const originalTotal = originalSubtotal + deliveryFee;
     const itemCount = cart.cartItems.reduce(
       (sum, item) => sum + item.quantity,
       0,
     );
 
-    return { subtotal, deliveryFee, total, itemCount };
+    return { subtotal, deliveryFee, total, originalTotal, itemCount };
   }, [cart?.cartItems]);
 
   const handleBack = () => {
@@ -152,7 +163,8 @@ export default function CartsScreen() {
             <CartSummary
               subtotal={subtotal}
               deliveryFee={deliveryFee}
-              total={total}
+              total={total - deliveryFee}
+              originalTotal={originalTotal - deliveryFee}
               onCheckout={handleCheckout}
             />
           </>

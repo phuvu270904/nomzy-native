@@ -6,6 +6,7 @@ interface CartSummaryProps {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  originalTotal?: number; // Original price before discount
   onCheckout?: () => void;
 }
 
@@ -13,21 +14,22 @@ export function CartSummary({
   subtotal,
   deliveryFee,
   total,
+  originalTotal,
   onCheckout,
 }: CartSummaryProps) {
   return (
     <View style={styles.container}>
       <View style={styles.summarySection}>
-        <View style={styles.summaryRow}>
-          <ThemedText style={styles.summaryLabel}>Subtotal</ThemedText>
-          <ThemedText style={styles.summaryValue}>
-            ${subtotal.toFixed(2)}
-          </ThemedText>
-        </View>
-
         <View style={[styles.summaryRow, styles.totalRow]}>
           <ThemedText style={styles.totalLabel}>Total</ThemedText>
-          <ThemedText style={styles.totalValue}>${total.toFixed(2)}</ThemedText>
+          <View style={styles.totalPriceContainer}>
+            {originalTotal && originalTotal > total && (
+              <ThemedText style={styles.originalTotalValue}>
+                ${originalTotal.toFixed(2)}
+              </ThemedText>
+            )}
+            <ThemedText style={styles.totalValue}>${total.toFixed(2)}</ThemedText>
+          </View>
         </View>
       </View>
 
@@ -80,8 +82,6 @@ const styles = StyleSheet.create({
     color: "#2E2E2E",
   },
   totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
     paddingTop: 12,
     marginTop: 8,
   },
@@ -89,6 +89,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#2E2E2E",
+  },
+  totalPriceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  originalTotalValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#999999",
+    textDecorationLine: "line-through",
+    textDecorationStyle: "solid",
   },
   totalValue: {
     fontSize: 18,
