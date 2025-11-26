@@ -3,14 +3,14 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -176,15 +176,10 @@ export default function FavoriteRestaurantsScreen() {
                 <Text style={styles.restaurantName} numberOfLines={1}>
                   {favorite.restaurant.name}
                 </Text>
-                <Text style={styles.restaurantId}>ID: {favorite.restaurantId}</Text>
                 <View style={styles.metaContainer}>
                   <View style={styles.metaItem}>
                     <Ionicons name="time-outline" size={14} color="#666" />
                     <Text style={styles.metaText}>25-30 min</Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="bicycle-outline" size={14} color="#666" />
-                    <Text style={styles.metaText}>Free delivery</Text>
                   </View>
                 </View>
                 <Text style={styles.addedDate}>
