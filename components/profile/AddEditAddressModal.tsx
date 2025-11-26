@@ -101,8 +101,8 @@ const AddEditAddressModal: React.FC<AddEditAddressModalProps> = ({
         postalCode: postalCode.trim(),
         country: country.trim(),
         label,
-        latitude: latitude.trim() || "0",
-        longitude: longitude.trim() || "0",
+        latitude: parseFloat(latitude.trim() || "0"),
+        longitude: parseFloat(longitude.trim() || "0"),
         isDefault,
       };
 

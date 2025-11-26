@@ -16,6 +16,18 @@ export interface AddressResponse {
   updatedAt: string;
 }
 
+export interface AddressInput {
+  streetAddress: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  state: string;
+  isDefault: boolean;
+  label: string;
+  latitude: number;
+  longitude: number;
+}
+
 // Address API functions
 export const addressApi = {
   // Get default address for the current user
@@ -40,7 +52,7 @@ export const addressApi = {
 
   // Create new address
   createAddress: async (
-    addressData: Omit<AddressResponse, "id" | "userId" | "createdAt" | "updatedAt">,
+    addressData: AddressInput,
   ): Promise<AddressResponse> => {
     const response = await apiClient.post<AddressResponse>(
       "/addresses",
@@ -52,7 +64,7 @@ export const addressApi = {
   // Update address
   updateAddress: async (
     addressId: number,
-    addressData: Partial<Omit<AddressResponse, "id" | "userId" | "createdAt" | "updatedAt">>,
+    addressData: Partial<AddressInput>,
   ): Promise<AddressResponse> => {
     const response = await apiClient.patch<AddressResponse>(
       `/addresses/${addressId}`,

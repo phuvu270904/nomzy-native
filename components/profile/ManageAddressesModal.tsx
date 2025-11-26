@@ -1,18 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { addressApi, AddressResponse } from "@/api/addressApi";
-import AddEditAddressModal from "./AddEditAddressModal";
 
 interface ManageAddressesModalProps {
   visible: boolean;
@@ -26,14 +26,21 @@ const ManageAddressesModal: React.FC<ManageAddressesModalProps> = ({
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [addEditModalVisible, setAddEditModalVisible] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<AddressResponse | null>(null);
 
   useEffect(() => {
     if (visible) {
       fetchAddresses();
     }
   }, [visible]);
+
+  // Refresh addresses when returning from add/edit screen
+  useFocusEffect(
+    useCallback(() => {
+      if (visible) {
+        fetchAddresses();
+      }
+    }, [visible])
+  );
 
   const fetchAddresses = async () => {
     try {
@@ -58,7 +65,14 @@ const ManageAddressesModal: React.FC<ManageAddressesModalProps> = ({
       
       if (currentAddress) {
         await addressApi.updateAddress(addressId, {
-          ...currentAddress,
+          streetAddress: currentAddress.streetAddress,
+          city: currentAddress.city,
+          state: currentAddress.state,
+          postalCode: currentAddress.postalCode,
+          country: currentAddress.country,
+          label: currentAddress.label,
+          latitude: parseFloat(currentAddress.latitude),
+          longitude: parseFloat(currentAddress.longitude),
           isDefault: true,
         });
         Alert.alert("Success", "Default address updated");
@@ -102,13 +116,59 @@ const ManageAddressesModal: React.FC<ManageAddressesModalProps> = ({
   };
 
   const handleEditAddress = (address: AddressResponse) => {
-    setSelectedAddress(address);
-    setAddEditModalVisible(true);
+    onClose();
+    router.push({
+      pathname: "/address-location-picker",
+      params: {
+        addressId: address.id.toString(),
+        label: address.label,
+        isDefault: address.isDefault.toString(),
+      },
+    });
   };
 
   const handleAddAddress = () => {
-    setSelectedAddress(null);
-    setAddEditModalVisible(true);
+    // Show label selector
+    Alert.alert(
+      "Choose Address Type",
+      "Select a label for your new address",
+      [
+        {
+          text: "Home",
+          onPress: () => {
+            onClose();
+            router.push({
+              pathname: "/address-location-picker",
+              params: { label: "Home" },
+            });
+          },
+        },
+        {
+          text: "Work",
+          onPress: () => {
+            onClose();
+            router.push({
+              pathname: "/address-location-picker",
+              params: { label: "Work" },
+            });
+          },
+        },
+        {
+          text: "Other",
+          onPress: () => {
+            onClose();
+            router.push({
+              pathname: "/address-location-picker",
+              params: { label: "Other" },
+            });
+          },
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ]
+    );
   };
 
   const renderAddressItem = (address: AddressResponse) => (
@@ -226,19 +286,6 @@ const ManageAddressesModal: React.FC<ManageAddressesModalProps> = ({
           </View>
         </View>
       </View>
-
-      <AddEditAddressModal
-        visible={addEditModalVisible}
-        address={selectedAddress}
-        onClose={() => {
-          setAddEditModalVisible(false);
-          setSelectedAddress(null);
-        }}
-        onSuccess={() => {
-          fetchAddresses();
-          setSelectedAddress(null);
-        }}
-      />
     </Modal>
   );
 };
@@ -253,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: "40%",
+    height: "80%",
     paddingBottom: 40,
   },
   header: {
