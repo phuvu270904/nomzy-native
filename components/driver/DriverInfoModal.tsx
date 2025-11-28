@@ -19,10 +19,10 @@ interface DriverInfoModalProps {
   driverInfo: {
     id?: string | number;
     name?: string;
-    rating?: number | string;
+    rating?: number;
     vehicle?: string;
     phone?: string;
-    photo?: string;
+    avatar?: string;
     plateNumber?: string;
     estimatedArrival?: string;
   };
@@ -72,9 +72,9 @@ export function DriverInfoModal({
           {/* Driver Profile Section */}
           <View style={styles.profileSection}>
             <View style={styles.avatarContainer}>
-              {driverInfo?.photo ? (
+              {driverInfo?.avatar ? (
                 <Image
-                  source={{ uri: driverInfo.photo }}
+                  source={{ uri: driverInfo.avatar }}
                   style={styles.avatar}
                 />
               ) : (
@@ -92,7 +92,7 @@ export function DriverInfoModal({
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={16} color="#FFD700" />
                 <ThemedText style={styles.rating}>
-                  {driverInfo?.rating || "4.9"}
+                  {driverInfo?.rating?.toFixed(1) || "4.9"}
                 </ThemedText>
                 <ThemedText style={styles.ratingText}>
                   • {driverInfo?.plateNumber || "ABC-123"}
@@ -139,22 +139,22 @@ export function DriverInfoModal({
 
           {/* Action Buttons */}
           <View style={styles.actionSection}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.primaryButton}
               onPress={handleCall}
               activeOpacity={0.8}
             >
               <Ionicons name="call" size={20} color="#FFFFFF" />
               <ThemedText style={styles.primaryButtonText}>Call Driver</ThemedText>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={styles.primaryButton}
               onPress={handleMessage}
               activeOpacity={0.8}
             >
-              <Ionicons name="chatbubble-outline" size={20} color="#4CAF50" />
-              <ThemedText style={styles.secondaryButtonText}>Message</ThemedText>
+              <Ionicons name="chatbubble-outline" size={20} color="#FFFFFF" />
+              <ThemedText style={styles.primaryButtonText}>Message</ThemedText>
             </TouchableOpacity>
           </View>
         </View>

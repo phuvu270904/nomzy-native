@@ -165,6 +165,8 @@ export default function OrderTrackingScreen() {
 
   // Update map when driver location changes
   useEffect(() => {
+    console.log("this is driver info", driverInfo);
+    
     if (mapRef.current && driverLocation) {
       mapRef.current.updateDriverLocation(
         driverLocation.latitude,
@@ -360,9 +362,9 @@ export default function OrderTrackingScreen() {
             
             <View style={styles.driverInfoContent}>
               <View style={styles.driverAvatar}>
-                {driverInfo?.photo ? (
+                {driverInfo?.avatar ? (
                   <Image
-                    source={{ uri: driverInfo.photo }}
+                    source={{ uri: driverInfo.avatar }}
                     style={styles.avatarImage}
                   />
                 ) : (
@@ -379,7 +381,7 @@ export default function OrderTrackingScreen() {
                 <View style={styles.driverMeta}>
                   <Ionicons name="star" size={14} color="#FFD700" />
                   <ThemedText style={styles.driverRating}>
-                    {driverInfo?.rating || "4.8"}
+                    {driverInfo?.rating?.toFixed(1) || "4.8"}
                   </ThemedText>
                   <ThemedText style={styles.driverPlate}>
                     • {driverInfo?.plateNumber || "ABC-123"}
@@ -429,7 +431,7 @@ export default function OrderTrackingScreen() {
           onClose={() => setIsChatModalVisible(false)}
           otherUserId={driverInfo.id}
           otherUserName={driverInfo.name || "Driver"}
-          otherUserPhoto={driverInfo.photo}
+          otherUserPhoto={driverInfo.avatar}
           otherUserRole="Driver"
         />
       )}
