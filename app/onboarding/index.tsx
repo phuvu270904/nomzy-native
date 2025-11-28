@@ -23,21 +23,21 @@ const steps = [
     id: "1",
     title: "Order for Food",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+      "Browse a wide variety of dishes from local restaurants and place your order in just a few taps.",
     image: require("../../assets/images/onboarding/onboarding-1.png"),
   },
   {
     id: "2",
     title: "Easy Payment",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+      "Pay effortlessly with secure online methods, including cards, e-wallets, and cash on delivery.",
     image: require("../../assets/images/onboarding/onboarding-2.png"),
   },
   {
     id: "3",
     title: "Fast Delivery",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+      "Get your meals delivered quickly and track your order in real time right from the app.",
     image: require("../../assets/images/onboarding/onboarding-3.png"),
   },
 ];
