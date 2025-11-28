@@ -57,7 +57,7 @@ export default function RecommendedList({
                 </View>
               )}
               <Text style={styles.recommendedRating}>
-                ⭐ {item.rating} ({item.reviews})
+                ⭐ {item.rating.toFixed(1)} ({item.reviews})
               </Text>
             </View>
             <TouchableOpacity
