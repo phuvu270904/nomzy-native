@@ -1,8 +1,11 @@
+import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 export const SearchingState = () => {
+  const { user } = useAuth();
+
   return (
     <View style={styles.searchingContainer}>
       <Text style={styles.searchingTitle}>
@@ -18,8 +21,14 @@ export const SearchingState = () => {
       </View>
       <Text style={styles.searchingSubtitle}>Looking for orders</Text>
       <View style={styles.searchingImagePlaceholder}>
-        <Ionicons name="car-outline" size={60} color="#ccc" />
-        <Text style={styles.placeholderText}>Driver Image</Text>
+        {user?.user.avatar ? (
+          <Image source={{ uri: user.user.avatar }} style={styles.avatarImage} />
+        ) : (
+          <Ionicons name="person-circle-outline" size={80} color="#ccc" />
+        )}
+        <Text style={styles.placeholderText}>
+          {user?.user.name || "Driver Avatar"}
+        </Text>
       </View>
     </View>
   );
@@ -59,7 +68,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 30,
     width: 150,
-    height: 100,
+    height: 150,
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#e0e0e0",
   },
   placeholderText: {
     fontSize: 12,
