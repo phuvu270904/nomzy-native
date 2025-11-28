@@ -90,7 +90,7 @@ export default function MessageScreen() {
     return {
       id: conv.id.toString(),
       name: otherUser?.name || "Unknown User",
-      avatar: otherUser?.photo || "",
+      avatar: otherUser?.avatar || "",
       lastMessage: conv.lastMessageText || "No messages yet",
       time: formatTime(conv.lastMessageTime),
       unreadCount: conv.unreadCount || 0,

@@ -19,7 +19,7 @@ interface FloatingDriverInfoProps {
     rating?: number | string;
     vehicle?: string;
     phone?: string;
-    photo?: string;
+    avatar?: string;
     plateNumber?: string;
     estimatedArrival?: string;
   };
@@ -55,9 +55,9 @@ export function FloatingDriverInfo({
         <View style={styles.header}>
           <View style={styles.driverSection}>
             <View style={styles.avatarContainer}>
-              {driverInfo?.photo ? (
+              {driverInfo?.avatar ? (
                 <Image
-                  source={{ uri: driverInfo.photo }}
+                  source={{ uri: driverInfo.avatar }}
                   style={styles.avatar}
                 />
               ) : (

@@ -2,11 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-    Alert,
-    Linking,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Alert,
+  Linking,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -18,7 +18,7 @@ interface DriverInfoCardProps {
     rating?: number | string;
     vehicle?: string;
     phone?: string;
-    photo?: string;
+    avatar?: string;
   };
   showActions?: boolean;
   style?: any;
@@ -68,9 +68,9 @@ export function DriverInfoCard({
 
       <View style={styles.driverInfo}>
         <View style={styles.driverImageContainer}>
-          {driverInfo?.photo ? (
+          {driverInfo?.avatar ? (
             <img
-              src={driverInfo.photo}
+              src={driverInfo.avatar}
               style={styles.driverImage}
               alt="Driver"
             />

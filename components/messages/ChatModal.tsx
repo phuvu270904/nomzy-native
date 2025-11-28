@@ -1,18 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    StatusBar,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -75,7 +75,6 @@ export function ChatModal({
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentUserId = user?.user?.id;
 
-  const isOtherUserOnline = onlineUsers.includes(otherUserId);
 
   // Find or create conversation
   useEffect(() => {
@@ -307,14 +306,12 @@ export function ChatModal({
                     <Ionicons name="person" size={20} color="#666" />
                   </View>
                 )}
-                {isOtherUserOnline && <View style={styles.onlineIndicator} />}
               </View>
               <View style={styles.headerInfo}>
                 <ThemedText style={styles.headerName}>
                   {otherUserName}
                 </ThemedText>
                 <ThemedText style={styles.headerStatus}>
-                  {isOtherUserOnline ? "Online" : "Offline"}
                   {otherUserRole && ` • ${otherUserRole}`}
                 </ThemedText>
               </View>

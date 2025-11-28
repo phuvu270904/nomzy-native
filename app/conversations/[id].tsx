@@ -154,8 +154,8 @@ export default function ChatScreen() {
       <View style={[styles.messageContainer, isSent && styles.sentContainer]}>
         {!isSent && (
           <View style={styles.avatarContainer}>
-            {otherUser?.photo ? (
-              <Image source={{ uri: otherUser.photo }} style={styles.avatar} />
+            {otherUser?.avatar ? (
+              <Image source={{ uri: otherUser.avatar }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
                 <Ionicons name="person" size={20} color="#666" />
@@ -204,8 +204,8 @@ export default function ChatScreen() {
 
         <View style={styles.headerCenter}>
           <View style={styles.headerAvatar}>
-            {otherUser?.photo ? (
-              <Image source={{ uri: otherUser.photo }} style={styles.headerAvatarImage} />
+            {otherUser?.avatar ? (
+              <Image source={{ uri: otherUser.avatar }} style={styles.headerAvatarImage} />
             ) : (
               <View style={styles.headerAvatarPlaceholder}>
                 <Ionicons name="person" size={20} color="#666" />

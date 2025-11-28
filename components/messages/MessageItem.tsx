@@ -21,6 +21,8 @@ interface MessageItemProps {
 
 const MessageItem: React.FC<MessageItemProps> = ({ message, onPress }) => {
   const getTypeIndicator = () => {
+	console.log("messageProps", message);
+	
     switch (message.type) {
       case "customer_support":
         return "Support";
@@ -40,7 +42,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onPress }) => {
 			activeOpacity={0.7}
 		>
 			<View style={styles.avatarContainer}>
-				{false ? (
+				{message.avatar ? (
 					<Image source={{ uri: message.avatar }} style={styles.avatar} />
 				) : (
 					<View style={styles.avatarPlaceholder}>

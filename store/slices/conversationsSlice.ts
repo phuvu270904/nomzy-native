@@ -4,7 +4,7 @@ export interface ConversationUser {
   id: number;
   name: string;
   email?: string;
-  photo?: string;
+  avatar?: string;
   role: "user" | "driver" | "restaurant";
 }
 
