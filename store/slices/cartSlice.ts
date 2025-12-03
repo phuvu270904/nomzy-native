@@ -167,11 +167,21 @@ const cartSlice = createSlice({
           );
 
           if (existingItemIndex !== -1) {
-            // Update existing item
-            state.cart.cartItems[existingItemIndex] = cartItem;
+            // Update existing item, preserve product data
+            const existingItem = state.cart.cartItems[existingItemIndex];
+            state.cart.cartItems[existingItemIndex] = {
+              ...cartItem,
+              product: cartItem.product || existingItem.product,
+            };
           } else {
-            // Add new item
-            state.cart.cartItems.push(cartItem);
+            // Add new item - only if it has product data
+            if (cartItem.product) {
+              state.cart.cartItems.push(cartItem);
+            } else {
+              console.warn('Cart item missing product data, refetching cart');
+              // If product data is missing, we should refetch the cart
+              state.error = 'Item added but missing product data';
+            }
           }
         }
         state.error = null;

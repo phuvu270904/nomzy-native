@@ -2,18 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { addToCartAsync } from "@/store/slices/cartSlice";
+import { addToCartAsync, fetchCart } from "@/store/slices/cartSlice";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { apiClient } from "@/utils/apiClient";
 
@@ -99,6 +99,9 @@ export default function ProductDetailScreen() {
       );
 
       if (addToCartAsync.fulfilled.match(result)) {
+        // Refetch cart to ensure we have complete product data
+        await dispatch(fetchCart());
+        
         // Success - show confirmation
         Alert.alert(
           "Added to Cart",

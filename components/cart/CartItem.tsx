@@ -1,10 +1,10 @@
 import { CartItem as ApiCartItem } from "@/api/cartApi";
 import { ThemedText } from "@/components/ThemedText";
 import {
-  removeCartItemAsync,
-  removeItemOptimistic,
-  updateCartItemAsync,
-  updateQuantityOptimistic,
+    removeCartItemAsync,
+    removeItemOptimistic,
+    updateCartItemAsync,
+    updateQuantityOptimistic,
 } from "@/store/slices/cartSlice";
 import { useAppDispatch } from "@/store/store";
 import { Ionicons } from "@expo/vector-icons";
@@ -81,9 +81,11 @@ export function CartItem({ item, onPress }: CartItemProps) {
 
         {/* Item Details */}
         <View style={styles.itemInfo}>
-          <ThemedText style={styles.itemName}>{item.product.name}</ThemedText>
+          <ThemedText style={styles.itemName}>
+            {item.product.name || 'Unknown Product'}
+          </ThemedText>
           <ThemedText style={styles.itemDescription} numberOfLines={2}>
-            {item.product.description}
+            {item.product.description || 'No description available'}
           </ThemedText>
 
           {/* Price section */}

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 import { claimCoupon, getRestaurantCoupons, RestaurantCoupon } from "@/api/couponsApi";
+import { UserCoupon, userCouponsApi } from "@/api/userCouponsApi";
 import { apiClient } from "@/utils/apiClient";
 
 interface Product {
@@ -90,6 +91,8 @@ export default function RestaurantDetailScreen() {
   const [coupons, setCoupons] = useState<RestaurantCoupon[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [claimingCouponId, setClaimingCouponId] = useState<number | null>(null);
+  const [userCoupons, setUserCoupons] = useState<UserCoupon[]>([]);
+  const [loadingUserCoupons, setLoadingUserCoupons] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -100,6 +103,7 @@ export default function RestaurantDetailScreen() {
   useEffect(() => {
     if (id && activeTab === "Offers") {
       fetchRestaurantCoupons();
+      fetchUserCoupons();
     }
   }, [id, activeTab]);
 
@@ -135,10 +139,30 @@ export default function RestaurantDetailScreen() {
     }
   };
 
+  const fetchUserCoupons = async () => {
+    try {
+      setLoadingUserCoupons(true);
+      const data = await userCouponsApi.getUserCoupons();
+      setUserCoupons(data);
+    } catch (err: any) {
+      console.error("Error fetching user coupons:", err);
+      // Don't set error state, just log it
+    } finally {
+      setLoadingUserCoupons(false);
+    }
+  };
+
+  const isCouponClaimed = (couponId: number): boolean => {
+    return userCoupons.some(uc => uc.couponId === couponId);
+  };
+
   const handleClaimCoupon = async (couponId: number) => {
     try {
       setClaimingCouponId(couponId);
       const result = await claimCoupon(couponId);
+      
+      // Refresh user coupons to update claimed status
+      await fetchUserCoupons();
       
       // Show success message
       Alert.alert(
@@ -332,6 +356,7 @@ export default function RestaurantDetailScreen() {
                   ? `${discountValue}%`
                   : `$${discountValue}`;
                 const isClaiming = claimingCouponId === coupon.id;
+                const claimed = isCouponClaimed(coupon.id);
                 
                 return (
                   <View key={restaurantCoupon.id} style={styles.couponCard}>
@@ -371,16 +396,23 @@ export default function RestaurantDetailScreen() {
                     <TouchableOpacity
                       style={[
                         styles.claimButton,
-                        isClaiming && styles.claimButtonDisabled
+                        (isClaiming || claimed) && styles.claimButtonDisabled
                       ]}
                       onPress={() => handleClaimCoupon(coupon.id)}
-                      disabled={isClaiming}
+                      disabled={isClaiming || claimed}
                       activeOpacity={0.7}
                     >
                       {isClaiming ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
-                        <Text style={styles.claimButtonText}>Claim Coupon</Text>
+                        <>
+                          {claimed && (
+                            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                          )}
+                          <Text style={styles.claimButtonText}>
+                            {claimed ? "Claimed" : "Claim Coupon"}
+                          </Text>
+                        </>
                       )}
                     </TouchableOpacity>
                   </View>

@@ -170,7 +170,7 @@ export default function ProfileScreen() {
     //   icon: "notifications-outline",
     //   iconColor: "#FFE66D",
     //   onPress: () =>
-    //     Alert.alert("Notifications", "Notification settings screen"),
+    //     resetOnboardingStatus()
     // },
   ];
 
